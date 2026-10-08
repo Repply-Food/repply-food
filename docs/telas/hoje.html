@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoje · telas do repply food.</title>
+<link rel="icon" href="assets/repply-food-simbolo-principal.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://api.fontshare.com">
+<!-- Fontes da marca. O 1º link é o padrão do projeto. A API da Fontshare devolve só a 1ª família
+     da lista, então a Satoshi vem num 2º link e a JetBrains Mono (que não está na Fontshare) vem do Google Fonts. -->
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=satoshi@400,500,700&f[]=jetbrains-mono@400,500,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<header class="topo"><div class="topo-in">
+  <a class="marca" href="index.html" aria-label="repply food.: voltar para a galeria"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-claro.svg" alt=""></a>
+  <span class="topo-rotulo">Telas aprovadas</span>
+  <nav class="topo-nav" aria-label="Telas">
+    <a href="index.html">Galeria</a>
+    <a href="hoje.html" aria-current="page">Hoje</a>
+    <a href="resultados.html">Resultados</a>
+    <a href="ajustes.html">Ajustes</a>
+    <a href="primeiro-acesso.html">Primeiro acesso</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</div></header>
+
+<main class="pagina">
+
+  <div class="cabeca">
+    <h1>Hoje</h1>
+    <p>A tela que o dono abre durante o expediente: quanto a casa já vendeu, se está acima ou abaixo do normal para aquele dia e horário, quem está na casa, se tem conta esquecida e como anda a meta do mês.</p>
+    <div class="decisoes"><span class="dec">D-33</span><span class="dec">D-14</span><span class="dec">D-22</span><span class="dec">D-39</span><span class="dec">D-40</span></div>
+  </div>
+
+  <!-- ============ Situação 1 ============ -->
+  <section class="bloco">
+    <div class="bloco-tit"><span class="passo">Situação 1</span><h2>Sexta, 21h40 · com alerta</h2></div>
+    <p class="bloco-sub">Sexta movimentada: o dia está acima do normal e há contas abertas há mais de 4h. Dados fictícios.</p>
+
+    <div class="par">
+      <div class="palco">
+        <p class="palco-rotulo">Celular</p>
+        <figure style="margin:0">
+          <div class="rf-phone hoje"><div class="rf-screen">
+            <div class="rf-top">
+              <span class="marca"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-claro.svg" alt="repply food."></span>
+              <div class="rf-rest"><h4>Bar do Zé</h4><span class="rf-sync">● há 2 min</span></div>
+            </div>
+            <div class="rf-body">
+              <div class="rf-card">
+                <div class="rf-lab">Faturamento da casa · hoje</div>
+                <div class="rf-big">R$ 8.420</div>
+                <span class="rf-chip">▲ 13% vs. sextas até 21h40</span>
+                <div class="rf-sub">+ R$ 842 de taxa de serviço (fora do faturamento)</div>
+                <svg class="rf-grafico" viewBox="0 0 280 128" role="img" aria-label="Curva acumulada de hoje acima da curva de uma sexta típica">
+                  <line x1="0" y1="120" x2="280" y2="120" stroke="#EEE"/>
+                  <polyline fill="none" stroke="#A3A3A3" stroke-width="1.6" stroke-dasharray="4 3" points="0,120 18.7,117.8 37.3,110.2 56,102.5 74.7,100.4 93.3,99.3 112,97.1 130.7,91.6 149.3,80.7 168,65.5 186.7,49.1 205.3,33.8 224,20.7 242.7,12 261.3,7.6 280,6.5"/>
+                  <polyline fill="none" stroke="#FF5A1F" stroke-width="2.4" points="0,120 18.7,117.3 37.3,108 56,99.3 74.7,97.1 93.3,96 112,93.8 130.7,87.3 149.3,75.3 168,57.8 186.7,39.3 199.1,28.1"/>
+                  <line x1="199.1" y1="0" x2="199.1" y2="120" stroke="#FF5A1F" stroke-opacity=".25"/>
+                  <circle cx="199.1" cy="28.1" r="3.5" fill="#FF5A1F"/>
+                  <text x="0" y="128" font-size="8" fill="#A3A3A3">11h</text>
+                  <text x="130" y="128" font-size="8" fill="#A3A3A3">18h</text>
+                  <text x="262" y="128" font-size="8" fill="#A3A3A3">2h</text>
+                </svg>
+                <div class="rf-legend"><span><i style="background:#FF5A1F"></i>hoje (acumulado)</span><span><i style="background:#A3A3A3"></i>sexta típica</span></div>
+              </div>
+              <div class="rf-row">
+                <div class="rf-card"><div class="rf-lab">Mesas abertas</div><div class="rf-mid">18</div><div class="rf-sub">R$ 3.960</div></div>
+                <div class="rf-card"><div class="rf-lab">Pessoas</div><div class="rf-mid">64</div><div class="rf-sub">na casa</div></div>
+                <div class="rf-card"><div class="rf-lab">Por pessoa</div><div class="rf-mid">R$ 72</div><div class="rf-sub">▲ 4%</div></div>
+              </div>
+              <div class="rf-fold"><span>sem rolar, vê até aqui</span></div>
+              <div class="rf-alert">
+                <h5>2 contas abertas há mais de 4h</h5>
+                <div><span>Mesa 12 · 4h20</span><span>R$ 610</span></div>
+                <div><span>Mesa 31 · 4h05</span><span>R$ 188</span></div>
+              </div>
+              <div class="rf-card">
+                <div class="rf-lab">Meta de outubro</div>
+                <div class="rf-mid">62%</div>
+                <div class="rf-bar"><i style="width:62%"></i></div>
+                <div class="rf-sub">no ritmo atual, fecha em R$ 182 mil (meta R$ 170 mil)</div>
+              </div>
+            </div>
+            <div class="rf-nav"><span class="on">Hoje</span><span>Resultados</span><span>Ajustes</span></div>
+          </div></div>
+          <figcaption class="legenda">A linha azul tracejada é anotação: mostra até onde o dono vê sem rolar, num celular comum.</figcaption>
+        </figure>
+      </div>
+
+      <div class="palco">
+        <p class="palco-rotulo">Computador</p>
+        <figure style="margin:0">
+          <div class="rolagem">
+            <div class="dk">
+              <div class="dk-bar"><i></i><i></i><i></i><span class="dk-url">food.repplyhub.com.br/r/bar-do-ze/hoje</span></div>
+              <div class="dk-app">
+                <div class="dk-side">
+                  <span class="marca"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-escuro.svg" alt="repply food."></span>
+                  <div class="dk-nav on">Hoje</div><div class="dk-nav">Resultados</div><div class="dk-nav">Ajustes</div>
+                  <div class="dk-foot"><b>Bar do Zé</b><span class="dk-ok">● dados de há 2 min</span></div>
+                </div>
+                <div class="dk-main">
+                  <div class="dk-head"><h3>Hoje<small>sexta, 9 de outubro · 21h40</small></h3></div>
+                  <div class="dk-g" style="grid-template-columns:2fr 1fr">
+                    <div class="dk-card">
+                      <div class="dk-lab">Faturamento da casa · hoje</div>
+                      <div class="dk-numlinha"><div class="dk-big">R$ 8.420</div><span class="dk-chip">▲ 13% vs. sextas até 21h40</span></div>
+                      <div class="dk-sub">+ R$ 842 de taxa de serviço (fora do faturamento)</div>
+                      <svg class="dk-grafico" viewBox="0 0 560 150" role="img" aria-label="Curva acumulada de hoje acima da curva de uma sexta típica">
+                        <line x1="0" y1="140" x2="560" y2="140" stroke="#EEE"/>
+                        <polyline fill="none" stroke="#A3A3A3" stroke-width="1.6" stroke-dasharray="5 4" points="0,140 37,137 75,128 112,119 149,117 187,116 224,113 261,107 299,94 336,76 373,57 411,39 448,24 485,14 523,9 560,8"/>
+                        <polyline fill="none" stroke="#FF5A1F" stroke-width="2.6" points="0,140 37,137 75,126 112,116 149,113 187,112 224,109 261,102 299,88 336,67 373,46 398,33"/>
+                        <line x1="398" y1="0" x2="398" y2="140" stroke="#FF5A1F" stroke-opacity=".25"/>
+                        <circle cx="398" cy="33" r="4" fill="#FF5A1F"/>
+                      </svg>
+                      <div class="dk-legend"><span><i style="background:#FF5A1F"></i>hoje (acumulado)</span><span><i style="background:#A3A3A3"></i>sexta típica</span></div>
+                    </div>
+                    <div class="dk-g" style="grid-template-rows:repeat(3,1fr)">
+                      <div class="dk-card"><div class="dk-lab">Mesas abertas</div><div class="dk-mid">18</div><div class="dk-sub">R$ 3.960 em aberto</div></div>
+                      <div class="dk-card"><div class="dk-lab">Pessoas na casa</div><div class="dk-mid">64</div></div>
+                      <div class="dk-card"><div class="dk-lab">Por pessoa</div><div class="dk-mid">R$ 72</div><div class="dk-sub dk-up">▲ 4%</div></div>
+                    </div>
+                  </div>
+                  <div class="dk-g" style="grid-template-columns:1fr 1fr;margin-top:12px">
+                    <div class="dk-alert">
+                      <h5>5 contas abertas há mais de 4h</h5>
+                      <div><span>Mesa 12 · 4h20</span><span>R$ 610</span></div>
+                      <div><span>Mesa 31 · 4h05</span><span>R$ 188</span></div>
+                      <div><span>Mesa 7 · 4h02</span><span>R$ 342</span></div>
+                      <span class="dk-link">ver todas (5) ▾</span>
+                    </div>
+                    <div class="dk-card">
+                      <div class="dk-lab">Meta de outubro</div>
+                      <div class="dk-mid">62%</div>
+                      <div class="dk-meta"><i style="width:62%"></i></div>
+                      <div class="dk-sub">no ritmo atual, fecha em R$ 182 mil (meta R$ 170 mil)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption class="legenda larga">O menu de baixo vira a barra lateral escura, com o restaurante e a hora dos últimos dados no rodapé. A curva ocupa 2/3 da largura, com os três quadros ao lado; o alerta e a meta ficam lado a lado. Aqui o alerta tem 5 contas: aparecem 3 e o botão "ver todas (5)".</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Situação 2 ============ -->
+  <section class="bloco">
+    <div class="bloco-tit"><span class="passo">Situação 2</span><h2>Terça, 15h10 · sem alerta, abaixo do normal</h2></div>
+    <p class="bloco-sub">Terça tranquila: o dia está abaixo do normal e não há conta aberta há mais de 4h, então o alerta some e a meta sobe para o lugar dele. Dados fictícios.</p>
+
+    <div class="par">
+      <div class="palco">
+        <p class="palco-rotulo">Celular</p>
+        <figure style="margin:0">
+          <div class="rf-phone hoje"><div class="rf-screen">
+            <div class="rf-top">
+              <span class="marca"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-claro.svg" alt="repply food."></span>
+              <div class="rf-rest"><h4>Bar do Zé</h4><span class="rf-sync">● há 4 min</span></div>
+            </div>
+            <div class="rf-body">
+              <div class="rf-card">
+                <div class="rf-lab">Faturamento da casa · hoje</div>
+                <div class="rf-big">R$ 2.140</div>
+                <span class="rf-chip neg">▼ 6% vs. terças até 15h10</span>
+                <div class="rf-sub">+ R$ 214 de taxa de serviço (fora do faturamento)</div>
+                <svg class="rf-grafico" viewBox="0 0 280 128" role="img" aria-label="Curva acumulada de hoje abaixo da curva de uma terça típica">
+                  <line x1="0" y1="120" x2="280" y2="120" stroke="#EEE"/>
+                  <polyline fill="none" stroke="#A3A3A3" stroke-width="1.6" stroke-dasharray="4 3" points="0,120 18.7,116.4 37.3,100.8 56,84 74.7,66 93.3,62.4 112,60 130.7,55.2 149.3,45.6 168,33.6 186.7,24 205.3,16.8 224,13.2 242.7,12 261.3,12 280,12"/>
+                  <polyline fill="none" stroke="#FF5A1F" stroke-width="2.4" points="0,120 18.7,117.1 37.3,103.2 56,87.6 74.7,70.8 77.8,68.6"/>
+                  <line x1="77.8" y1="0" x2="77.8" y2="120" stroke="#FF5A1F" stroke-opacity=".25"/>
+                  <circle cx="77.8" cy="68.6" r="3.5" fill="#FF5A1F"/>
+                  <text x="0" y="128" font-size="8" fill="#A3A3A3">11h</text>
+                  <text x="130" y="128" font-size="8" fill="#A3A3A3">18h</text>
+                  <text x="262" y="128" font-size="8" fill="#A3A3A3">2h</text>
+                </svg>
+                <div class="rf-legend"><span><i style="background:#FF5A1F"></i>hoje (acumulado)</span><span><i style="background:#A3A3A3"></i>terça típica</span></div>
+              </div>
+              <div class="rf-row">
+                <div class="rf-card"><div class="rf-lab">Mesas abertas</div><div class="rf-mid">6</div><div class="rf-sub">R$ 410</div></div>
+                <div class="rf-card"><div class="rf-lab">Pessoas</div><div class="rf-mid">15</div><div class="rf-sub">na casa</div></div>
+                <div class="rf-card"><div class="rf-lab">Por pessoa</div><div class="rf-mid">R$ 58</div><div class="rf-sub">▼ 3%</div></div>
+              </div>
+              <div class="rf-fold"><span>sem rolar, vê até aqui</span></div>
+              <div class="rf-card">
+                <div class="rf-lab">Meta de outubro</div>
+                <div class="rf-mid rf-warn">31%</div>
+                <div class="rf-bar"><i class="risco" style="width:31%"></i></div>
+                <div class="rf-sub">no ritmo atual, fecha em R$ 158 mil (meta R$ 170 mil)</div>
+              </div>
+            </div>
+            <div class="rf-nav"><span class="on">Hoje</span><span>Resultados</span><span>Ajustes</span></div>
+          </div></div>
+          <figcaption class="legenda">Vermelho porque está abaixo do normal; amarelo porque a meta está em risco.</figcaption>
+        </figure>
+      </div>
+
+      <div class="palco">
+        <p class="palco-rotulo">Computador</p>
+        <div class="vazio">
+          <strong>Sem desenho próprio para esta situação</strong>
+          <p>No computador vale a mesma regra do celular: sem conta aberta há mais de 4h, o quadro de alerta não aparece (D-33).</p>
+          <p>As cores também são as mesmas: vermelho quando o dia está abaixo do normal, amarelo quando a meta está em risco.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Regras ============ -->
+  <section class="regras" aria-labelledby="regras-hoje">
+    <h2 id="regras-hoje">Regras desta tela</h2>
+    <p>O que a implementação precisa respeitar. O número é a decisão registrada em <a href="../decisoes.md">docs/decisoes.md</a>; quando começa com M, é a métrica definida em <a href="../metricas.md">docs/metricas.md</a>.</p>
+
+    <h3>Conteúdo e ordem</h3>
+    <ul>
+      <li><span>De cima para baixo: faturamento da casa, linha da taxa de serviço, curva do dia, três quadros (mesas abertas, pessoas, por pessoa), contas abertas há mais de 4h e meta do mês.</span><span class="refs"><span class="dec">D-33</span></span></li>
+      <li><span>"Faturamento da casa" é sem a taxa de serviço. A taxa aparece na linha de baixo, separada: "+ R$ X de taxa de serviço (fora do faturamento)".</span><span class="refs"><span class="dec">D-14</span></span></li>
+      <li><span>O faturamento é comparado com a média do mesmo dia da semana (últimas 4) <b>até o mesmo horário</b>: "vs. sextas até 21h40".</span><span class="refs"><span class="dec">D-33</span><span class="dec">D-22</span></span></li>
+      <li><span>Curva acumulada de hoje (laranja, com o ponto de agora) contra o "dia típico" do mesmo dia da semana (cinza tracejado).</span><span class="refs"><span class="dec">D-33</span></span></li>
+      <li><span>Meta do mês com barra de progresso e projeção: "no ritmo atual, fecha em R$ X".</span><span class="refs"><span class="dec">D-33</span><span class="dec">M11</span></span></li>
+      <li><span>A hora dos últimos dados fica sempre à vista: no topo, no celular ("há 2 min"); no rodapé da barra lateral, no computador. Selo verde até 15 min, amarelo de 15 a 45 min, vermelho acima de 45 min (só dentro do horário de funcionamento).</span><span class="refs"><span class="dec">M05</span><span class="dec">D-40</span></span></li>
+    </ul>
+
+    <h3>Comportamento</h3>
+    <ul>
+      <li><span>Contas abertas há mais de 4h: no máximo 3 visíveis + botão "ver todas (N)", que expande a lista.</span><span class="refs"><span class="dec">D-33</span></span></li>
+      <li><span>O alerta só aparece quando existe. Sem ele, a meta sobe para o lugar dele.</span><span class="refs"><span class="dec">D-33</span></span></li>
+      <li><span>Cores só com significado: verde = acima do normal, vermelho = abaixo, amarelo = meta em risco. O laranja fica para a marca e para a linha de hoje.</span><span class="refs"><span class="dec">D-33</span></span></li>
+      <li><span>No celular, o mais importante cabe sem rolar: até os três quadros.</span><span class="refs"><span class="dec">D-33</span></span></li>
+    </ul>
+
+    <h3>Celular e computador</h3>
+    <ul>
+      <li><span>Celular primeiro, computador sempre funcionando: as duas versões existem.</span><span class="refs"><span class="dec">D-39</span></span></li>
+      <li><span>No computador, o menu de baixo vira barra lateral escura à esquerda; curva em 2/3 da largura com os quadros ao lado; alerta e meta lado a lado.</span><span class="refs"><span class="dec">D-40</span></span></li>
+    </ul>
+
+    <h3>Padrões que valem aqui</h3>
+    <ul>
+      <li><span>Um único login por restaurante, sem cargos: quem entra vê esta mesma tela, com tudo.</span><span class="refs"><span class="dec">D-10</span></span></li>
+      <li><span>Tema claro é o padrão (o escuro é opção em Ajustes).</span><span class="refs"><span class="dec">D-12</span></span></li>
+      <li><span>Marca: símbolo oficial + "repply food." com ponto laranja. O tomate só aparece no símbolo, nunca depois do nome.</span><span class="refs"><span class="dec">D-42</span></span></li>
+      <li><span>Dados fictícios (Bar do Zé), só para o desenho e a demonstração.</span><span class="refs"><span class="dec">D-13</span></span></li>
+    </ul>
+  </section>
+
+</main>
+</body>
+</html>

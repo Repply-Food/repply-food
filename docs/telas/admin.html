@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · telas do repply food.</title>
+<link rel="icon" href="assets/repply-food-simbolo-principal.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://api.fontshare.com">
+<!-- Fontes da marca. O 1º link é o padrão do projeto. A API da Fontshare devolve só a 1ª família
+     da lista, então a Satoshi vem num 2º link e a JetBrains Mono (que não está na Fontshare) vem do Google Fonts. -->
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=satoshi@400,500,700&f[]=jetbrains-mono@400,500,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<header class="topo"><div class="topo-in">
+  <a class="marca" href="index.html" aria-label="repply food.: voltar para a galeria"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-claro.svg" alt=""></a>
+  <span class="topo-rotulo">Telas aprovadas</span>
+  <nav class="topo-nav" aria-label="Telas">
+    <a href="index.html">Galeria</a>
+    <a href="hoje.html">Hoje</a>
+    <a href="resultados.html">Resultados</a>
+    <a href="ajustes.html">Ajustes</a>
+    <a href="primeiro-acesso.html">Primeiro acesso</a>
+    <a href="admin.html" aria-current="page">Admin</a>
+  </nav>
+</div></header>
+
+<main class="pagina">
+
+  <div class="cabeca">
+    <h1>Admin da Repply</h1>
+    <p>O painel interno da equipe Repply (Lucas Ferreira e Lucas Duarte), na mesma aplicação, em <code>/admin</code>. Serve para cadastrar restaurantes, ver quem parou de enviar dados, cuidar do token de envio e do acesso do cliente. É pensado para o computador, mas funciona no celular.</p>
+    <div class="decisoes"><span class="dec">D-32</span><span class="dec">D-38</span><span class="dec">D-35</span><span class="dec">D-39</span><span class="dec">D-40</span></div>
+  </div>
+
+  <section class="bloco">
+    <div class="bloco-tit"><h2>Lista de restaurantes e restaurante selecionado</h2></div>
+    <p class="bloco-sub">Dados fictícios: cinco restaurantes, um em cada estado de envio.</p>
+
+    <div class="par">
+      <div class="palco">
+        <p class="palco-rotulo">Celular</p>
+        <figure style="margin:0">
+          <div class="rf-phone w280"><div class="rf-screen">
+            <div class="rf-top escuro">
+              <span class="ad-brand"><span class="marca"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-escuro.svg" alt="repply food."></span><span class="ad-tag">admin</span></span>
+              <span class="rf-menu" aria-label="menu">☰</span>
+            </div>
+            <div class="rf-body lista">
+              <div class="rf-new">+ Cadastrar restaurante</div>
+              <div class="rf-li"><div>Sabor do Mar<small>há 2 dias</small></div><span class="st stop">parado</span></div>
+              <div class="rf-li"><div>Cantina da Praça<small>há 47 min</small></div><span class="st late">atrasado</span></div>
+              <div class="rf-li"><div>Forno a Lenha<small>—</small></div><span class="st wait">aguardando</span></div>
+              <div class="rf-li"><div>Bar do Zé<small>há 2 min · SCC 5.2.1</small></div><span class="st ok">em dia</span></div>
+              <div class="rf-li"><div>Bar da Esquina<small>hoje 02:14</small></div><span class="st off">fechado</span></div>
+            </div>
+          </div></div>
+          <figcaption class="legenda">No celular, a lista mostra <b>primeiro quem precisa de atenção</b> (parado, atrasado, aguardando). Tocar num restaurante abre os detalhes numa tela própria, com os mesmos blocos do computador: dados, token, acesso do cliente, últimos envios e "ver o painel do cliente".</figcaption>
+        </figure>
+      </div>
+
+      <div class="palco">
+        <p class="palco-rotulo">Computador</p>
+        <figure style="margin:0">
+          <div class="rolagem">
+            <div class="dk adm">
+              <div class="dk-bar"><i></i><i></i><i></i><span class="dk-url">food.repplyhub.com.br/admin</span></div>
+              <div class="ad-top">
+                <span class="ad-brand"><span class="marca"><img src="assets/repply-food-simbolo-principal.svg" alt=""><img src="assets/repply-food-texto-fundo-escuro.svg" alt="repply food."></span><span class="ad-tag">admin</span></span>
+                <span class="ad-user">Lucas Ferreira · Sair</span>
+              </div>
+              <div class="ad-main">
+
+                <div>
+                  <div class="ad-h"><h3>Restaurantes</h3><span class="ad-new">+ Cadastrar restaurante</span></div>
+                  <div class="ad-kpis"><span>5 cadastrados</span><span class="t-verde">2 em dia</span><span class="t-amarelo">1 atrasado</span><span class="t-vermelho">1 parado</span><span class="t-azul">1 aguardando</span></div>
+                  <table class="ad-t">
+                    <thead><tr><th>Restaurante</th><th>Envio de dados</th><th>Último envio</th><th>SCC</th></tr></thead>
+                    <tbody>
+                      <tr class="sel"><td><b>Bar do Zé</b></td><td><span class="st ok">● em dia</span></td><td class="mono">há 2 min</td><td class="mono">5.2.1</td></tr>
+                      <tr><td>Cantina da Praça</td><td><span class="st late">● atrasado</span></td><td class="mono">há 47 min</td><td class="mono">5.2.1</td></tr>
+                      <tr><td>Sabor do Mar</td><td><span class="st stop">● parado</span></td><td class="mono">há 2 dias</td><td class="mono">5.1.8</td></tr>
+                      <tr><td>Bar da Esquina</td><td><span class="st off">◐ fechado agora</span></td><td class="mono">hoje 02:14</td><td class="mono">5.2.1</td></tr>
+                      <tr><td>Forno a Lenha</td><td><span class="st wait">○ aguardando 1º envio</span></td><td class="mono">—</td><td class="mono">—</td></tr>
+                    </tbody>
+                  </table>
+                  <p class="ad-nota">"Atrasado" e "parado" só contam dentro do horário de funcionamento. Fora dele, o restaurante aparece como "fechado agora" e não gera alarme. O alarme por e-mail sai quando um restaurante vira "parado".</p>
+                </div>
+
+                <div>
+                  <div class="ad-card">
+                    <div class="ad-lab">Bar do Zé</div>
+                    <div class="ad-row"><span>CNPJ</span><span class="mono">12.345.678/0001-90</span></div>
+                    <div class="ad-row"><span>Funcionamento</span><span>ter–dom · 11h–2h</span></div>
+                    <div class="ad-row"><span>O dia vira às</span><span>5h</span></div>
+                    <div class="ad-act"><span>Editar dados</span><span>Ver o painel do cliente</span></div>
+                  </div>
+                  <div class="ad-card">
+                    <div class="ad-lab">Token de envio (vai no SCC do restaurante)</div>
+                    <div class="ad-row"><span class="mono">rf_8f3k••••••••</span><span>criado 02/10 · usado há 2 min</span></div>
+                    <div class="ad-act"><span class="pri">Gerar novo token</span><span>Copiar instruções para a SCC</span></div>
+                    <p class="ad-ajuda">O token completo só aparece uma vez, na hora em que é gerado. "Copiar instruções" monta a mensagem com endereço, token e intervalo para mandar ao Pedro.</p>
+                  </div>
+                  <div class="ad-card">
+                    <div class="ad-lab">Acesso do cliente</div>
+                    <div class="ad-row"><span>dono@bardoze.com.br</span><span>entrou ontem 22:10</span></div>
+                    <div class="ad-act"><span>Redefinir senha</span><span>Trocar e-mail</span></div>
+                  </div>
+                  <div class="ad-card ad-log">
+                    <div class="ad-lab">Últimos envios</div>
+                    <div><span>21:38</span><span>212 entradas · 3 novas · 5 alteradas</span><span class="t-verde">ok</span></div>
+                    <div><span>21:33</span><span>209 entradas · 2 novas · 4 alteradas</span><span class="t-verde">ok</span></div>
+                    <div><span>21:28</span><span>formato desconhecido (versão 2)</span><span class="t-vermelho">erro</span></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          <figcaption class="legenda larga">À esquerda, a lista de restaurantes; à direita, o restaurante selecionado (Bar do Zé).</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Regras ============ -->
+  <section class="regras" aria-labelledby="regras-admin">
+    <h2 id="regras-admin">Regras desta tela</h2>
+    <p>O que a implementação precisa respeitar. O número é a decisão registrada em <a href="../decisoes.md">docs/decisoes.md</a>.</p>
+
+    <h3>Quem usa e onde fica</h3>
+    <ul>
+      <li><span>Só para a equipe Repply. "Admin Repply" é um tipo de usuário da plataforma, não um cargo dentro do restaurante: para os clientes continua valendo um único login, sem cargos.</span><span class="refs"><span class="dec">D-32</span><span class="dec">D-10</span></span></li>
+      <li><span>Fica no mesmo app, em <code>/admin</code>, num endereço que só os admins abrem.</span><span class="refs"><span class="dec">D-38</span></span></li>
+      <li><span>Pensado para o computador, mas precisa funcionar no celular.</span><span class="refs"><span class="dec">D-39</span></span></li>
+    </ul>
+
+    <h3>Lista de restaurantes</h3>
+    <ul>
+      <li><span>Estado do envio: em dia / atrasado / parado / fechado agora / aguardando 1º envio, com o horário do último envio.</span><span class="refs"><span class="dec">D-32</span><span class="dec">D-38</span></span></li>
+      <li><span>"Atrasado" e "parado" só contam dentro do horário de funcionamento. Fora dele, "fechado agora", sem alarme.</span><span class="refs"><span class="dec">D-38</span></span></li>
+      <li><span>O e-mail de alarme sai quando um restaurante vira "parado". Vai para a equipe Repply, não para o dono.</span><span class="refs"><span class="dec">D-38</span><span class="dec">D-15</span></span></li>
+      <li><span>Cadastrar restaurante.</span><span class="refs"><span class="dec">D-32</span></span></li>
+      <li><span>No celular, a lista mostra primeiro quem precisa de atenção (parado, atrasado, aguardando); o detalhe abre numa tela própria, com os mesmos blocos do computador.</span><span class="refs"><span class="dec">D-40</span></span></li>
+    </ul>
+
+    <h3>Restaurante selecionado</h3>
+    <ul>
+      <li><span>Nome, CNPJ, horário de funcionamento e hora em que o dia vira são editados só aqui ("Editar dados"). O dono só consulta, em Ajustes.</span><span class="refs"><span class="dec">D-35</span></span></li>
+      <li><span>Token de envio: mostrado inteiro só na hora em que é gerado; depois, só o começo ("rf_8f3k••••"). "Copiar instruções para a SCC" monta a mensagem com endereço, token e intervalo.</span><span class="refs"><span class="dec">D-38</span><span class="dec">D-03</span></span></li>
+      <li><span>Troca de token: na hora de gerar o novo, o admin escolhe se o antigo para imediatamente (padrão) ou em 24h.</span><span class="refs"><span class="dec">D-38</span></span></li>
+      <li><span>Acesso do cliente: criar o login, redefinir a senha e trocar o e-mail.</span><span class="refs"><span class="dec">D-32</span><span class="dec">D-38</span></span></li>
+      <li><span>Últimos envios, com os erros.</span><span class="refs"><span class="dec">D-38</span></span></li>
+      <li><span>"Ver o painel do cliente": abre o painel daquele restaurante só para leitura, para o suporte sem pedir a senha do cliente. Entra no MVP.</span><span class="refs"><span class="dec">D-38</span></span></li>
+    </ul>
+
+    <h3>Padrões que valem aqui</h3>
+    <ul>
+      <li><span>Botão principal ("+ Cadastrar restaurante") com fundo laranja e texto preto.</span><span class="refs"><span class="dec">contraste</span></span></li>
+      <li><span>Marca: símbolo oficial + "repply food." com ponto laranja, mais a etiqueta "admin". O tomate só aparece no símbolo, nunca depois do nome.</span><span class="refs"><span class="dec">D-42</span></span></li>
+    </ul>
+  </section>
+
+</main>
+</body>
+</html>

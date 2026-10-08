@@ -1,0 +1,29 @@
+# dependências e build
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# ambiente (só o .env.example vai para o git)
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Vercel
+.vercel/
+
+# IA: configurações locais e rascunhos de execução
+.claude/settings.local.json
+.superpowers/
+
+# sistema
+.DS_Store
+Thumbs.db
