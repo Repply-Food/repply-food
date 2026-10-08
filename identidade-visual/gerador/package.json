@@ -1,0 +1,17 @@
+{
+  "name": "repply-food-marca",
+  "private": true,
+  "description": "Gera os logos (../logos) e o brandbook (../brandbook.html) do repply food. a partir da fonte oficial e do tomate traçado.",
+  "scripts": {
+    "gerar": "node pacote.js ../logos",
+    "brandbook": "node brandbook.js ../brandbook.html",
+    "tracar": "node trace.js"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2",
+    "opentype.js": "^1"
+  },
+  "devDependencies": {
+    "potrace": "^2"
+  }
+}

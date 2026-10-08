@@ -46,7 +46,7 @@ O sistema SCC, no computador do restaurante, envia as contas para a função `re
 
 ## Marca
 
-Os logos, ícones e o brandbook ficam fora do repositório, em `Playbooks e Identidade visual/Identidade visual/` (pasta da Repply). Os ícones que o app usa são copiados para `public/` na implementação.
+Tudo da identidade visual está em [`identidade-visual/`](identidade-visual/README.md): brandbook, logos, ícones do app, fontes e o gerador que recria tudo. Os ícones que o app usa são copiados para `public/` na implementação.
 
 ---
 

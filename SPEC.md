@@ -4,7 +4,7 @@
 - **Data:** 08/10/2026
 - **Autor:** Lucas Ferreira (produto) + Claude Code (engenharia)
 - **Base técnica:** Next.js + Supabase, com peças do Repply Imob (D-04)
-- **Marca:** `Playbooks e Identidade visual/Identidade visual/repply_food_brandbook.html`
+- **Marca:** [`identidade-visual/`](identidade-visual/README.md) (brandbook, logos, fontes)
 - **Playbook:** `Playbooks e Identidade visual/Playbooks e processos comerciais/repply_playbook_v5.md`
 
 ## Índice
@@ -75,7 +75,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 | Simulador do envio em C++ (Lucas Duarte) | `github.com/Repply-Food/scc-dashboard` | Pode virar o gerador de dados fictícios. Os 9 relatórios dele inspiraram as métricas |
 | Repply Imob (Next.js 16 + Supabase) | `Projetos/Repply Imob` | Peças reaproveitadas: tokens de marca, clientes Supabase, guardas de auth, cabeçalhos de segurança, logger, configuração de Biome e Vitest |
 | Repply CRM | `Projetos/Repply CRM/repositorio` | Padrões: webhook que fecha por padrão, idempotência, alarme de "sinal de vida", checklist de RLS |
-| Marca completa | `Identidade visual/logos e instruções/repply food/` | Ícones do app, favicon, logos |
+| Marca completa | [`identidade-visual/`](identidade-visual/README.md) | Brandbook, logos, ícones do app, favicon, fontes |
 | Telas aprovadas | [`docs/telas/`](docs/telas/index.html) | Referência visual da implementação |
 
 ## 4. Módulos

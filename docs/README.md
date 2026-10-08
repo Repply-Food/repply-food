@@ -13,6 +13,7 @@
 | [`operacao/cadastrar-restaurante.md`](operacao/cadastrar-restaurante.md) | Roteiro para colocar um cliente no ar | Equipe Repply |
 | [`operacao/publicar.md`](operacao/publicar.md) | Como publicar banco, funções e painel no piloto | Dev |
 | [`operacao/migrar-para-pro.md`](operacao/migrar-para-pro.md) | O que fazer no 1º cliente pagante (D-09) | Lucas Ferreira, dev |
+| [`../identidade-visual/`](../identidade-visual/README.md) | Marca: brandbook, logos, ícones do app, fontes, gerador | Todos |
 | [`telas/index.html`](telas/index.html) | As telas aprovadas, em celular e computador (abra no navegador) | Dev, Lucas Ferreira |
 | [`divida-tecnica.md`](divida-tecnica.md) | O que ficou pendente, com gravidade | Dev |
 | [`superpowers/specs/`](superpowers/specs/) | Desenhos aprovados, um por tema (`AAAA-MM-DD-<tema>-design.md`) | Dev, IA |

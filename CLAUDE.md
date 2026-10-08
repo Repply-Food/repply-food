@@ -157,10 +157,13 @@ Há duas pessoas pedindo, e o jeito de responder muda:
 
 ## 8. Identidade visual
 
-**Fontes da verdade da marca:**
-- brandbook: `Playbooks e Identidade visual/Identidade visual/repply_food_brandbook.html`;
-- arquivos: `Playbooks e Identidade visual/Identidade visual/logos e instruções/repply food/`. Os ícones do app estão em `app/` dessa pasta;
-- telas aprovadas: [`docs/telas/`](docs/telas/index.html).
+**Fonte da verdade da marca: [`identidade-visual/`](identidade-visual/README.md)**, dentro deste repositório (D-48):
+- [`brandbook.html`](identidade-visual/brandbook.html);
+- [`logos/`](identidade-visual/logos/README.md). Os ícones do app ficam em `logos/app/` e são copiados para `public/`;
+- [`fontes/`](identidade-visual/fontes/), que entram por `next/font/local`;
+- [`gerador/`](identidade-visual/gerador/), que recria logos e brandbook.
+
+**Telas aprovadas:** [`docs/telas/`](docs/telas/index.html).
 
 | Elemento | Valor |
 |---|---|
@@ -245,7 +248,8 @@ repositorio/
 │   └── config.toml
 ├── tests/                    # recepção, isolamento, métricas (exemplo de conta), design-tokens
 ├── scripts/                  # gerador de dados fictícios, sincronizar-skills.mjs
-├── public/                   # ícones do app (copiados do pacote de marca)
+├── public/                   # ícones do app (copiados de identidade-visual/logos/app/)
+├── identidade-visual/        # marca: brandbook, logos, fontes, gerador (fonte da verdade)
 ├── .claude/skills/ · .agents/skills/
 └── docs/                     # ver docs/README.md
 ```
