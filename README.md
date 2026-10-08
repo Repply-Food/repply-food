@@ -33,7 +33,7 @@ O sistema SCC, no computador do restaurante, envia as contas para a função `re
 *Os comandos completos entram aqui quando o projeto tiver código.* Vai precisar de:
 - **Node.js 22 ou mais novo.** Este computador usa o 24, que é LTS.
 - **CLI do Supabase.** Por enquanto via `npx supabase …`. Quando houver `package.json`, ela entra como dependência de desenvolvimento e todos usam a mesma versão.
-- **Docker Desktop**, para o banco local (`npx supabase start`), usado nos testes.
+- **Rancher Desktop** (gratuito, no modo `dockerd`/moby, com o Kubernetes desligado), para o banco local (`npx supabase start`) usado nos testes. Ele faz o papel do Docker Desktop sem a licença comercial (D-49). Precisa estar aberto quando o banco local for usado.
 - Um `.env.local` a partir do [`.env.example`](.env.example).
 
 **Ligar a pasta ao projeto do Supabase** (uma vez por computador):
