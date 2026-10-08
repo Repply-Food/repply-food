@@ -225,8 +225,10 @@ Veja o `AGENTS.md` §4. **Escalar não é falha, é disciplina.** Trabalho ruim 
   - **nunca `git add -A`**: liste os arquivos;
   - a migration vai no mesmo commit da funcionalidade que a usa.
 - **Remoto:**
-  - o repositório remoto será criado na organização GitHub **`Repply-Food`** (D-05);
-  - criar o remoto e o primeiro `push` pedem autorização do Lucas Ferreira.
+  - o repositório é **`github.com/Repply-Food/repply-food`**, privado (D-47);
+  - antes de commitar, `git fetch` e confira se entrou commit de outra pessoa (o Lucas Duarte também trabalha aqui);
+  - `git push` para o `main` só depois da verificação do §9. **Publicar** (Vercel, Supabase) é outra coisa e pede autorização;
+  - o `github.com/Repply-Food/scc-dashboard` é o **simulador em C++** do Lucas Duarte, um repositório separado. Não misture os dois.
 - **Trailer de coautoria** nos commits feitos com IA: o que a ferramenta indicar.
 
 ## 13. Estrutura (planejada)

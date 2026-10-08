@@ -74,7 +74,7 @@ Pare e converse com o Lucas Ferreira antes de:
 - mudar o **banco** de produção (migration escrita não é migration aplicada);
 - **decisão de produto** que muda o que o cliente vê ou paga, ou que contraria [`docs/decisoes.md`](docs/decisoes.md);
 - **risco de segurança** novo;
-- publicar, criar repositório remoto ou mexer em conta externa (Supabase, Vercel, GitHub, DNS).
+- publicar, criar repositório ou mexer em conta externa (Supabase, Vercel, GitHub, DNS).
 
 **Decisão registrada em `docs/decisoes.md` não se reabre** sem falar com ele.
 

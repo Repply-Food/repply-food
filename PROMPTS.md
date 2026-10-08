@@ -39,8 +39,8 @@ Me mostre o plano antes de executar.
 Execute o plano repositorio/docs/superpowers/plans/<ARQUIVO>.md com a skill
 subagent-driven-development. Teste antes do código (test-driven-development).
 Ao fim de cada tarefa, rode a verificação do CLAUDE.md §9 e me diga o que passou, com evidência.
-Commits em PT-BR, direto no main, sem git add -A. Não crie repositório remoto nem publique
-sem me perguntar.
+Commits em PT-BR, direto no main, sem git add -A; git push depois da verificação.
+Não publique (Vercel, Supabase de produção) sem me perguntar.
 ```
 
 ## 🐛 4. Algo não funciona
