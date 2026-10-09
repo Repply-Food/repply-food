@@ -1,0 +1,16 @@
+:root {
+  --bg: #ffffff;
+  --fg: #0a0a0a;
+  --brand-orange: #ff5a1f;
+  --brand-tomato: #e8371f;
+  --brand-leaf: #2f9e44;
+  --success: #1e9e5a;
+  --danger: #d64545;
+  --warning: #e8a33d;
+  --muted: #737373;
+  --border: #e5e5e5;
+  --radius: 0.5rem;
+  --font-sans: "Satoshi", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "General Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}

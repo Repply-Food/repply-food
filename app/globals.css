@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@import "./styles/tokens.css";
+@import "./styles/brand.css";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

@@ -1,0 +1,21 @@
+.scheme-ink {
+  color: var(--fg);
+  background: transparent;
+}
+
+.scheme-paper {
+  color: var(--fg);
+  background: var(--bg);
+}
+
+.label-mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.signature-dot::after {
+  content: ".";
+  color: var(--brand-orange);
+}
