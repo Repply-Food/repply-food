@@ -27,3 +27,11 @@ supabase/.temp/
 # sistema
 .DS_Store
 Thumbs.db
+.env*
+.next/
+out/
+dist/
+coverage/
+.supabase/
+.vercel/
+.superpowers/
