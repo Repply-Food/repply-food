@@ -16,7 +16,9 @@
       "identidade-visual",
       "docs/telas",
       ".vercel",
-      ".superpowers"
+      ".superpowers",
+      ".claude",
+      ".agents"
     ]
   },
   "formatter": {

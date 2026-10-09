@@ -34,7 +34,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${generalSans.variable} ${satoshi.variable} ${jetBrainsMono.variable}`}>
+    <html
+      lang="pt-BR"
+      className={`${generalSans.variable} ${satoshi.variable} ${jetBrainsMono.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

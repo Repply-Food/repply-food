@@ -13,7 +13,7 @@
 // Cópia de verdade, nunca junção nem link simbólico: junção do Windows já apagou o
 // node_modules real aqui (ver a memória worktree-com-juncao-apaga-node-modules).
 
-import { cpSync, rmSync, existsSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,4 +30,4 @@ rmSync(espelho, { recursive: true, force: true });
 mkdirSync(dirname(espelho), { recursive: true });
 cpSync(fonte, espelho, { recursive: true });
 
-console.log(`Skills sincronizadas: .claude/skills → .agents/skills`);
+console.log("Skills sincronizadas: .claude/skills → .agents/skills");
