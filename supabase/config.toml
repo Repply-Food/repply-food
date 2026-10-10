@@ -386,6 +386,13 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# A função receber-envio NÃO usa a sessão do Supabase: a autenticação é o token
+# do restaurante (Authorization: Bearer), conferido DENTRO da função
+# (docs/arquitetura/seguranca-e-isolamento.md §6 e recepcao-de-dados.md §2).
+# Por isso verify_jwt = false, como o CRM faz.
+[functions.receber-envio]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

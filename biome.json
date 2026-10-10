@@ -18,7 +18,8 @@
       ".vercel",
       ".superpowers",
       ".claude",
-      ".agents"
+      ".agents",
+      "types/database.types.ts"
     ]
   },
   "formatter": {
