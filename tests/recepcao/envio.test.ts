@@ -10,6 +10,7 @@ import {
   envelhecerSinal,
   envelope,
   enviar,
+  hashToken,
   limparFixture,
 } from "../helpers/supabase-local";
 
@@ -20,10 +21,12 @@ type ResultadoEnvio = {
 };
 
 describe("receber-envio no Supabase local", () => {
-  let banco: Client;
-  let fixture: Fixture;
+  let banco: Client = undefined as never;
+  let fixture: Fixture = undefined as never;
 
   beforeEach(async () => {
+    banco = undefined as never;
+    fixture = undefined as never;
     banco = await conectarBanco();
     fixture = await criarFixture(banco);
   });
@@ -33,8 +36,13 @@ describe("receber-envio no Supabase local", () => {
   });
 
   async function limpar() {
-    if (fixture) await limparFixture(banco, fixture);
-    if (banco) await banco.end();
+    try {
+      if (fixture) await limparFixture(banco, fixture);
+    } finally {
+      if (banco) await banco.end();
+      banco = undefined as never;
+      fixture = undefined as never;
+    }
   }
 
   async function enviarComPausa(corpo: unknown): Promise<Response> {
@@ -138,9 +146,14 @@ describe("receber-envio no Supabase local", () => {
     });
   });
 
-  it("descarta RG e telefone antes de gravar entradas e payload", async () => {
+  it("descarta todos os dados pessoais das entradas e do payload", async () => {
     const corpo = envelope([
-      entrada(501, { RG: "000.000.000-00", FoneCliente: "(85) 99999-9999" }),
+      entrada(501, {
+        NomeCliente: "Pessoa de teste",
+        RG: "000.000.000-00",
+        FoneCliente: "(85) 99999-9999",
+        Sexo: "X",
+      }),
     ]);
     expect((await enviar(fixture.tokenA, corpo)).status).toBe(200);
     const dados = await banco.query<{ entrada: unknown; payload: unknown }>(
@@ -151,10 +164,22 @@ describe("receber-envio no Supabase local", () => {
         order by v.id desc limit 1`,
       [fixture.restauranteA]
     );
-    expect(JSON.stringify(dados.rows[0]?.entrada)).not.toContain(
-      "000.000.000-00"
-    );
-    expect(JSON.stringify(dados.rows[0]?.payload)).not.toContain("99999-9999");
+    expect(dados.rowCount).toBe(1);
+    const entradaGravada = JSON.stringify(dados.rows[0]?.entrada);
+    const payloadGravado = JSON.stringify(dados.rows[0]?.payload);
+    for (const campoOuValor of [
+      "NomeCliente",
+      "Pessoa de teste",
+      "RG",
+      "000.000.000-00",
+      "FoneCliente",
+      "(85) 99999-9999",
+      "Sexo",
+      '"X"',
+    ]) {
+      expect(entradaGravada).not.toContain(campoOuValor);
+      expect(payloadGravado).not.toContain(campoOuValor);
+    }
   });
 
   it("rejeita token errado, revogado e expirado", async () => {
@@ -171,17 +196,26 @@ describe("receber-envio no Supabase local", () => {
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(401);
   });
 
-  it("aceita token em troca até expirar e o rejeita depois", async () => {
+  it("mantém o token antigo na troca por 24h e rejeita só ele depois de expirar", async () => {
+    const tokenNovo = `${fixture.tokenA}_novo`;
     await banco.query(
-      "update public.tokens_envio set expira_em = now() + interval '24 hours' where restaurante_id = $1",
-      [fixture.restauranteA]
+      "update public.tokens_envio set expira_em = now() + interval '24 hours' where hash = $1",
+      [hashToken(fixture.tokenA)]
+    );
+    await banco.query(
+      "insert into public.tokens_envio (restaurante_id, hash, prefixo) values ($1, $2, 'teste-novo')",
+      [fixture.restauranteA, hashToken(tokenNovo)]
     );
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(200);
+    await envelhecerSinal(banco, fixture.restauranteA);
+    expect((await enviar(tokenNovo, envelope([]))).status).toBe(200);
     await banco.query(
-      "update public.tokens_envio set expira_em = now() - interval '1 second' where restaurante_id = $1",
-      [fixture.restauranteA]
+      "update public.tokens_envio set expira_em = now() - interval '1 second' where hash = $1",
+      [hashToken(fixture.tokenA)]
     );
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(401);
+    await envelhecerSinal(banco, fixture.restauranteA);
+    expect((await enviar(tokenNovo, envelope([]))).status).toBe(200);
   });
 
   it("responde os limites e erros HTTP do contrato", async () => {
@@ -277,9 +311,11 @@ describe("receber-envio no Supabase local", () => {
 
   it("serializa dois processamentos simultâneos em conexões PostgreSQL separadas", async () => {
     const corpo = JSON.stringify(envelope([entrada(901)]));
-    const primeiro = await conectarBanco();
-    const segundo = await conectarBanco();
+    let primeiro: Client | undefined;
+    let segundo: Client | undefined;
     try {
+      primeiro = await conectarBanco();
+      segundo = await conectarBanco();
       const resultados = await Promise.all([
         primeiro.query<{ processar_envio: ResultadoEnvio }>(
           "select public.processar_envio($1, $2::jsonb)",
@@ -300,8 +336,8 @@ describe("receber-envio no Supabase local", () => {
         expect.objectContaining({ inalteradas: 1 })
       );
     } finally {
-      await primeiro.end();
-      await segundo.end();
+      await primeiro?.end();
+      await segundo?.end();
     }
   });
 

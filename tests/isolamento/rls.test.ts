@@ -10,10 +10,12 @@ import {
 } from "../helpers/supabase-local";
 
 describe("RLS com identidades authenticated reais", () => {
-  let banco: Client;
-  let fixture: Fixture;
+  let banco: Client = undefined as never;
+  let fixture: Fixture = undefined as never;
 
   beforeEach(async () => {
+    banco = undefined as never;
+    fixture = undefined as never;
     banco = await conectarBanco();
     fixture = await criarFixture(banco);
     await banco.query(
@@ -27,8 +29,13 @@ describe("RLS com identidades authenticated reais", () => {
   });
 
   afterEach(async () => {
-    await limparFixture(banco, fixture);
-    await banco.end();
+    try {
+      if (fixture) await limparFixture(banco, fixture);
+    } finally {
+      if (banco) await banco.end();
+      banco = undefined as never;
+      fixture = undefined as never;
+    }
   });
 
   it("cliente A lê somente as entradas do próprio restaurante", async () => {
@@ -59,14 +66,25 @@ describe("RLS com identidades authenticated reais", () => {
     }
   });
 
-  it("admin lê entradas do painel do cliente, mas não escreve entradas nem metas", async () => {
-    const leituras = await comoAutenticado(banco, fixture.admin, () =>
+  it("admin lê entradas e metas, mas não escreve dados dos restaurantes", async () => {
+    await banco.query(
+      "insert into public.metas (restaurante_id, mes, valor) values ($1, '2026-10-01', 1000), ($2, '2026-10-01', 2000)",
+      [fixture.restauranteA, fixture.restauranteB]
+    );
+    const entradas = await comoAutenticado(banco, fixture.admin, () =>
       banco.query(
         "select restaurante_id from public.entradas where restaurante_id = any($1::uuid[])",
         [fixture.idsRestaurantes]
       )
     );
-    expect(leituras.rowCount).toBe(2);
+    expect(entradas.rowCount).toBe(2);
+    const metas = await comoAutenticado(banco, fixture.admin, () =>
+      banco.query(
+        "select restaurante_id from public.metas where restaurante_id = any($1::uuid[])",
+        [fixture.idsRestaurantes]
+      )
+    );
+    expect(metas.rowCount).toBe(2);
     await expect(
       comoAutenticado(banco, fixture.admin, () =>
         banco.query(
@@ -75,6 +93,49 @@ describe("RLS com identidades authenticated reais", () => {
         )
       )
     ).rejects.toMatchObject({ code: "42501" });
+    await expect(
+      comoAutenticado(banco, fixture.admin, () =>
+        banco.query(
+          "insert into public.entradas (restaurante_id, cod_entrada, aberta_em, dia_operacao, valor_consumido, pago, hash_origem) values ($1, 2, now(), current_date, 100, true, 'admin')",
+          [fixture.restauranteA]
+        )
+      )
+    ).rejects.toMatchObject({ code: "42501" });
+    const entradaAlterada = await comoAutenticado(banco, fixture.admin, () =>
+      banco.query(
+        "update public.entradas set valor_consumido = 200 where restaurante_id = $1 and cod_entrada = 1",
+        [fixture.restauranteA]
+      )
+    );
+    const entradaExcluida = await comoAutenticado(banco, fixture.admin, () =>
+      banco.query(
+        "delete from public.entradas where restaurante_id = $1 and cod_entrada = 1",
+        [fixture.restauranteA]
+      )
+    );
+    expect(entradaAlterada.rowCount).toBe(0);
+    expect(entradaExcluida.rowCount).toBe(0);
+    const metaAlterada = await comoAutenticado(banco, fixture.admin, () =>
+      banco.query(
+        "update public.metas set valor = 3000 where restaurante_id = $1 and mes = '2026-10-01'",
+        [fixture.restauranteA]
+      )
+    );
+    const metaExcluida = await comoAutenticado(banco, fixture.admin, () =>
+      banco.query(
+        "delete from public.metas where restaurante_id = $1 and mes = '2026-10-01'",
+        [fixture.restauranteA]
+      )
+    );
+    expect(metaAlterada.rowCount).toBe(0);
+    expect(metaExcluida.rowCount).toBe(0);
+    const estado = await banco.query<{ meta: string; entrada: string }>(
+      `select
+        (select valor::text from public.metas where restaurante_id = $1 and mes = '2026-10-01') as meta,
+        (select valor_consumido::text from public.entradas where restaurante_id = $1 and cod_entrada = 1) as entrada`,
+      [fixture.restauranteA]
+    );
+    expect(estado.rows[0]).toEqual({ meta: "1000.00", entrada: "100.00" });
   });
 
   it("cliente escreve a própria meta e recebe zero linhas ao tentar alterar a do B", async () => {

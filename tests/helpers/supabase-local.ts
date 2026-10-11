@@ -18,10 +18,33 @@ export type Fixture = {
   idsRestaurantes: string[];
 };
 
+export type IdentificadoresFixture = Pick<
+  Fixture,
+  | "restauranteA"
+  | "restauranteB"
+  | "usuarioA"
+  | "usuarioB"
+  | "usuarioSemAcesso"
+  | "admin"
+>;
+
+type OpcoesFixture = {
+  identificadores?: IdentificadoresFixture;
+  tokenA?: string;
+  tokenB?: string;
+};
+
 export async function conectarBanco(): Promise<Client> {
   const cliente = new Client({ connectionString: bancoUrl });
-  await cliente.connect();
-  return cliente;
+  try {
+    await cliente.connect();
+    return cliente;
+  } catch {
+    await cliente.end().catch(() => undefined);
+    throw new Error(
+      "Não foi possível conectar ao Supabase local. Inicie-o com `npm run supabase:start` e sirva receber-envio com `npm run functions:serve`."
+    );
+  }
 }
 
 export function hashToken(token: string): string {
@@ -45,59 +68,78 @@ async function criarUsuario(
   );
 }
 
-export async function criarFixture(cliente: Client): Promise<Fixture> {
-  const sufixo = randomUUID();
-  const restauranteA = randomUUID();
-  const restauranteB = randomUUID();
-  const usuarioA = randomUUID();
-  const usuarioB = randomUUID();
-  const usuarioSemAcesso = randomUUID();
-  const admin = randomUUID();
-  const tokenA = `rf_teste_a_${randomUUID()}`;
-  const tokenB = `rf_teste_b_${randomUUID()}`;
-
-  for (const [id, papel] of [
-    [usuarioA, "a"],
-    [usuarioB, "b"],
-    [usuarioSemAcesso, "sem"],
-    [admin, "admin"],
-  ] as const) {
-    await criarUsuario(cliente, id, `${papel}-${sufixo}@teste.repply.local`);
-  }
-
-  await cliente.query(
-    `insert into public.restaurantes (id, slug, nome, fuso, hora_virada)
-     values
-       ($1, $2, 'Casa de teste A', 'America/Fortaleza', '05:00'),
-       ($3, $4, 'Casa de teste B', 'America/Fortaleza', '05:00')`,
-    [restauranteA, `teste-a-${sufixo}`, restauranteB, `teste-b-${sufixo}`]
-  );
-  await cliente.query(
-    "insert into public.acessos (user_id, restaurante_id) values ($1, $2), ($3, $4)",
-    [usuarioA, restauranteA, usuarioB, restauranteB]
-  );
-  await cliente.query(
-    "insert into public.admins_repply (user_id) values ($1)",
-    [admin]
-  );
-  await cliente.query(
-    `insert into public.tokens_envio (restaurante_id, hash, prefixo)
-     values ($1, $2, 'teste-a'), ($3, $4, 'teste-b')`,
-    [restauranteA, hashToken(tokenA), restauranteB, hashToken(tokenB)]
-  );
-
+export function criarIdentificadoresFixture(): IdentificadoresFixture {
   return {
+    restauranteA: randomUUID(),
+    restauranteB: randomUUID(),
+    usuarioA: randomUUID(),
+    usuarioB: randomUUID(),
+    usuarioSemAcesso: randomUUID(),
+    admin: randomUUID(),
+  };
+}
+
+export async function criarFixture(
+  cliente: Client,
+  opcoes: OpcoesFixture = {}
+): Promise<Fixture> {
+  const sufixo = randomUUID();
+  const identificadores =
+    opcoes.identificadores ?? criarIdentificadoresFixture();
+  const {
     restauranteA,
     restauranteB,
     usuarioA,
     usuarioB,
     usuarioSemAcesso,
     admin,
+  } = identificadores;
+  const tokenA = opcoes.tokenA ?? `rf_teste_a_${randomUUID()}`;
+  const tokenB = opcoes.tokenB ?? `rf_teste_b_${randomUUID()}`;
+  const fixture: Fixture = {
+    ...identificadores,
     tokenA,
     tokenB,
     idsUsuarios: [usuarioA, usuarioB, usuarioSemAcesso, admin],
     idsRestaurantes: [restauranteA, restauranteB],
   };
+
+  try {
+    for (const [id, papel] of [
+      [usuarioA, "a"],
+      [usuarioB, "b"],
+      [usuarioSemAcesso, "sem"],
+      [admin, "admin"],
+    ] as const) {
+      await criarUsuario(cliente, id, `${papel}-${sufixo}@teste.repply.local`);
+    }
+
+    await cliente.query(
+      `insert into public.restaurantes (id, slug, nome, fuso, hora_virada)
+     values
+       ($1, $2, 'Casa de teste A', 'America/Fortaleza', '05:00'),
+       ($3, $4, 'Casa de teste B', 'America/Fortaleza', '05:00')`,
+      [restauranteA, `teste-a-${sufixo}`, restauranteB, `teste-b-${sufixo}`]
+    );
+    await cliente.query(
+      "insert into public.acessos (user_id, restaurante_id) values ($1, $2), ($3, $4)",
+      [usuarioA, restauranteA, usuarioB, restauranteB]
+    );
+    await cliente.query(
+      "insert into public.admins_repply (user_id) values ($1)",
+      [admin]
+    );
+    await cliente.query(
+      `insert into public.tokens_envio (restaurante_id, hash, prefixo)
+     values ($1, $2, 'teste-a'), ($3, $4, 'teste-b')`,
+      [restauranteA, hashToken(tokenA), restauranteB, hashToken(tokenB)]
+    );
+
+    return fixture;
+  } catch (erro) {
+    await limparFixture(cliente, fixture).catch(() => undefined);
+    throw erro;
+  }
 }
 
 export async function limparFixture(
@@ -186,12 +228,18 @@ export function entrada(
 }
 
 export async function enviar(token: string, corpo: unknown): Promise<Response> {
-  return fetch(endpointRecepcao, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(corpo),
-  });
+  try {
+    return await fetch(endpointRecepcao, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(corpo),
+    });
+  } catch {
+    throw new Error(
+      "Não foi possível alcançar receber-envio local. Inicie o Supabase com `npm run supabase:start` e sirva a função com `npm run functions:serve`."
+    );
+  }
 }

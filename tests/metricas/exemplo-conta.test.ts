@@ -11,17 +11,24 @@ import {
 } from "../helpers/supabase-local";
 
 describe("exemplo de conta de métricas no PostgreSQL", () => {
-  let banco: Client;
-  let fixture: Fixture;
+  let banco: Client = undefined as never;
+  let fixture: Fixture = undefined as never;
 
   beforeEach(async () => {
+    banco = undefined as never;
+    fixture = undefined as never;
     banco = await conectarBanco();
     fixture = await criarFixture(banco);
   });
 
   afterEach(async () => {
-    await limparFixture(banco, fixture);
-    await banco.end();
+    try {
+      if (fixture) await limparFixture(banco, fixture);
+    } finally {
+      if (banco) await banco.end();
+      banco = undefined as never;
+      fixture = undefined as never;
+    }
   });
 
   it("mantém a virada às 5h e separa R$ 580,00 de faturamento de R$ 60,00 de taxa", async () => {
