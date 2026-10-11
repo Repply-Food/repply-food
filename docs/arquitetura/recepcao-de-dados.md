@@ -74,6 +74,17 @@ Por que dividir assim:
 
 ## 4. Testes que precisam existir
 
+### Execução local
+
+Os testes de integração usam o banco local em `127.0.0.1:54322` e a API em `127.0.0.1:54321`. Com o Supabase iniciado, mantenha a função em outro terminal:
+
+```bash
+npx supabase functions serve receber-envio
+npm run test
+```
+
+As fixtures usam IDs exclusivos e a limpeza remove somente esses registros, inclusive em falha parcial. Não use a Casa de Demonstração, `demo-local`, `.env.gerador.local` nem `supabase db reset` para repetir os testes.
+
 | Caso | Esperado |
 |---|---|
 | Envelope válido, 3 entradas novas | 200; `gravadas = 3` |

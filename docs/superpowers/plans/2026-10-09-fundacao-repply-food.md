@@ -156,37 +156,37 @@
 
 **Interfaces:** Consome: T3–T4. Produz: suíte Vitest verde.
 
-- [ ] **Passo 1: Escrever `tests/recepcao/envio.test.ts`** cobrindo todos os casos da §4
-- [ ] **Passo 2: Escrever `tests/isolamento/rls.test.ts`** (A não lê B, zero linhas ≠ sucesso, admin lê painel do cliente, `restaurante_id` imutável)
-- [ ] **Passo 3: Criar `tests/metricas/exemplo-conta.test.ts`** (virada 5h, taxa separada) como base
-- [ ] **Passo 4: Rodar `npm run test`** até tudo verde
-- [ ] **Passo 5: Commit** em PT-BR imperativo
+- [x] **Passo 1: Escrever `tests/recepcao/envio.test.ts`** cobrindo todos os casos da §4
+- [x] **Passo 2: Escrever `tests/isolamento/rls.test.ts`** (A não lê B, zero linhas ≠ sucesso, admin lê painel do cliente, `restaurante_id` imutável)
+- [x] **Passo 3: Criar `tests/metricas/exemplo-conta.test.ts`** (virada 5h, taxa separada) como base
+- [x] **Passo 4: Rodar `npm run test`** até tudo verde
+- [x] **Passo 5: Commit** em PT-BR imperativo
 
 ---
 
 ## Tarefa 7: Verificação final (tipos, lint, testes, build) + documentação
 
-- [ ] **Passo 1: `npx tsc --noEmit`** → 0 erros
-- [ ] **Passo 2: `npm run check`** → sem erros
-- [ ] **Passo 3: `npm run test`** → Vitest 100% verde
-- [ ] **Passo 4: `npm run build`** → build completa
-- [ ] **Passo 5: Conferir `.env.example`**
-- [ ] **Passo 6: Conferir RLS no mesmo arquivo da migration**
-- [ ] **Passo 7: Conferir remoção de PII antes de validar/salvar**
-- [ ] **Passo 8: Conferir o gerador enviando por HTTP**
-- [ ] **Passo 9: Commit final** e `git push origin main` depois da verificação
+- [x] **Passo 1: `npx tsc --noEmit`** → 0 erros
+- [x] **Passo 2: `npm run check`** → sem erros
+- [x] **Passo 3: `npm run test`** → Vitest 100% verde
+- [x] **Passo 4: `npm run build`** → build completa
+- [x] **Passo 5: Conferir `.env.example`**
+- [x] **Passo 6: Conferir RLS no mesmo arquivo da migration**
+- [x] **Passo 7: Conferir remoção de PII antes de validar/salvar**
+- [x] **Passo 8: Conferir o gerador enviando por HTTP**
+- [x] **Passo 9: Commit local final; push pendente de autorização**
 
 ---
 
 ## Critérios de Aceite (Fundação)
 
-- [ ] Projeto Next.js compila, TS estrito sem erros, Biome OK, Vitest verde.
-- [ ] Tokens de marca + teste de contraste passam.
-- [ ] 8 tabelas com RLS habilitado **no mesmo arquivo** de migration.
-- [ ] Helpers `tem_acesso`, `eh_admin_repply`, triggers `updated_at` e imutabilidade.
-- [ ] `processar_envio()` em transação, upsert por hash, reconciliação, contagens corretas.
-- [ ] `receber-envio`: remove PII antes de validar/payload, 401/413/422/429/500 corretos.
-- [ ] Testes de recepção (§4) e de isolamento RLS passam.
-- [ ] Gerador envia pelo mesmo caminho HTTP com Bearer token.
-- [ ] `types/database.types.ts` gerado e compila.
-- [ ] Sem `any`, sem PII em log/payload, dinheiro em `numeric`, migrations só acrescentam.
+- [x] Projeto Next.js compila, TS estrito sem erros, Biome OK, Vitest verde.
+- [x] Tokens de marca + teste de contraste passam.
+- [x] 8 tabelas com RLS habilitado **no mesmo arquivo** de migration.
+- [x] Helpers `tem_acesso`, `eh_admin_repply`, triggers `updated_at` e imutabilidade.
+- [x] `processar_envio()` em transação, upsert por hash, reconciliação, contagens corretas.
+- [x] `receber-envio`: remove PII antes de validar/payload, 401/413/422/429/500 corretos.
+- [x] Testes de recepção (§4) e de isolamento RLS passam.
+- [x] Gerador envia pelo mesmo caminho HTTP com Bearer token.
+- [x] `types/database.types.ts` gerado e compila.
+- [x] Sem `any`, sem PII em log/payload, dinheiro em `numeric`, migrations só acrescentam.

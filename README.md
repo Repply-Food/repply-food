@@ -2,7 +2,7 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 09/10/2026:** documentação e desenho prontos; **fundação em andamento**.
+> **Estado em 11/10/2026:** a fundação foi verificada localmente (banco, recepção, isolamento e build). As telas e o MVP ainda não foram implementados; o push desta verificação continua pendente.
 
 ## Ordem de leitura
 
@@ -16,7 +16,7 @@
 
 **Pré-requisitos:**
 - **Node.js 22 ou mais novo.**
-- **Rancher Desktop** (modo `dockerd`, Kubernetes desligado) para rodar o banco local do Supabase.
+- **Docker Engine** para rodar o banco local do Supabase (validado nesta máquina). O Rancher Desktop, em modo `dockerd` e com Kubernetes desligado, continua sendo alternativa.
 - **Supabase CLI** (via `npx supabase ...`).
 
 **Passo a passo:**
@@ -33,6 +33,17 @@ npx supabase start
 # 4) Rodar em desenvolvimento
 npm run dev
 ```
+
+### Testes reais locais
+
+Os testes de recepção, isolamento e métricas usam o PostgreSQL local em `127.0.0.1:54322` e a API em `127.0.0.1:54321`; a suíte recusa outros endereços. Inicie o Supabase e mantenha a função em outro terminal:
+
+```bash
+npx supabase start
+npx supabase functions serve receber-envio
+```
+
+Então rode `npm run test`. As fixtures criam IDs próprios e removem somente esses IDs ao final; não use `supabase db reset` nem apague a Casa de Demonstração para executar a suíte.
 
 **Verificação obrigatória:**
 ```bash
@@ -59,11 +70,13 @@ O sistema SCC envia as contas para a função `receber-envio` a cada ~5 minutos,
 
 Simula o SCC: gera meses de entradas realistas (almoço e jantar, pico de sexta e sábado, mesas abertas agora, contas esquecidas, descontos e garçons) e envia pelo **mesmo** `receber-envio` que o sistema real usa. Detalhes em `docs/arquitetura/recepcao-de-dados.md` §5 e no topo de `scripts/gerador-dados-ficticios.ts`.
 
-**Pré-requisito:** um token de restaurante de teste (criado no admin) e o Supabase local rodando (`npx supabase start`).
+**Pré-requisito:** um token próprio de restaurante de teste e o Supabase local rodando (`npx supabase start`). As telas de admin e login ainda não existem: o token da demonstração foi preparado diretamente no banco local e não deve ser reutilizado por outra pessoa ou ambiente.
 
 ```bash
-SCC_TOKEN=rf_exemplo npm run gerador
+node --env-file=.env.gerador.local --import tsx scripts/gerador-dados-ficticios.ts
 ```
+
+O arquivo `.env.gerador.local` é ignorado pelo Git e guarda a URL local e o token do seu ambiente; crie-o localmente, sem colocar token real em exemplos ou no repositório. Para conferir apenas o envelope e o schema sem token nem envio HTTP, use `npm run gerador -- --dry-run`.
 
 | Opção | O que faz |
 |---|---|
