@@ -19,7 +19,8 @@
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",
     "supabase:migrate": "npx supabase db push",
-    "functions:serve": "npx supabase functions serve"
+    "functions:serve": "npx supabase functions serve",
+    "gerador": "tsx scripts/gerador-dados-ficticios.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
