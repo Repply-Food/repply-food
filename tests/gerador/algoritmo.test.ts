@@ -4,6 +4,7 @@ import {
   type Config,
   Gerador,
   Mundo,
+  carregarDe,
   enviarJanela,
   montarEnvelope,
   validarGerado,
@@ -84,6 +85,20 @@ describe("gerador", () => {
       new Date(2026, 9, 10, 9).getTime() + 20_000,
       new Date(2026, 9, 10, 9).getTime() + 40_000,
     ]);
+  });
+
+  it("mantém o intervalo entre janelas consecutivas da carga", async () => {
+    const { ambiente, tentativas } = ambienteComIntervalo([200, 200]);
+
+    await carregarDe(config, new Mundo(), "2026-10-01", "2026-10-08", ambiente);
+
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-01..2026-10-07",
+      "2026-10-08..2026-10-08",
+    ]);
+    const [primeira, segunda] = tentativas;
+    if (!primeira || !segunda) throw new Error("faltaram tentativas da carga");
+    expect(segunda.em - primeira.em).toBe(20_000);
   });
 
   it("mantém aberta a conta cujo fechamento calculado ficaria no futuro", () => {

@@ -584,7 +584,7 @@ export async function enviarJanela(
  * só avança para a próxima depois do 200 da anterior. Devolve a última data
  * confirmada pelo servidor.
  */
-async function carregarDe(
+export async function carregarDe(
   config: Config,
   mundo: Mundo,
   desde: string,
