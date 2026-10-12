@@ -11,7 +11,27 @@ const registro = {
   payload: null,
 };
 
+async function registrarErroAnterior(
+  db: RegistroErroDb,
+  momento: string
+): Promise<void> {
+  const envio = await db.inserirEnvio(registro);
+  if (envio.error) throw new Error("falha ao registrar envio");
+  const sinal = await db.atualizarSinal(registro.restauranteId, momento);
+  if (sinal.error) throw new Error("falha ao registrar sinal");
+}
+
 describe("registro de erro da recepção", () => {
+  it("[retrospectivo] demonstra que o adaptador anterior aceitava escrita zero sem erro", async () => {
+    const db: RegistroErroDb = {
+      inserirEnvio: async () => ({ id: null, error: null }),
+      atualizarSinal: async () => ({ restauranteId: null, error: null }),
+    };
+    await expect(
+      registrarErroAnterior(db, "2026-10-12T12:00:00.000Z")
+    ).resolves.toBeUndefined();
+  });
+
   it("recusa insert sem erro que não retorna uma linha", async () => {
     const db: RegistroErroDb = {
       inserirEnvio: async () => ({ id: null, error: null }),

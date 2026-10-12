@@ -4,52 +4,99 @@ import {
   type Fixture,
   conectarBanco,
   criarFixture,
-  limparFixture,
 } from "../helpers/supabase-local";
 
+type SinalSnapshot = {
+  restaurante_id: string;
+  primeiro_envio_em: string | null;
+  ultimo_envio_em: string | null;
+  ultimo_envio_ok_em: string | null;
+  ultimo_erro_em: string | null;
+  estado: string;
+  estado_desde: string;
+  alarme_enviado_em: string | null;
+};
+
 describe("rotinas locais", () => {
-  let banco: Client;
-  let fixture: Fixture;
+  let banco: Client | undefined;
+  let fixture: Fixture | undefined;
+  let sinaisAntes: SinalSnapshot[] = [];
 
   beforeEach(async () => {
     banco = await conectarBanco();
-    fixture = await criarFixture(banco);
+    sinaisAntes = (
+      await banco.query<SinalSnapshot>(
+        `select restaurante_id::text, primeiro_envio_em::text, ultimo_envio_em::text,
+                ultimo_envio_ok_em::text, ultimo_erro_em::text, estado,
+                estado_desde::text, alarme_enviado_em::text
+           from public.sinal_de_vida order by restaurante_id`
+      )
+    ).rows;
+    await banco.query("begin");
+    fixture = await criarFixture(banco, { transacaoExterna: true });
   });
 
   afterEach(async () => {
+    const cliente = banco;
     try {
-      await limparFixture(banco, fixture);
+      if (cliente) await cliente.query("rollback");
+      if (cliente) {
+        const sinaisDepois = (
+          await cliente.query<SinalSnapshot>(
+            `select restaurante_id::text, primeiro_envio_em::text, ultimo_envio_em::text,
+                    ultimo_envio_ok_em::text, ultimo_erro_em::text, estado,
+                    estado_desde::text, alarme_enviado_em::text
+               from public.sinal_de_vida order by restaurante_id`
+          )
+        ).rows;
+        expect(sinaisDepois).toEqual(sinaisAntes);
+        if (fixture) {
+          const restos = await cliente.query(
+            "select count(*)::int as total from public.restaurantes where id = any($1::uuid[])",
+            [fixture.idsRestaurantes]
+          );
+          expect(restos.rows[0]?.total).toBe(0);
+        }
+      }
     } finally {
-      await banco.end();
+      await cliente?.end();
+      banco = undefined;
+      fixture = undefined;
     }
   });
 
-  it("preserva resumos e contas ao limpar somente payloads vencidos", async () => {
+  it("executa o comando instalado de retenção somente na transação revertida e preserva contas", async () => {
+    const cliente = banco as Client;
+    const dados = fixture as Fixture;
     const payload = { entradas: [{ codEntrada: 1 }] };
-    await banco.query(
+    await cliente.query(
       `insert into public.envios (restaurante_id, recebido_em, http_status, payload, recebidas)
        values
          ($1, now() - interval '49 hours', 200, $2::jsonb, 3),
          ($1, now() - interval '47 hours', 200, $2::jsonb, 4),
          ($1, now() - interval '91 days', 422, $2::jsonb, 5),
          ($1, now() - interval '89 days', 422, $2::jsonb, 6)`,
-      [fixture.restauranteA, JSON.stringify(payload)]
+      [dados.restauranteA, JSON.stringify(payload)]
     );
-    await banco.query(
-      `update public.envios set payload = null
-        where restaurante_id = $1 and (
-          (http_status = 200 and recebido_em < now() - interval '48 hours') or
-          (http_status <> 200 and recebido_em < now() - interval '90 days')
-        ) and payload is not null`,
-      [fixture.restauranteA]
+    await cliente.query(
+      `insert into public.entradas (
+        restaurante_id, cod_entrada, aberta_em, dia_operacao, valor_consumido,
+        pago, hash_origem
+      ) values ($1, 88001, now(), current_date, 12.34, true, 'fixture-retencao')`,
+      [dados.restauranteA]
     );
-    const envios = await banco.query<{
+    const job = await cliente.query<{ command: string }>(
+      "select command from cron.job where jobname = 'rf-retencao' and active"
+    );
+    expect(job.rowCount).toBe(1);
+    await cliente.query(job.rows[0]?.command ?? "select 1");
+    const envios = await cliente.query<{
       http_status: number;
       payload: unknown;
       recebidas: number;
     }>(
       "select http_status, payload, recebidas from public.envios where restaurante_id = $1 order by recebidas",
-      [fixture.restauranteA]
+      [dados.restauranteA]
     );
     expect(envios.rows).toEqual([
       { http_status: 200, payload: null, recebidas: 3 },
@@ -58,85 +105,104 @@ describe("rotinas locais", () => {
       { http_status: 422, payload, recebidas: 6 },
     ]);
     expect(
-      await banco.query("select 1 from public.restaurantes where id = $1", [
-        fixture.restauranteA,
-      ])
+      await cliente.query(
+        "select cod_entrada from public.entradas where restaurante_id = $1 and cod_entrada = 88001",
+        [dados.restauranteA]
+      )
     ).toHaveProperty("rowCount", 1);
   });
 
-  it("calcula estados pela abertura, sinal e horário sem alterar dados fora da fixture", async () => {
-    await banco.query(
-      `update public.restaurantes
-          set horario_funcionamento = $2::jsonb
-        where id = $1`,
+  it("calcula em_dia, atrasado, parado, fechado e sem sinal no fuso da fixture sem persistir efeitos globais", async () => {
+    const cliente = banco as Client;
+    const dados = fixture as Fixture;
+    await cliente.query(
+      "update public.restaurantes set fuso = 'America/Fortaleza', horario_funcionamento = $2::jsonb where id = $1",
       [
-        fixture.restauranteA,
+        dados.restauranteA,
         JSON.stringify(
           Array.from({ length: 7 }, (_, dia) => ({
             dia,
             abre: "00:00",
-            fecha: "23:59",
+            fecha: "00:00",
           }))
         ),
       ]
     );
-    await banco.query(
-      `insert into public.sinal_de_vida (restaurante_id, primeiro_envio_em, ultimo_envio_ok_em)
-       values ($1, now() - interval '10 minutes', now() - interval '10 minutes')`,
-      [fixture.restauranteA]
+    await cliente.query(
+      `insert into public.sinal_de_vida (restaurante_id, primeiro_envio_em, ultimo_envio_ok_em, alarme_enviado_em)
+       values ($1, now() - interval '10 minutes', now() - interval '10 minutes', now())`,
+      [dados.restauranteA]
     );
-    await banco.query("select public.atualizar_estados()");
-    const estado = async () =>
-      banco.query<{ estado: string }>(
+    await cliente.query("select public.atualizar_estados()");
+    const estado = () =>
+      cliente.query<{ estado: string }>(
         "select estado from public.sinal_de_vida where restaurante_id = $1",
-        [fixture.restauranteA]
+        [dados.restauranteA]
       );
     expect((await estado()).rows[0]?.estado).toBe("em_dia");
-    await banco.query(
+    await cliente.query(
       "update public.sinal_de_vida set ultimo_envio_ok_em = now() - interval '20 minutes' where restaurante_id = $1",
-      [fixture.restauranteA]
+      [dados.restauranteA]
     );
-    await banco.query("select public.atualizar_estados()");
+    await cliente.query("select public.atualizar_estados()");
     expect((await estado()).rows[0]?.estado).toBe("atrasado");
-    await banco.query(
+    await cliente.query(
       "update public.sinal_de_vida set ultimo_envio_ok_em = now() - interval '46 minutes', alarme_enviado_em = now() where restaurante_id = $1",
-      [fixture.restauranteA]
+      [dados.restauranteA]
     );
-    await banco.query("select public.atualizar_estados()");
+    await cliente.query("select public.atualizar_estados()");
     expect((await estado()).rows[0]?.estado).toBe("parado");
-    await banco.query(
-      "update public.sinal_de_vida set alarme_enviado_em = null where restaurante_id = $1",
-      [fixture.restauranteA]
-    );
-    const proximoDia = await banco.query<{ dia: number }>(
+    const proximoDia = await cliente.query<{ dia: number }>(
       "select ((extract(dow from now() at time zone 'America/Fortaleza')::int + 1) % 7) as dia"
     );
-    await banco.query(
-      "update public.restaurantes set horario_funcionamento = $2::jsonb where id = $1",
+    await cliente.query(
+      `update public.restaurantes
+          set horario_funcionamento = $2::jsonb
+        where id = $1`,
       [
-        fixture.restauranteA,
+        dados.restauranteA,
         JSON.stringify([
-          { dia: proximoDia.rows[0]?.dia, abre: "11:00", fecha: "22:00" },
+          { dia: proximoDia.rows[0]?.dia, abre: "12:00", fecha: "13:00" },
         ]),
       ]
     );
-    await banco.query("select public.atualizar_estados()");
+    await cliente.query(
+      "update public.sinal_de_vida set alarme_enviado_em = null where restaurante_id = $1",
+      [dados.restauranteA]
+    );
+    await cliente.query("select public.atualizar_estados()");
     expect((await estado()).rows[0]?.estado).toBe("fechado");
     expect(
-      await banco.query(
+      await cliente.query(
         "select 1 from public.sinal_de_vida where restaurante_id = $1",
-        [fixture.restauranteB]
+        [dados.restauranteB]
       )
     ).toHaveProperty("rowCount", 0);
   });
 
-  it("mantém os jobs da rotina com os horários contratados", async () => {
-    const jobs = await banco.query<{ jobname: string; schedule: string }>(
-      "select jobname, schedule from cron.job where jobname in ('rf-vigia', 'rf-retencao') order by jobname"
+  it("mantém jobs ativos com comando e horários contratados", async () => {
+    const cliente = banco as Client;
+    const jobs = await cliente.query<{
+      jobname: string;
+      schedule: string;
+      active: boolean;
+      command: string;
+    }>(
+      "select jobname, schedule, active, command from cron.job where jobname in ('rf-vigia', 'rf-retencao') order by jobname"
     );
     expect(jobs.rows).toEqual([
-      { jobname: "rf-retencao", schedule: "0 5 * * *" },
-      { jobname: "rf-vigia", schedule: "*/5 * * * *" },
+      expect.objectContaining({
+        jobname: "rf-retencao",
+        schedule: "0 5 * * *",
+        active: true,
+      }),
+      expect.objectContaining({
+        jobname: "rf-vigia",
+        schedule: "*/5 * * * *",
+        active: true,
+      }),
     ]);
+    expect(jobs.rows[0]?.command).toContain("payload = null");
+    expect(jobs.rows[1]?.command).toContain("public.atualizar_estados()");
   });
 });

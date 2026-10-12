@@ -78,6 +78,7 @@ describe("RPCs reservadas", () => {
     ];
     const identidades = [
       { papel: "anon", usuario: null },
+      { papel: "authenticated", usuario: fixture.usuarioA },
       { papel: "authenticated", usuario: fixture.usuarioSemAcesso },
       { papel: "authenticated", usuario: fixture.admin },
     ] as const;

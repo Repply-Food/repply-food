@@ -269,7 +269,15 @@ describe("receber-envio no Supabase local", () => {
     ]) {
       const resposta = await enviarComPausa(corpo);
       expect(resposta.status).toBe(422);
-      expect(await resposta.json()).toMatchObject({ ok: false });
+      expect(await resposta.json()).toMatchObject({
+        ok: false,
+        erros: [
+          expect.objectContaining({
+            campo: expect.any(String),
+            mensagem: expect.any(String),
+          }),
+        ],
+      });
     }
     expect((await enviarComPausa(envelope([entrada(6104)]))).status).toBe(200);
   });
@@ -281,11 +289,15 @@ describe("receber-envio no Supabase local", () => {
 
   it("aceita envelope vazio como sinal de vida e registra erro autenticado curto", async () => {
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(200);
-    const sinal = await banco.query<{ primeiro_envio_em: string | null }>(
-      "select primeiro_envio_em from public.sinal_de_vida where restaurante_id = $1",
+    const sinal = await banco.query<{
+      primeiro_envio_em: string | null;
+      ultimo_envio_ok_em: string | null;
+    }>(
+      "select primeiro_envio_em, ultimo_envio_ok_em from public.sinal_de_vida where restaurante_id = $1",
       [fixture.restauranteA]
     );
     expect(sinal.rows[0]?.primeiro_envio_em).not.toBeNull();
+    expect(sinal.rows[0]?.ultimo_envio_ok_em).not.toBeNull();
     await envelhecerSinal(banco, fixture.restauranteA);
     const erro = await fetch(endpointRecepcao, {
       method: "POST",
@@ -301,6 +313,14 @@ describe("receber-envio no Supabase local", () => {
     );
     expect(registro.rows[0]?.erro).toBe("json inválido");
     expect(JSON.stringify(registro.rows[0]?.payload)).not.toContain("RG");
+    const depois = await banco.query<{
+      primeiro_envio_em: string | null;
+      ultimo_envio_ok_em: string | null;
+    }>(
+      "select primeiro_envio_em, ultimo_envio_ok_em from public.sinal_de_vida where restaurante_id = $1",
+      [fixture.restauranteA]
+    );
+    expect(depois.rows[0]).toMatchObject(sinal.rows[0] ?? {});
   });
 
   it("cria sinal no primeiro erro autenticado e limita a repetição imediata", async () => {

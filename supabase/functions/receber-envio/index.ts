@@ -141,7 +141,7 @@ async function receberEnvio(req: Request): Promise<Response> {
   // 3. Token: SHA-256 e procura em tokens_envio (passo 3).
   const token = extrairToken(req);
   if (!token) {
-    console.error("[receber-envio] token inválido: ausente");
+    console.error("[receber-envio] token inválido");
     return responder({ ok: false, erro: "não autorizado" }, 401);
   }
   const hash = await sha256Hex(token);
@@ -157,9 +157,7 @@ async function receberEnvio(req: Request): Promise<Response> {
     linhaToken.revogado_em === null &&
     (linhaToken.expira_em === null || linhaToken.expira_em > agoraIso);
   if (!tokenValido) {
-    console.error(
-      `[receber-envio] token inválido: ${linhaToken?.prefixo ?? "sem prefixo"}`
-    );
+    console.error("[receber-envio] token inválido");
     return responder({ ok: false, erro: "não autorizado" }, 401);
   }
   const restauranteId = linhaToken.restaurante_id;
@@ -216,9 +214,7 @@ async function receberEnvio(req: Request): Promise<Response> {
     p_envelope: envelope as Json,
   });
   if (erroRpc) {
-    console.error(
-      `[receber-envio] processar_envio: ${erroRpc.code ?? "sem-codigo"}`
-    );
+    console.error("[receber-envio] processar_envio falhou");
     await registrarErro(restauranteId, 500, "erro interno", envelope);
     return responder({ ok: false, erro: "erro interno" }, 500);
   }

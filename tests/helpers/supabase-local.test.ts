@@ -75,8 +75,9 @@ describe("lifecycle das fixtures locais", () => {
 
   it("faz rollback da limpeza parcial e permite a limpeza posterior", async () => {
     const banco = await conectarBanco();
-    const fixture = await criarFixture(banco);
+    let fixture: Awaited<ReturnType<typeof criarFixture>> | undefined;
     try {
+      fixture = await criarFixture(banco);
       await expect(
         limparFixture(banco, fixture, { interromperApos: "restaurantes" })
       ).rejects.toThrow("interrupção controlada");
@@ -86,8 +87,41 @@ describe("lifecycle das fixtures locais", () => {
       );
       expect(preservados.rows[0]?.total).toBe(2);
       await limparFixture(banco, fixture);
+      fixture = undefined;
     } finally {
-      await banco.end();
+      try {
+        if (fixture) await limparFixture(banco, fixture);
+      } finally {
+        await banco.end();
+      }
+    }
+  });
+
+  it("preserva a transação externa e deixa o rollback do chamador remover a fixture", async () => {
+    const banco = await conectarBanco();
+    let fixture: Awaited<ReturnType<typeof criarFixture>> | undefined;
+    try {
+      await banco.query("begin");
+      fixture = await criarFixture(banco, { transacaoExterna: true });
+      expect(
+        await banco.query("select 1 from public.restaurantes where id = $1", [
+          fixture.restauranteA,
+        ])
+      ).toHaveProperty("rowCount", 1);
+      await banco.query("rollback");
+      expect(
+        await banco.query("select 1 from public.restaurantes where id = $1", [
+          fixture.restauranteA,
+        ])
+      ).toHaveProperty("rowCount", 0);
+      fixture = undefined;
+    } finally {
+      try {
+        await banco.query("rollback");
+        if (fixture) await limparFixture(banco, fixture);
+      } finally {
+        await banco.end();
+      }
     }
   });
 });

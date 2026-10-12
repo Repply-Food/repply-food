@@ -11,6 +11,8 @@ describe("logger", () => {
     logError("codigo inesperado e muito longo", new Error(pessoal) as never);
     logInfo("envio_processado", pessoal);
     logInfo(pessoal, "contexto inesperado");
+    logInfo(new Error(pessoal), "receber-envio");
+    logInfo("envio_processado", "x".repeat(10_000));
 
     const saida = JSON.stringify([...erro.mock.calls, ...info.mock.calls]);
     expect(saida).not.toContain("Ana Silva");

@@ -4,6 +4,39 @@ import { validarEnvelope } from "../../lib/validators/recepcao";
 import { entrada, envelope } from "../helpers/supabase-local";
 
 describe("contrato SCC canônico", () => {
+  const camposEnvelope = [
+    "versao_formato",
+    "versao_scc",
+    "enviado_em",
+    "modo",
+    "janela",
+    "lote",
+    "entradas",
+  ] as const;
+  const camposJanela = ["desde", "ate"] as const;
+  const camposLote = ["numero", "total"] as const;
+
+  it.each(camposEnvelope)(
+    "rejeita ausência do envelope obrigatório %s",
+    (campo) => {
+      const corpo = envelope([]) as Record<string, unknown>;
+      delete corpo[campo];
+      expect(validarEnvelope(corpo).success).toBe(false);
+    }
+  );
+
+  it.each(camposJanela)("rejeita ausência de janela.%s", (campo) => {
+    const corpo = envelope([]);
+    delete (corpo.janela as Record<string, unknown>)[campo];
+    expect(validarEnvelope(corpo).success).toBe(false);
+  });
+
+  it.each(camposLote)("rejeita ausência de lote.%s", (campo) => {
+    const corpo = envelope([]);
+    delete (corpo.lote as Record<string, unknown>)[campo];
+    expect(validarEnvelope(corpo).success).toBe(false);
+  });
+
   const camposObrigatorios = [
     "codEntrada",
     "DataEntrada",
