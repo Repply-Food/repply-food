@@ -53,7 +53,7 @@ interface EntradaGerada {
   codCliente: number | null;
   NumeroOcupantes: number;
   TipoOcupacao: "MESA" | "BALCAO";
-  TipoCartao: string | null;
+  TipoCartao: string;
   /** Estado interno do simulador (não vai no envelope). */
   aberta: boolean;
   abertaDesde: Date;
@@ -328,7 +328,7 @@ export class Mundo {
       codCliente: temCliente ? 1000 + Math.floor(Math.random() * 1000) : null,
       NumeroOcupantes: ocupantes,
       TipoOcupacao: Math.random() < 0.85 ? "MESA" : "BALCAO",
-      TipoCartao: null,
+      TipoCartao: "",
       aberta: fechamento === null,
       abertaDesde: abertura,
     };

@@ -72,7 +72,7 @@ const entradaSchema = z
     codCliente: z.number().int().nullable(),
     NumeroOcupantes: z.number().int(),
     TipoOcupacao: z.string(),
-    TipoCartao: z.string().nullable(),
+    TipoCartao: z.string(),
   })
   .passthrough()
   .refine(

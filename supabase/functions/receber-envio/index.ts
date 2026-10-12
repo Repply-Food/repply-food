@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database, Json } from "../../../types/database.types.ts";
 import { validarEnvelope } from "../_shared/recepcao.ts";
+import { registrarErroNoBanco } from "../_shared/registro-erro.ts";
 
 // Limites e ritmo (contrato-de-dados.md §7 e recepcao-de-dados.md §3).
 const LIMITE_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -69,26 +70,48 @@ async function registrarErro(
   envelope?: unknown
 ): Promise<void> {
   const agora = new Date().toISOString();
-  const { error: erroEnvio } = await db.from("envios").insert({
-    restaurante_id: restauranteId,
-    http_status: httpStatus,
-    erro,
-    payload: envelope === undefined ? null : (envelope as Json),
-  });
-  if (erroEnvio) {
-    throw new Error("falha ao registrar envio");
-  }
-  const { error: erroSinal } = await db.from("sinal_de_vida").upsert(
+  await registrarErroNoBanco(
     {
-      restaurante_id: restauranteId,
-      ultimo_envio_em: agora,
-      ultimo_erro_em: agora,
+      async inserirEnvio(registro) {
+        const { data, error } = await db
+          .from("envios")
+          .insert({
+            restaurante_id: registro.restauranteId,
+            http_status: registro.httpStatus,
+            erro: registro.erro,
+            payload:
+              registro.payload === undefined
+                ? null
+                : (registro.payload as Json),
+          })
+          .select("id")
+          .single();
+        return { id: data?.id ?? null, error };
+      },
+      async atualizarSinal(id, momento) {
+        const { data, error } = await db
+          .from("sinal_de_vida")
+          .upsert(
+            {
+              restaurante_id: id,
+              ultimo_envio_em: momento,
+              ultimo_erro_em: momento,
+            },
+            { onConflict: "restaurante_id" }
+          )
+          .select("restaurante_id")
+          .single();
+        return { restauranteId: data?.restaurante_id ?? null, error };
+      },
     },
-    { onConflict: "restaurante_id" }
+    {
+      restauranteId,
+      httpStatus,
+      erro,
+      payload: envelope,
+    },
+    agora
   );
-  if (erroSinal) {
-    throw new Error("falha ao registrar sinal");
-  }
 }
 
 function contarEntradas(envelope: unknown): number {

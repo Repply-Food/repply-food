@@ -32,6 +32,13 @@ type OpcoesFixture = {
   identificadores?: IdentificadoresFixture;
   tokenA?: string;
   tokenB?: string;
+  interromperApos?: "usuarios" | "restaurantes" | "acessos" | "tokens";
+  transacaoExterna?: boolean;
+};
+
+type OpcoesLimpezaFixture = {
+  interromperApos?: "restaurantes";
+  transacaoExterna?: boolean;
 };
 
 export async function conectarBanco(): Promise<Client> {
@@ -104,6 +111,12 @@ export async function criarFixture(
     idsRestaurantes: [restauranteA, restauranteB],
   };
 
+  const savepoint = `fixture_criacao_${randomUUID().replaceAll("-", "")}`;
+  if (opcoes.transacaoExterna) {
+    await cliente.query(`savepoint ${savepoint}`);
+  } else {
+    await cliente.query("begin");
+  }
   try {
     for (const [id, papel] of [
       [usuarioA, "a"],
@@ -113,6 +126,8 @@ export async function criarFixture(
     ] as const) {
       await criarUsuario(cliente, id, `${papel}-${sufixo}@teste.repply.local`);
     }
+    if (opcoes.interromperApos === "usuarios")
+      throw new Error("interrupção controlada");
 
     await cliente.query(
       `insert into public.restaurantes (id, slug, nome, fuso, hora_virada)
@@ -121,10 +136,14 @@ export async function criarFixture(
        ($3, $4, 'Casa de teste B', 'America/Fortaleza', '05:00')`,
       [restauranteA, `teste-a-${sufixo}`, restauranteB, `teste-b-${sufixo}`]
     );
+    if (opcoes.interromperApos === "restaurantes")
+      throw new Error("interrupção controlada");
     await cliente.query(
       "insert into public.acessos (user_id, restaurante_id) values ($1, $2), ($3, $4)",
       [usuarioA, restauranteA, usuarioB, restauranteB]
     );
+    if (opcoes.interromperApos === "acessos")
+      throw new Error("interrupção controlada");
     await cliente.query(
       "insert into public.admins_repply (user_id) values ($1)",
       [admin]
@@ -134,25 +153,62 @@ export async function criarFixture(
      values ($1, $2, 'teste-a'), ($3, $4, 'teste-b')`,
       [restauranteA, hashToken(tokenA), restauranteB, hashToken(tokenB)]
     );
+    if (opcoes.interromperApos === "tokens")
+      throw new Error("interrupção controlada");
 
+    if (opcoes.transacaoExterna) {
+      await cliente.query(`release savepoint ${savepoint}`);
+    } else {
+      await cliente.query("commit");
+    }
     return fixture;
   } catch (erro) {
-    await limparFixture(cliente, fixture).catch(() => undefined);
+    if (opcoes.transacaoExterna) {
+      await cliente.query(`rollback to savepoint ${savepoint}`);
+      await cliente.query(`release savepoint ${savepoint}`);
+    } else {
+      await cliente.query("rollback");
+    }
     throw erro;
   }
 }
 
 export async function limparFixture(
   cliente: Client,
-  fixture: Fixture
+  fixture: Fixture,
+  opcoes: OpcoesLimpezaFixture = {}
 ): Promise<void> {
-  await cliente.query(
-    "delete from public.restaurantes where id = any($1::uuid[])",
-    [fixture.idsRestaurantes]
-  );
-  await cliente.query("delete from auth.users where id = any($1::uuid[])", [
-    fixture.idsUsuarios,
-  ]);
+  const savepoint = `fixture_limpeza_${randomUUID().replaceAll("-", "")}`;
+  if (opcoes.transacaoExterna) {
+    await cliente.query(`savepoint ${savepoint}`);
+  } else {
+    await cliente.query("begin");
+  }
+  try {
+    await cliente.query(
+      "delete from public.restaurantes where id = any($1::uuid[])",
+      [fixture.idsRestaurantes]
+    );
+    if (opcoes.interromperApos === "restaurantes") {
+      throw new Error("interrupção controlada");
+    }
+    await cliente.query("delete from auth.users where id = any($1::uuid[])", [
+      fixture.idsUsuarios,
+    ]);
+    if (opcoes.transacaoExterna) {
+      await cliente.query(`release savepoint ${savepoint}`);
+    } else {
+      await cliente.query("commit");
+    }
+  } catch (erro) {
+    if (opcoes.transacaoExterna) {
+      await cliente.query(`rollback to savepoint ${savepoint}`);
+      await cliente.query(`release savepoint ${savepoint}`);
+    } else {
+      await cliente.query("rollback");
+    }
+    throw erro;
+  }
 }
 
 export async function comoAutenticado<T>(
@@ -229,7 +285,7 @@ export function entrada(
     codCliente: null,
     NumeroOcupantes: 2,
     TipoOcupacao: "MESA",
-    TipoCartao: null,
+    TipoCartao: "",
     ...parcial,
   };
 }

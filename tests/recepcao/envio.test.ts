@@ -260,6 +260,20 @@ describe("receber-envio no Supabase local", () => {
     });
   });
 
+  it("rejeita no HTTP campos ausentes, fechamento incompleto e TipoCartao nulo", async () => {
+    const { ValorDescontos: _, ...semObrigatorio } = entrada(6101);
+    for (const corpo of [
+      envelope([semObrigatorio]),
+      envelope([entrada(6102, { DataSaida: "2026-10-09", HoraSaida: null })]),
+      envelope([entrada(6103, { TipoCartao: null })]),
+    ]) {
+      const resposta = await enviarComPausa(corpo);
+      expect(resposta.status).toBe(422);
+      expect(await resposta.json()).toMatchObject({ ok: false });
+    }
+    expect((await enviarComPausa(envelope([entrada(6104)]))).status).toBe(200);
+  });
+
   it("limita o ritmo a uma chamada a cada vinte segundos", async () => {
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(200);
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(429);

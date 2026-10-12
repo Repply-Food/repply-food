@@ -1,7 +1,12 @@
 import type { Client } from "pg";
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { conectarBanco } from "../helpers/supabase-local";
+import {
+  type Fixture,
+  conectarBanco,
+  criarFixture,
+  limparFixture,
+} from "../helpers/supabase-local";
 
 const funcoesReservadas = [
   "public.processar_envio(uuid,jsonb)",
@@ -11,13 +16,19 @@ const funcoesReservadas = [
 
 describe("RPCs reservadas", () => {
   let banco: Client;
+  let fixture: Fixture;
 
   beforeAll(async () => {
     banco = await conectarBanco();
+    fixture = await criarFixture(banco);
   });
 
   afterAll(async () => {
-    await banco?.end();
+    try {
+      await limparFixture(banco, fixture);
+    } finally {
+      await banco?.end();
+    }
   });
 
   it("nega anon e authenticated, preservando service_role", async () => {
@@ -57,5 +68,37 @@ describe("RPCs reservadas", () => {
       authenticated: true,
       service: true,
     });
+  });
+
+  it("recusa execução real para anon e authenticated, inclusive admin", async () => {
+    const chamadas = [
+      "select public.processar_envio(null::uuid, null::jsonb)",
+      "select public.recalcular_dia_operacao(null::uuid)",
+      "select public.atualizar_estados()",
+    ];
+    const identidades = [
+      { papel: "anon", usuario: null },
+      { papel: "authenticated", usuario: fixture.usuarioSemAcesso },
+      { papel: "authenticated", usuario: fixture.admin },
+    ] as const;
+    for (const { papel, usuario } of identidades) {
+      for (const chamada of chamadas) {
+        await banco.query("begin");
+        try {
+          await banco.query(`set local role ${papel}`);
+          if (usuario) {
+            await banco.query(
+              "select set_config('request.jwt.claim.sub', $1, true)",
+              [usuario]
+            );
+          }
+          await expect(banco.query(chamada)).rejects.toMatchObject({
+            code: "42501",
+          });
+        } finally {
+          await banco.query("rollback");
+        }
+      }
+    }
   });
 });

@@ -6,6 +6,7 @@ import {
   criarFixture,
   criarIdentificadoresFixture,
   hashToken,
+  limparFixture,
 } from "./supabase-local";
 
 describe("lifecycle das fixtures locais", () => {
@@ -48,6 +49,44 @@ describe("lifecycle das fixtures locais", () => {
       await banco.query("delete from public.restaurantes where id = $1", [
         restauranteColisao,
       ]);
+      await banco.end();
+    }
+  });
+
+  it("faz rollback de uma interrupção controlada sem deixar criação parcial", async () => {
+    const banco = await conectarBanco();
+    const identificadores = criarIdentificadoresFixture();
+    try {
+      await expect(
+        criarFixture(banco, {
+          identificadores,
+          interromperApos: "restaurantes",
+        })
+      ).rejects.toThrow("interrupção controlada");
+      const sobras = await banco.query(
+        "select count(*)::int as total from public.restaurantes where id = any($1::uuid[])",
+        [[identificadores.restauranteA, identificadores.restauranteB]]
+      );
+      expect(sobras.rows[0]?.total).toBe(0);
+    } finally {
+      await banco.end();
+    }
+  });
+
+  it("faz rollback da limpeza parcial e permite a limpeza posterior", async () => {
+    const banco = await conectarBanco();
+    const fixture = await criarFixture(banco);
+    try {
+      await expect(
+        limparFixture(banco, fixture, { interromperApos: "restaurantes" })
+      ).rejects.toThrow("interrupção controlada");
+      const preservados = await banco.query(
+        "select count(*)::int as total from public.restaurantes where id = any($1::uuid[])",
+        [fixture.idsRestaurantes]
+      );
+      expect(preservados.rows[0]?.total).toBe(2);
+      await limparFixture(banco, fixture);
+    } finally {
       await banco.end();
     }
   });
