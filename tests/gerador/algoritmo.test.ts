@@ -1,53 +1,161 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  type AmbienteGerador,
   type Config,
+  Gerador,
   Mundo,
   enviarJanela,
-  sortearAbertura,
+  montarEnvelope,
+  validarGerado,
 } from "../../scripts/gerador-dados-ficticios";
 
 const config: Config = {
   url: "http://teste.local/receber-envio",
   token: "teste",
   historicoDias: 1,
-  intervaloSegundos: 0,
+  intervaloSegundos: 20,
   pararApos: 0,
   dryRun: false,
 };
 
-describe("gerador", () => {
-  afterEach(() => vi.restoreAllMocks());
+function ambienteComIntervalo(
+  respostas: number[],
+  inicio = new Date(2026, 9, 10, 9).getTime()
+): {
+  ambiente: AmbienteGerador;
+  tentativas: Array<{ janela: string; em: number }>;
+  avancar(ms: number): void;
+} {
+  let agora = inicio;
+  const tentativas: Array<{ janela: string; em: number }> = [];
+  return {
+    ambiente: {
+      agora: () => new Date(agora),
+      aguardar: async (ms) => {
+        agora += ms;
+      },
+      enviar: async (envelope) => {
+        const anterior = tentativas.at(-1);
+        if (anterior && agora - anterior.em < 20_000) {
+          throw new Error("tentativa antes de 20 s");
+        }
+        tentativas.push({
+          janela: `${envelope.janela.desde}..${envelope.janela.ate}`,
+          em: agora,
+        });
+        return {
+          status: respostas.shift() ?? 200,
+          corpo: { janela_confirmada: envelope.janela },
+        };
+      },
+    },
+    tentativas,
+    avancar: (ms) => {
+      agora += ms;
+    },
+  };
+}
 
-  it("divide 413 de dois dias em duas janelas menores sequenciais", async () => {
-    const janelas: string[] = [];
-    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
-      const corpo = JSON.parse(String(init.body)) as {
-        janela: { desde: string; ate: string };
-      };
-      janelas.push(`${corpo.janela.desde}..${corpo.janela.ate}`);
-      const status = janelas.length === 1 ? 413 : 200;
-      return new Response(JSON.stringify({ janela_confirmada: corpo.janela }), {
-        status,
-      });
-    });
+describe("gerador", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("aguarda 20 segundos antes de cada tentativa, inclusive as metades após 413", async () => {
+    const { ambiente, tentativas } = ambienteComIntervalo([413, 200, 200]);
+
     const resultado = await enviarJanela(
       config,
       new Mundo(),
       "2026-10-09",
-      "2026-10-10"
+      "2026-10-10",
+      ambiente
     );
+
     expect(resultado.ok).toBe(true);
-    expect(janelas).toEqual([
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
       "2026-10-09..2026-10-10",
       "2026-10-09..2026-10-09",
       "2026-10-10..2026-10-10",
     ]);
+    expect(tentativas.map(({ em }) => em)).toEqual([
+      new Date(2026, 9, 10, 9).getTime(),
+      new Date(2026, 9, 10, 9).getTime() + 20_000,
+      new Date(2026, 9, 10, 9).getTime() + 40_000,
+    ]);
   });
 
-  it("sorteia almoço e jantar a partir do início do dia", () => {
+  it("mantém aberta a conta cujo fechamento calculado ficaria no futuro", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
-    const diaComHora = new Date(2026, 9, 10, 18, 0, 0);
-    expect(sortearAbertura(diaComHora, "almoço").getHours()).toBe(12);
-    expect(sortearAbertura(diaComHora, "jantar").getHours()).toBe(22);
+    const mundo = new Mundo();
+    const referencia = new Date(2026, 9, 10, 12, 0, 0);
+
+    mundo.gerarHistorico(new Date(2026, 9, 10, 9), referencia);
+    const envelope = montarEnvelope(
+      "2026-10-10",
+      "2026-10-10",
+      mundo.entradasJanela("2026-10-10", "2026-10-10")
+    );
+
+    expect(
+      envelope.entradas.every(
+        (entrada) =>
+          entrada.DataEntrada === "2026-10-10" &&
+          entrada.HoraEntrada <= "12:00:00"
+      )
+    ).toBe(true);
+    expect(
+      envelope.entradas.every(
+        (entrada) =>
+          entrada.DataSaida === null ||
+          (entrada.HoraSaida !== null && entrada.HoraSaida <= "12:00:00")
+      )
+    ).toBe(true);
+    expect(
+      envelope.entradas.some(
+        (entrada) => entrada.DataSaida === null && entrada.Pago === "Não"
+      )
+    ).toBe(true);
+  });
+
+  it("mantém a fórmula monetária exata em centavos no envelope canônico", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.2);
+    const mundo = new Mundo();
+    mundo.gerarHistorico(
+      new Date(2026, 9, 9),
+      new Date(2026, 9, 9, 23, 59, 59)
+    );
+    const envelope = montarEnvelope(
+      "2026-10-09",
+      "2026-10-09",
+      mundo.entradasJanela("2026-10-09", "2026-10-09")
+    );
+
+    validarGerado(envelope);
+    for (const entrada of envelope.entradas) {
+      expect(entrada.ValorConsumido).toBeCloseTo(
+        entrada.ValorItens -
+          entrada.ValorDescontos +
+          entrada.ValorAcrescimos +
+          entrada.TaxaServico +
+          entrada.Complemento,
+        2
+      );
+    }
+  });
+
+  it("repete a janela diária pendente depois de falha, mesmo no dia seguinte", async () => {
+    const { ambiente, tentativas, avancar } = ambienteComIntervalo(
+      [500, 200],
+      new Date(2026, 9, 10, 7).getTime()
+    );
+    const gerador = new Gerador(config, new Mundo(), ambiente);
+
+    await gerador.executarCiclo();
+    avancar(24 * 60 * 60 * 1000);
+    await gerador.executarCiclo();
+
+    expect(tentativas[0]?.janela).toBe(tentativas[1]?.janela);
   });
 });

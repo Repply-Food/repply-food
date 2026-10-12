@@ -40,12 +40,12 @@ interface EntradaGerada {
   HoraEntrada: string;
   DataSaida: string | null;
   HoraSaida: string | null;
-  ValorItens: number;
-  ValorDescontos: number;
-  ValorAcrescimos: number;
-  TaxaServico: number;
-  Complemento: number;
-  ValorConsumido: number;
+  ValorItens: Decimal;
+  ValorDescontos: Decimal;
+  ValorAcrescimos: Decimal;
+  TaxaServico: Decimal;
+  Complemento: Decimal;
+  ValorConsumido: Decimal;
   Pago: "Sim" | "Não";
   CodGarcon: number;
   codOperadorHab: number;
@@ -134,8 +134,8 @@ function menor(a: string, b: string): string {
   return a <= b ? a : b;
 }
 
-function arredondar(valor: number): number {
-  return new Decimal(valor).toDecimalPlaces(2).toNumber();
+function arredondar(valor: Decimal.Value): Decimal {
+  return new Decimal(valor).toDecimalPlaces(2);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -208,31 +208,44 @@ export class Mundo {
    * (almoço e jantar, pico de sexta e sábado, contas esquecidas).
    */
   gerarHistorico(diaInicial: Date, hoje: Date): void {
-    let dia = diaInicial;
+    let dia = new Date(
+      diaInicial.getFullYear(),
+      diaInicial.getMonth(),
+      diaInicial.getDate()
+    );
     while (dia <= hoje) {
       const fator = FATOR_DIA[dia.getDay()] ?? 1;
       const almoço = Math.round(18 * fator);
       const jantar = Math.round(26 * fator);
       for (let i = 0; i < almoço; i++) {
-        this.entradas.push(
-          this.criarEntrada(
-            sortearAbertura(dia, "almoço"),
-            35 + Math.floor(Math.random() * 40)
-          )
+        const entrada = this.criarEntrada(
+          sortearAbertura(dia, "almoço"),
+          35 + Math.floor(Math.random() * 40),
+          hoje
         );
+        if (entrada) this.entradas.push(entrada);
       }
       for (let i = 0; i < jantar; i++) {
-        this.entradas.push(
-          this.criarEntrada(
-            sortearAbertura(dia, "jantar"),
-            45 + Math.floor(Math.random() * 65)
-          )
+        const entrada = this.criarEntrada(
+          sortearAbertura(dia, "jantar"),
+          45 + Math.floor(Math.random() * 65),
+          hoje
         );
+        if (entrada) this.entradas.push(entrada);
       }
       // ~35% dos dias têm uma conta esquecida aberta.
       if (Math.random() < 0.35) {
-        const abertura = somarMinutos(dia, 11 * 60 + 30 + Math.random() * 600);
-        this.entradas.push(this.criarEntrada(abertura, null));
+        const inicioDoDia = new Date(
+          dia.getFullYear(),
+          dia.getMonth(),
+          dia.getDate()
+        );
+        const abertura = somarMinutos(
+          inicioDoDia,
+          11 * 60 + 30 + Math.random() * 600
+        );
+        const entrada = this.criarEntrada(abertura, null, hoje);
+        if (entrada) this.entradas.push(entrada);
       }
       dia = somarDias(dia, 1);
     }
@@ -261,7 +274,8 @@ export class Mundo {
       novas = Math.random() < 0.5 ? 1 : Math.random() < 0.7 ? 2 : 3;
     }
     for (let i = 0; i < novas; i++) {
-      this.entradas.push(this.criarEntrada(agora, null));
+      const entrada = this.criarEntrada(agora, null);
+      if (entrada) this.entradas.push(entrada);
     }
   }
 
@@ -282,31 +296,50 @@ export class Mundo {
 
   private criarEntrada(
     abertura: Date,
-    duracaoMinutos: number | null
-  ): EntradaGerada {
-    const fechamento =
+    duracaoMinutos: number | null,
+    referencia?: Date
+  ): EntradaGerada | null {
+    if (referencia && abertura > referencia) return null;
+    const fechamentoCalculado =
       duracaoMinutos === null ? null : somarMinutos(abertura, duracaoMinutos);
+    const fechamento =
+      fechamentoCalculado && (!referencia || fechamentoCalculado <= referencia)
+        ? fechamentoCalculado
+        : null;
     const ocupantes = sortearOcupantes();
-    const itens = arredondar(ocupantes * (28 + Math.random() * 47));
+    const itens = arredondar(
+      new Decimal(ocupantes).mul(
+        new Decimal(28).plus(new Decimal(Math.random()).mul(47))
+      )
+    );
     const temDesconto = Math.random() < 0.12;
     const descontos = temDesconto
-      ? arredondar(itens * (0.05 + Math.random() * 0.15))
-      : 0;
+      ? arredondar(
+          itens.mul(
+            new Decimal(0.05).plus(new Decimal(Math.random()).mul(0.15))
+          )
+        )
+      : new Decimal(0);
     const temAcrescimo = Math.random() < 0.05;
     const acrescimos = temAcrescimo
-      ? arredondar((itens - descontos) * (0.01 + Math.random() * 0.02))
-      : 0;
+      ? arredondar(
+          itens
+            .minus(descontos)
+            .mul(new Decimal(0.01).plus(new Decimal(Math.random()).mul(0.02)))
+        )
+      : new Decimal(0);
     // Taxa de serviço sobre o consumo (exemplo do contrato: 90 - 10 + 8 = 88).
-    const taxa = arredondar((itens - descontos) * 0.1);
+    const taxa = arredondar(itens.minus(descontos).mul(0.1));
     const temComplemento = Math.random() < 0.2;
-    const complemento = temComplemento ? arredondar(4 + Math.random() * 11) : 0;
-    const consumido = new Decimal(itens)
+    const complemento = temComplemento
+      ? arredondar(new Decimal(4).plus(new Decimal(Math.random()).mul(11)))
+      : new Decimal(0);
+    const consumido = itens
       .minus(descontos)
       .plus(acrescimos)
       .plus(taxa)
       .plus(complemento)
-      .toDecimalPlaces(2)
-      .toNumber();
+      .toDecimalPlaces(2);
     const temCliente = Math.random() < 0.3;
     return {
       codEntrada: this.proximoCod++,
@@ -343,7 +376,7 @@ export class Mundo {
 // Envelope e envio
 // ---------------------------------------------------------------------------
 
-function montarEnvelope(
+export function montarEnvelope(
   desde: string,
   ate: string,
   entradas: EntradaGerada[]
@@ -362,12 +395,12 @@ function montarEnvelope(
       HoraEntrada: entrada.HoraEntrada,
       DataSaida: entrada.DataSaida,
       HoraSaida: entrada.HoraSaida,
-      ValorItens: entrada.ValorItens,
-      ValorDescontos: entrada.ValorDescontos,
-      ValorAcrescimos: entrada.ValorAcrescimos,
-      TaxaServico: entrada.TaxaServico,
-      Complemento: entrada.Complemento,
-      ValorConsumido: entrada.ValorConsumido,
+      ValorItens: entrada.ValorItens.toNumber(),
+      ValorDescontos: entrada.ValorDescontos.toNumber(),
+      ValorAcrescimos: entrada.ValorAcrescimos.toNumber(),
+      TaxaServico: entrada.TaxaServico.toNumber(),
+      Complemento: entrada.Complemento.toNumber(),
+      ValorConsumido: entrada.ValorConsumido.toNumber(),
       Pago: entrada.Pago,
       CodGarcon: entrada.CodGarcon,
       codOperadorHab: entrada.codOperadorHab,
@@ -381,7 +414,7 @@ function montarEnvelope(
 }
 
 /** O gerador só produz envelopes válidos; falhar aqui é bug do gerador. */
-function validarGerado(envelope: Envelope): void {
+export function validarGerado(envelope: Envelope): void {
   const resultado = validarEnvelope(envelope);
   if (!resultado.success) {
     const problemas = resultado.error.issues
@@ -396,6 +429,16 @@ function validarGerado(envelope: Envelope): void {
 interface RespostaEnvio {
   status: number;
   corpo: unknown;
+}
+
+export interface AmbienteGerador {
+  agora(): Date;
+  aguardar(ms: number): Promise<void>;
+  enviar(envelope: Envelope, config: Config): Promise<RespostaEnvio>;
+}
+
+interface ControleRitmo {
+  ultimaTentativaEm: number | null;
 }
 
 async function enviarEnvelope(
@@ -428,6 +471,27 @@ async function enviarEnvelope(
   }
 }
 
+const ambientePadrao: AmbienteGerador = {
+  agora: () => new Date(),
+  aguardar: sleep,
+  enviar: (envelope, config) => enviarEnvelope(config, envelope),
+};
+
+async function enviarComRitmo(
+  config: Config,
+  envelope: Envelope,
+  ambiente: AmbienteGerador,
+  ritmo: ControleRitmo
+): Promise<RespostaEnvio> {
+  const minimo = Math.max(20_000, config.intervaloSegundos * 1000);
+  if (ritmo.ultimaTentativaEm !== null) {
+    const decorrido = ambiente.agora().getTime() - ritmo.ultimaTentativaEm;
+    await ambiente.aguardar(Math.max(0, minimo - decorrido));
+  }
+  ritmo.ultimaTentativaEm = ambiente.agora().getTime();
+  return ambiente.enviar(envelope, config);
+}
+
 function corpoJson(corpo: unknown): Corpo200 | null {
   if (corpo === null || typeof corpo !== "object" || Array.isArray(corpo)) {
     return null;
@@ -444,11 +508,13 @@ export async function enviarJanela(
   config: Config,
   mundo: Mundo,
   desde: string,
-  ate: string
+  ate: string,
+  ambiente: AmbienteGerador = ambientePadrao,
+  ritmo: ControleRitmo = { ultimaTentativaEm: null }
 ): Promise<ResultadoJanela> {
   const envelope = montarEnvelope(desde, ate, mundo.entradasJanela(desde, ate));
   validarGerado(envelope);
-  const resposta = await enviarEnvelope(config, envelope);
+  const resposta = await enviarComRitmo(config, envelope, ambiente, ritmo);
 
   if (resposta.status === 200) {
     const corpo = corpoJson(resposta.corpo);
@@ -463,7 +529,14 @@ export async function enviarJanela(
 
   if (resposta.status === 413 && desde !== ate) {
     const meio = somarDiasStr(desde, Math.floor(diasEntre(desde, ate) / 2));
-    const metade1 = await enviarJanela(config, mundo, desde, meio);
+    const metade1 = await enviarJanela(
+      config,
+      mundo,
+      desde,
+      meio,
+      ambiente,
+      ritmo
+    );
     if (!metade1.ok) {
       return {
         ok: false,
@@ -472,8 +545,14 @@ export async function enviarJanela(
         resumo: "413: primeira metade falhou",
       };
     }
-    await sleep(config.intervaloSegundos * 1000);
-    const metade2 = await enviarJanela(config, mundo, diaSeguinte(meio), ate);
+    const metade2 = await enviarJanela(
+      config,
+      mundo,
+      diaSeguinte(meio),
+      ate,
+      ambiente,
+      ritmo
+    );
     if (!metade2.ok) {
       return {
         ok: false,
@@ -509,17 +588,28 @@ async function carregarDe(
   config: Config,
   mundo: Mundo,
   desde: string,
-  ateFinal: string
+  ateFinal: string,
+  ambiente: AmbienteGerador = ambientePadrao,
+  ritmo: ControleRitmo = { ultimaTentativaEm: null }
 ): Promise<string> {
   let atual = desde;
   while (atual <= ateFinal) {
     const fim = menor(somarDiasStr(atual, 6), ateFinal);
-    const resultado = await enviarJanela(config, mundo, atual, fim);
+    const resultado = await enviarJanela(
+      config,
+      mundo,
+      atual,
+      fim,
+      ambiente,
+      ritmo
+    );
     if (!resultado.ok) {
       console.error(
         `[gerador] carga: ${resultado.resumo}; repete a janela ${atual}..${fim}`
       );
-      await sleep(config.intervaloSegundos * 1000);
+      await ambiente.aguardar(
+        Math.max(20_000, config.intervaloSegundos * 1000)
+      );
       continue;
     }
     if (resultado.reenviar) {
@@ -535,6 +625,74 @@ async function carregarDe(
     atual = diaSeguinte(fim);
   }
   return ateFinal;
+}
+
+export class Gerador {
+  private ultimaConfirmada = "";
+  private ultimaVarreduraDiaria = "";
+  private janelaPendente: {
+    desde: string;
+    ate: string;
+    varreduraDiaria: boolean;
+  } | null = null;
+  private readonly ritmo: ControleRitmo = { ultimaTentativaEm: null };
+
+  constructor(
+    private readonly config: Config,
+    private readonly mundo: Mundo,
+    private readonly ambiente: AmbienteGerador = ambientePadrao,
+    ultimaConfirmada = ""
+  ) {
+    this.ultimaConfirmada = ultimaConfirmada;
+  }
+
+  async executarCiclo(): Promise<ResultadoJanela> {
+    const agora = this.ambiente.agora();
+    const hoje = formatarData(agora);
+    this.mundo.evoluir(agora);
+    if (!this.ultimaConfirmada)
+      this.ultimaConfirmada = formatarData(somarDias(agora, -1));
+    const pendente = this.janelaPendente;
+    const varreduraDiaria =
+      agora.getHours() >= 6 && this.ultimaVarreduraDiaria !== hoje;
+    const desde =
+      pendente?.desde ??
+      (varreduraDiaria
+        ? formatarData(somarDias(agora, -7))
+        : menor(this.ultimaConfirmada, formatarData(somarDias(agora, -1))));
+    const ate = pendente?.ate ?? hoje;
+    const resultado = await enviarJanela(
+      this.config,
+      this.mundo,
+      desde,
+      ate,
+      this.ambiente,
+      this.ritmo
+    );
+    if (!resultado.ok) {
+      this.janelaPendente = {
+        desde,
+        ate,
+        varreduraDiaria: pendente?.varreduraDiaria ?? varreduraDiaria,
+      };
+      return resultado;
+    }
+    this.ultimaConfirmada = resultado.confirmada ?? ate;
+    const confirmouVarredura = pendente?.varreduraDiaria ?? varreduraDiaria;
+    if (confirmouVarredura) this.ultimaVarreduraDiaria = hoje;
+    this.janelaPendente = null;
+    if (resultado.reenviar) {
+      this.ultimaConfirmada = await carregarDe(
+        this.config,
+        this.mundo,
+        resultado.reenviar,
+        hoje,
+        this.ambiente,
+        this.ritmo
+      );
+    }
+    return resultado;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -609,13 +767,13 @@ async function main(): Promise<void> {
   console.log(
     `[gerador] carga inicial de ${inicioS} até ${hojeS}, em janelas de 7 dias`
   );
-  let ultimaConfirmada = await carregarDe(config, mundo, inicioS, hojeS);
+  const ultimaConfirmada = await carregarDe(config, mundo, inicioS, hojeS);
   console.log(
     `[gerador] carga inicial completa (última confirmada: ${ultimaConfirmada}). Ciclos de ${config.intervaloSegundos} s`
   );
 
   let enviadosOk = 0;
-  let ultimaVarreduraDiaria = "";
+  const gerador = new Gerador(config, mundo, ambientePadrao, ultimaConfirmada);
   while (true) {
     if (config.pararApos > 0 && enviadosOk >= config.pararApos) {
       console.log(
@@ -626,35 +784,10 @@ async function main(): Promise<void> {
     }
 
     await sleep(config.intervaloSegundos * 1000);
-    mundo.evoluir(new Date());
-    const agora = new Date();
-    const hojeCiclo = formatarData(agora);
-
-    // Varredura diária: primeiro ciclo depois das 6h cobre 7 dias (contrato §6).
-    let desde: string;
-    if (agora.getHours() >= 6 && ultimaVarreduraDiaria !== hojeCiclo) {
-      ultimaVarreduraDiaria = hojeCiclo;
-      desde = formatarData(somarDias(agora, -7));
-    } else {
-      desde = menor(ultimaConfirmada, formatarData(somarDias(agora, -1)));
-    }
-
-    const resultado = await enviarJanela(config, mundo, desde, hojeCiclo);
+    const resultado = await gerador.executarCiclo();
     if (resultado.ok) {
-      ultimaConfirmada = resultado.confirmada ?? hojeCiclo;
       enviadosOk++;
-      console.log(
-        `[gerador] 200 — ${resultado.resumo} (janela ${desde}..${hojeCiclo})`
-      );
-      if (resultado.reenviar) {
-        console.log(`[gerador] pedido de reenvio desde ${resultado.reenviar}`);
-        ultimaConfirmada = await carregarDe(
-          config,
-          mundo,
-          resultado.reenviar,
-          hojeCiclo
-        );
-      }
+      console.log(`[gerador] 200 — ${resultado.resumo}`);
     } else {
       console.error(`[gerador] ${resultado.resumo}; repete no próximo ciclo`);
     }
