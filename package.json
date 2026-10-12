@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "types": "supabase gen types typescript --local > types/database.types.ts",
+    "types": "sh -c 'tmp=$(mktemp types/database.types.XXXXXX) && npx supabase gen types typescript --local > \"$tmp\" && test -s \"$tmp\" && mv \"$tmp\" types/database.types.ts'",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",

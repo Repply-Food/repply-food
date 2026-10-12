@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+
 /**
  * Gerador de dados fictícios (recepcao-de-dados.md §5).
  *
@@ -22,7 +24,7 @@ import { type Envelope, validarEnvelope } from "../lib/validators/recepcao.ts";
 const FATOR_DIA = [0.7, 0.8, 0.9, 1.0, 1.1, 1.6, 1.8]; // dom..sáb
 const GARCONS = [1, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 7, 8];
 
-interface Config {
+export interface Config {
   url: string;
   token: string;
   historicoDias: number;
@@ -48,9 +50,10 @@ interface EntradaGerada {
   CodGarcon: number;
   codOperadorHab: number;
   codOperadorDesab: number;
-  codCliente?: number;
+  codCliente: number | null;
   NumeroOcupantes: number;
   TipoOcupacao: "MESA" | "BALCAO";
+  TipoCartao: string | null;
   /** Estado interno do simulador (não vai no envelope). */
   aberta: boolean;
   abertaDesde: Date;
@@ -132,7 +135,7 @@ function menor(a: string, b: string): string {
 }
 
 function arredondar(valor: number): number {
-  return Math.round(valor * 100) / 100;
+  return new Decimal(valor).toDecimalPlaces(2).toNumber();
 }
 
 function sleep(ms: number): Promise<void> {
@@ -170,27 +173,32 @@ function sortearOcupantes(): number {
   return 5;
 }
 
-function sortearAbertura(dia: Date, turno: "almoço" | "jantar"): Date {
+export function sortearAbertura(dia: Date, turno: "almoço" | "jantar"): Date {
+  const inicioDoDia = new Date(
+    dia.getFullYear(),
+    dia.getMonth(),
+    dia.getDate()
+  );
   if (turno === "almoço") {
     // 60% no pico 12h-13h; o resto espalhado entre 11h30 e 14h30.
     if (Math.random() < 0.6) {
-      return somarMinutos(dia, 12 * 60 + Math.random() * 60);
+      return somarMinutos(inicioDoDia, 12 * 60 + Math.random() * 60);
     }
-    return somarMinutos(dia, 11 * 60 + 30 + Math.random() * 180);
+    return somarMinutos(inicioDoDia, 11 * 60 + 30 + Math.random() * 180);
   }
   // Jantar: 5% abrem tarde (22h30-23h15), para fechar depois da meia-noite
   // (virada do dia, testada no §4).
   if (Math.random() < 0.05) {
-    return somarMinutos(dia, 22 * 60 + 30 + Math.random() * 45);
+    return somarMinutos(inicioDoDia, 22 * 60 + 30 + Math.random() * 45);
   }
-  return somarMinutos(dia, 18 * 60 + Math.random() * 300);
+  return somarMinutos(inicioDoDia, 18 * 60 + Math.random() * 300);
 }
 
 // ---------------------------------------------------------------------------
 // Mundo: estado do restaurante simulado
 // ---------------------------------------------------------------------------
 
-class Mundo {
+export class Mundo {
   private entradas: EntradaGerada[] = [];
 
   private proximoCod = 100_000 + Math.floor(Math.random() * 50_000);
@@ -292,9 +300,13 @@ class Mundo {
     const taxa = arredondar((itens - descontos) * 0.1);
     const temComplemento = Math.random() < 0.2;
     const complemento = temComplemento ? arredondar(4 + Math.random() * 11) : 0;
-    const consumido = arredondar(
-      itens - descontos + acrescimos + taxa + complemento
-    );
+    const consumido = new Decimal(itens)
+      .minus(descontos)
+      .plus(acrescimos)
+      .plus(taxa)
+      .plus(complemento)
+      .toDecimalPlaces(2)
+      .toNumber();
     const temCliente = Math.random() < 0.3;
     return {
       codEntrada: this.proximoCod++,
@@ -313,11 +325,10 @@ class Mundo {
       CodGarcon: sortearDe(GARCONS),
       codOperadorHab: 1,
       codOperadorDesab: 1,
-      codCliente: temCliente
-        ? 1000 + Math.floor(Math.random() * 1000)
-        : undefined,
+      codCliente: temCliente ? 1000 + Math.floor(Math.random() * 1000) : null,
       NumeroOcupantes: ocupantes,
       TipoOcupacao: Math.random() < 0.85 ? "MESA" : "BALCAO",
+      TipoCartao: null,
       aberta: fechamento === null,
       abertaDesde: abertura,
     };
@@ -364,6 +375,7 @@ function montarEnvelope(
       codCliente: entrada.codCliente,
       NumeroOcupantes: entrada.NumeroOcupantes,
       TipoOcupacao: entrada.TipoOcupacao,
+      TipoCartao: entrada.TipoCartao,
     })),
   };
 }
@@ -428,7 +440,7 @@ function corpoJson(corpo: unknown): Corpo200 | null {
  * devolvem ok=false e o chamador repete no próximo ciclo, sem mexer na data
  * confirmada (contrato §6).
  */
-async function enviarJanela(
+export async function enviarJanela(
   config: Config,
   mundo: Mundo,
   desde: string,
@@ -450,10 +462,19 @@ async function enviarJanela(
   }
 
   if (resposta.status === 413 && desde !== ate) {
-    const meio = somarDiasStr(desde, Math.ceil(diasEntre(desde, ate) / 2));
+    const meio = somarDiasStr(desde, Math.floor(diasEntre(desde, ate) / 2));
     const metade1 = await enviarJanela(config, mundo, desde, meio);
+    if (!metade1.ok) {
+      return {
+        ok: false,
+        confirmada: null,
+        reenviar: null,
+        resumo: "413: primeira metade falhou",
+      };
+    }
+    await sleep(config.intervaloSegundos * 1000);
     const metade2 = await enviarJanela(config, mundo, diaSeguinte(meio), ate);
-    if (!metade1.ok || !metade2.ok) {
+    if (!metade2.ok) {
       return {
         ok: false,
         confirmada: null,
@@ -640,10 +661,12 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((erro) => {
-  console.error(
-    "[gerador] erro fatal:",
-    erro instanceof Error ? erro.message : String(erro)
-  );
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith("gerador-dados-ficticios.ts")) {
+  main().catch((erro) => {
+    console.error(
+      "[gerador] erro fatal:",
+      erro instanceof Error ? erro.message : String(erro)
+    );
+    process.exit(1);
+  });
+}

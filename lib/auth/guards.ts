@@ -1,7 +1,7 @@
 export function requireAuth(): void {
-  // Guard base - será expandido conforme necessário
+  throw new Error("autenticação ainda não disponível");
 }
 
 export function hasAccess(): boolean {
-  return true;
+  return false;
 }

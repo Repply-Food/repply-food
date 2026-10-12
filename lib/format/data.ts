@@ -9,11 +9,7 @@ export function toZonedTimeDate(data: Date | string, fuso: string): Date {
   return toZonedTime(typeof data === "string" ? parseISO(data) : data, fuso);
 }
 
-export function formatDiaOperacao(
-  fuso: string,
-  horaVirada: string,
-  data: Date | string
-): string {
+export function formatDataCivil(fuso: string, data: Date | string): string {
   const zoned = toZonedTimeDate(data, fuso);
   return format(zoned, "yyyy-MM-dd");
 }

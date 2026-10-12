@@ -289,6 +289,30 @@ describe("receber-envio no Supabase local", () => {
     expect(JSON.stringify(registro.rows[0]?.payload)).not.toContain("RG");
   });
 
+  it("cria sinal no primeiro erro autenticado e limita a repetição imediata", async () => {
+    const primeiro = await fetch(endpointRecepcao, {
+      method: "POST",
+      headers: { authorization: `Bearer ${fixture.tokenA}` },
+      body: "{",
+    });
+    expect(primeiro.status).toBe(400);
+    const sinal = await banco.query<{
+      primeiro_envio_em: string | null;
+      ultimo_envio_ok_em: string | null;
+      ultimo_erro_em: string | null;
+    }>(
+      `select primeiro_envio_em, ultimo_envio_ok_em, ultimo_erro_em
+         from public.sinal_de_vida where restaurante_id = $1`,
+      [fixture.restauranteA]
+    );
+    expect(sinal.rows[0]).toMatchObject({
+      primeiro_envio_em: null,
+      ultimo_envio_ok_em: null,
+    });
+    expect(sinal.rows[0]?.ultimo_erro_em).not.toBeNull();
+    expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(429);
+  });
+
   it("calcula o dia de operação da abertura ao atravessar a meia-noite", async () => {
     const resposta = await enviar(
       fixture.tokenA,

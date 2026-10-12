@@ -69,16 +69,26 @@ async function registrarErro(
   envelope?: unknown
 ): Promise<void> {
   const agora = new Date().toISOString();
-  await db.from("envios").insert({
+  const { error: erroEnvio } = await db.from("envios").insert({
     restaurante_id: restauranteId,
     http_status: httpStatus,
     erro,
     payload: envelope === undefined ? null : (envelope as Json),
   });
-  await db
-    .from("sinal_de_vida")
-    .update({ ultimo_envio_em: agora, ultimo_erro_em: agora })
-    .eq("restaurante_id", restauranteId);
+  if (erroEnvio) {
+    throw new Error("falha ao registrar envio");
+  }
+  const { error: erroSinal } = await db.from("sinal_de_vida").upsert(
+    {
+      restaurante_id: restauranteId,
+      ultimo_envio_em: agora,
+      ultimo_erro_em: agora,
+    },
+    { onConflict: "restaurante_id" }
+  );
+  if (erroSinal) {
+    throw new Error("falha ao registrar sinal");
+  }
 }
 
 function contarEntradas(envelope: unknown): number {
@@ -184,7 +194,7 @@ async function receberEnvio(req: Request): Promise<Response> {
   });
   if (erroRpc) {
     console.error(
-      `[receber-envio] processar_envio: ${erroRpc.code} ${erroRpc.message}`
+      `[receber-envio] processar_envio: ${erroRpc.code ?? "sem-codigo"}`
     );
     await registrarErro(restauranteId, 500, "erro interno", envelope);
     return responder({ ok: false, erro: "erro interno" }, 500);
@@ -200,11 +210,7 @@ Deno.serve(async (req) => {
     return await receberEnvio(req);
   } catch (erro) {
     // Log curto e sem dado pessoal; o SCC repete no próximo ciclo.
-    console.error(
-      `[receber-envio] falha inesperada: ${
-        erro instanceof Error ? erro.message : String(erro)
-      }`
-    );
+    console.error("[receber-envio] falha inesperada");
     return responder({ ok: false, erro: "erro interno" }, 500);
   }
 });

@@ -222,7 +222,14 @@ export function entrada(
     Complemento: 0,
     ValorConsumido: 110,
     Pago: "Sim",
+    codCartaoMesa: null,
+    CodGarcon: null,
+    codOperadorHab: null,
+    codOperadorDesab: null,
+    codCliente: null,
     NumeroOcupantes: 2,
+    TipoOcupacao: "MESA",
+    TipoCartao: null,
     ...parcial,
   };
 }

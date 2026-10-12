@@ -56,26 +56,31 @@ const entradaSchema = z
     codEntrada: z.number().int(),
     DataEntrada: dataLocal,
     HoraEntrada: horaLocal,
-    DataSaida: dataLocal.nullable().optional(),
-    HoraSaida: horaLocal.nullable().optional(),
-    ValorItens: dinheiro.optional(),
-    ValorDescontos: dinheiro.optional(),
-    ValorAcrescimos: dinheiro.optional(),
-    TaxaServico: dinheiro.optional(),
-    Complemento: dinheiro.optional(),
+    DataSaida: dataLocal.nullable(),
+    HoraSaida: horaLocal.nullable(),
+    ValorItens: dinheiro,
+    ValorDescontos: dinheiro,
+    ValorAcrescimos: dinheiro,
+    TaxaServico: dinheiro,
+    Complemento: dinheiro,
     ValorConsumido: dinheiro,
     Pago: pago,
-    codCartaoMesa: z.number().int().nullable().optional(),
-    CodGarcon: z.number().int().nullable().optional(),
-    codOperadorHab: z.number().int().nullable().optional(),
-    codOperadorDesab: z.number().int().nullable().optional(),
-    codCliente: z.number().int().nullable().optional(),
-    NumeroOcupantes: z.number().int().optional(),
-    TipoOcupacao: z.string().optional(),
-    TipoCartao: z.string().nullable().optional(),
+    codCartaoMesa: z.number().int().nullable(),
+    CodGarcon: z.number().int().nullable(),
+    codOperadorHab: z.number().int().nullable(),
+    codOperadorDesab: z.number().int().nullable(),
+    codCliente: z.number().int().nullable(),
+    NumeroOcupantes: z.number().int(),
+    TipoOcupacao: z.string(),
+    TipoCartao: z.string().nullable(),
   })
-  // Campos desconhecidos são preservados: o `processar_envio` os leva para extras.
-  .passthrough();
+  .passthrough()
+  .refine(
+    (entrada) =>
+      (entrada.DataSaida === null && entrada.HoraSaida === null) ||
+      (entrada.DataSaida !== null && entrada.HoraSaida !== null),
+    { message: "DataSaida e HoraSaida devem vir juntas", path: ["DataSaida"] }
+  );
 
 export const envelopeSchema = z
   .object({
