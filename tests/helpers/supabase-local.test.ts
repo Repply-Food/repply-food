@@ -9,7 +9,41 @@ import {
   limparFixture,
 } from "./supabase-local";
 
+async function limpezaAnteriorInterrompida(
+  banco: Awaited<ReturnType<typeof conectarBanco>>,
+  fixture: Awaited<ReturnType<typeof criarFixture>>
+): Promise<void> {
+  await banco.query(
+    "delete from public.restaurantes where id = any($1::uuid[])",
+    [fixture.idsRestaurantes]
+  );
+  throw new Error("interrupção controlada");
+}
+
 describe("lifecycle das fixtures locais", () => {
+  it("[retrospectivo] demonstra que a limpeza sequencial anterior deixava usuários após interrupção", async () => {
+    const banco = await conectarBanco();
+    let fixture: Awaited<ReturnType<typeof criarFixture>> | undefined;
+    try {
+      fixture = await criarFixture(banco);
+      await expect(limpezaAnteriorInterrompida(banco, fixture)).rejects.toThrow(
+        "interrupção controlada"
+      );
+      expect(
+        await banco.query(
+          "select count(*)::int as total from auth.users where id = any($1::uuid[])",
+          [fixture.idsUsuarios]
+        )
+      ).toMatchObject({ rows: [{ total: 4 }] });
+    } finally {
+      try {
+        if (fixture) await limparFixture(banco, fixture);
+      } finally {
+        await banco.end();
+      }
+    }
+  });
+
   it("remove os IDs já criados quando uma restrição real do banco interrompe a criação", async () => {
     const banco = await conectarBanco();
     const identificadores = criarIdentificadoresFixture();
@@ -114,6 +148,57 @@ describe("lifecycle das fixtures locais", () => {
           fixture.restauranteA,
         ])
       ).toHaveProperty("rowCount", 0);
+      fixture = undefined;
+    } finally {
+      try {
+        await banco.query("rollback");
+        if (fixture) await limparFixture(banco, fixture);
+      } finally {
+        await banco.end();
+      }
+    }
+  });
+
+  it("mantém a transação externa utilizável após falhas de criação e limpeza em savepoints", async () => {
+    const banco = await conectarBanco();
+    const idsFalha = criarIdentificadoresFixture();
+    let fixture: Awaited<ReturnType<typeof criarFixture>> | undefined;
+    try {
+      await banco.query("begin");
+      await expect(
+        criarFixture(banco, {
+          identificadores: idsFalha,
+          interromperApos: "restaurantes",
+          transacaoExterna: true,
+        })
+      ).rejects.toThrow("interrupção controlada");
+      expect(await banco.query("select 1 as continua")).toHaveProperty(
+        "rowCount",
+        1
+      );
+      fixture = await criarFixture(banco, { transacaoExterna: true });
+      await expect(
+        limparFixture(banco, fixture, {
+          interromperApos: "restaurantes",
+          transacaoExterna: true,
+        })
+      ).rejects.toThrow("interrupção controlada");
+      expect(
+        await banco.query("select 1 from public.restaurantes where id = $1", [
+          fixture.restauranteA,
+        ])
+      ).toHaveProperty("rowCount", 1);
+      expect(await banco.query("select 1 as continua")).toHaveProperty(
+        "rowCount",
+        1
+      );
+      await banco.query("rollback");
+      expect(
+        await banco.query(
+          "select count(*)::int as total from public.restaurantes where id = any($1::uuid[])",
+          [[fixture.restauranteA, fixture.restauranteB]]
+        )
+      ).toMatchObject({ rows: [{ total: 0 }] });
       fixture = undefined;
     } finally {
       try {

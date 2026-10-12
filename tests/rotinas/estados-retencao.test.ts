@@ -20,18 +20,11 @@ type SinalSnapshot = {
 describe("rotinas locais", () => {
   let banco: Client | undefined;
   let fixture: Fixture | undefined;
-  let sinaisAntes: SinalSnapshot[] = [];
 
   beforeEach(async () => {
+    banco = undefined;
+    fixture = undefined;
     banco = await conectarBanco();
-    sinaisAntes = (
-      await banco.query<SinalSnapshot>(
-        `select restaurante_id::text, primeiro_envio_em::text, ultimo_envio_em::text,
-                ultimo_envio_ok_em::text, ultimo_erro_em::text, estado,
-                estado_desde::text, alarme_enviado_em::text
-           from public.sinal_de_vida order by restaurante_id`
-      )
-    ).rows;
     await banco.query("begin");
     fixture = await criarFixture(banco, { transacaoExterna: true });
   });
@@ -41,15 +34,6 @@ describe("rotinas locais", () => {
     try {
       if (cliente) await cliente.query("rollback");
       if (cliente) {
-        const sinaisDepois = (
-          await cliente.query<SinalSnapshot>(
-            `select restaurante_id::text, primeiro_envio_em::text, ultimo_envio_em::text,
-                    ultimo_envio_ok_em::text, ultimo_erro_em::text, estado,
-                    estado_desde::text, alarme_enviado_em::text
-               from public.sinal_de_vida order by restaurante_id`
-          )
-        ).rows;
-        expect(sinaisDepois).toEqual(sinaisAntes);
         if (fixture) {
           const restos = await cliente.query(
             "select count(*)::int as total from public.restaurantes where id = any($1::uuid[])",
@@ -115,6 +99,15 @@ describe("rotinas locais", () => {
   it("calcula em_dia, atrasado, parado, fechado e sem sinal no fuso da fixture sem persistir efeitos globais", async () => {
     const cliente = banco as Client;
     const dados = fixture as Fixture;
+    const sinaisAntes = (
+      await cliente.query<SinalSnapshot>(
+        `select restaurante_id::text, primeiro_envio_em::text, ultimo_envio_em::text,
+                ultimo_envio_ok_em::text, ultimo_erro_em::text, estado,
+                estado_desde::text, alarme_enviado_em::text
+           from public.sinal_de_vida order by restaurante_id`
+      )
+    ).rows;
+    await cliente.query("savepoint efeitos_vigia");
     await cliente.query(
       "update public.restaurantes set fuso = 'America/Fortaleza', horario_funcionamento = $2::jsonb where id = $1",
       [
@@ -178,6 +171,16 @@ describe("rotinas locais", () => {
         [dados.restauranteB]
       )
     ).toHaveProperty("rowCount", 0);
+    await cliente.query("rollback to savepoint efeitos_vigia");
+    const sinaisDepois = (
+      await cliente.query<SinalSnapshot>(
+        `select restaurante_id::text, primeiro_envio_em::text, ultimo_envio_em::text,
+                ultimo_envio_ok_em::text, ultimo_erro_em::text, estado,
+                estado_desde::text, alarme_enviado_em::text
+           from public.sinal_de_vida order by restaurante_id`
+      )
+    ).rows;
+    expect(sinaisDepois).toEqual(sinaisAntes);
   });
 
   it("mantém jobs ativos com comando e horários contratados", async () => {
