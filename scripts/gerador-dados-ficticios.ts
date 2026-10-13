@@ -31,6 +31,7 @@ export interface Config {
   intervaloSegundos: number;
   pararApos: number;
   dryRun: boolean;
+  fusoHorario: string;
 }
 
 interface EntradaGerada {
@@ -97,6 +98,31 @@ function formatarEnviadoEm(data: Date): string {
   return `${formatarData(data)}T${formatarHora(data)}`;
 }
 
+export function dataCivilNoFuso(instante: Date, fusoHorario: string): Date {
+  const partes = new Intl.DateTimeFormat("en-CA", {
+    timeZone: fusoHorario,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(instante);
+  const parte = (tipo: Intl.DateTimeFormatPartTypes): number =>
+    Number(partes.find((item) => item.type === tipo)?.value);
+  return new Date(
+    Date.UTC(
+      parte("year"),
+      parte("month") - 1,
+      parte("day"),
+      parte("hour"),
+      parte("minute"),
+      parte("second")
+    )
+  );
+}
+
 function parseDataLocal(valor: string): Date {
   const partes = valor.split("-");
   const ano = Number(partes[0]);
@@ -136,6 +162,38 @@ function menor(a: string, b: string): string {
 
 function arredondar(valor: Decimal.Value): Decimal {
   return new Decimal(valor).toDecimalPlaces(2);
+}
+
+export function calcularValoresMonetarios(
+  itens: Decimal.Value,
+  descontos: Decimal.Value,
+  acrescimos: Decimal.Value,
+  taxaServico: Decimal.Value,
+  complemento: Decimal.Value
+): {
+  itens: Decimal;
+  descontos: Decimal;
+  acrescimos: Decimal;
+  taxaServico: Decimal;
+  complemento: Decimal;
+  consumido: Decimal;
+} {
+  const valores = {
+    itens: arredondar(itens),
+    descontos: arredondar(descontos),
+    acrescimos: arredondar(acrescimos),
+    taxaServico: arredondar(taxaServico),
+    complemento: arredondar(complemento),
+  };
+  return {
+    ...valores,
+    consumido: valores.itens
+      .minus(valores.descontos)
+      .plus(valores.acrescimos)
+      .plus(valores.taxaServico)
+      .plus(valores.complemento)
+      .toDecimalPlaces(2),
+  };
 }
 
 function sleep(ms: number): Promise<void> {
@@ -334,12 +392,13 @@ export class Mundo {
     const complemento = temComplemento
       ? arredondar(new Decimal(4).plus(new Decimal(Math.random()).mul(11)))
       : new Decimal(0);
-    const consumido = itens
-      .minus(descontos)
-      .plus(acrescimos)
-      .plus(taxa)
-      .plus(complemento)
-      .toDecimalPlaces(2);
+    const valores = calcularValoresMonetarios(
+      itens,
+      descontos,
+      acrescimos,
+      taxa,
+      complemento
+    );
     const temCliente = Math.random() < 0.3;
     return {
       codEntrada: this.proximoCod++,
@@ -348,12 +407,12 @@ export class Mundo {
       HoraEntrada: formatarHora(abertura),
       DataSaida: fechamento ? formatarData(fechamento) : null,
       HoraSaida: fechamento ? formatarHora(fechamento) : null,
-      ValorItens: itens,
-      ValorDescontos: descontos,
-      ValorAcrescimos: acrescimos,
-      TaxaServico: taxa,
-      Complemento: complemento,
-      ValorConsumido: consumido,
+      ValorItens: valores.itens,
+      ValorDescontos: valores.descontos,
+      ValorAcrescimos: valores.acrescimos,
+      TaxaServico: valores.taxaServico,
+      Complemento: valores.complemento,
+      ValorConsumido: valores.consumido,
       Pago: fechamento ? "Sim" : "Não",
       CodGarcon: sortearDe(GARCONS),
       codOperadorHab: 1,
@@ -379,12 +438,13 @@ export class Mundo {
 export function montarEnvelope(
   desde: string,
   ate: string,
-  entradas: EntradaGerada[]
+  entradas: EntradaGerada[],
+  enviadoEm = new Date()
 ): Envelope {
   return {
     versao_formato: 1,
     versao_scc: "9.0.0-ficticio",
-    enviado_em: formatarEnviadoEm(new Date()),
+    enviado_em: formatarEnviadoEm(enviadoEm),
     modo: "janela",
     janela: { desde, ate },
     lote: { numero: 1, total: 1 },
@@ -437,8 +497,12 @@ export interface AmbienteGerador {
   enviar(envelope: Envelope, config: Config): Promise<RespostaEnvio>;
 }
 
-interface ControleRitmo {
+export interface ControleRitmo {
   ultimaTentativaEm: number | null;
+}
+
+export function criarControleRitmo(): ControleRitmo {
+  return { ultimaTentativaEm: null };
 }
 
 async function enviarEnvelope(
@@ -477,6 +541,13 @@ const ambientePadrao: AmbienteGerador = {
   enviar: (envelope, config) => enviarEnvelope(config, envelope),
 };
 
+function criarAmbientePadrao(fusoHorario: string): AmbienteGerador {
+  return {
+    ...ambientePadrao,
+    agora: () => dataCivilNoFuso(new Date(), fusoHorario),
+  };
+}
+
 async function enviarComRitmo(
   config: Config,
   envelope: Envelope,
@@ -510,9 +581,14 @@ export async function enviarJanela(
   desde: string,
   ate: string,
   ambiente: AmbienteGerador = ambientePadrao,
-  ritmo: ControleRitmo = { ultimaTentativaEm: null }
+  ritmo: ControleRitmo = criarControleRitmo()
 ): Promise<ResultadoJanela> {
-  const envelope = montarEnvelope(desde, ate, mundo.entradasJanela(desde, ate));
+  const envelope = montarEnvelope(
+    desde,
+    ate,
+    mundo.entradasJanela(desde, ate),
+    ambiente.agora()
+  );
   validarGerado(envelope);
   const resposta = await enviarComRitmo(config, envelope, ambiente, ritmo);
 
@@ -590,7 +666,7 @@ export async function carregarDe(
   desde: string,
   ateFinal: string,
   ambiente: AmbienteGerador = ambientePadrao,
-  ritmo: ControleRitmo = { ultimaTentativaEm: null }
+  ritmo: ControleRitmo = criarControleRitmo()
 ): Promise<string> {
   let atual = desde;
   while (atual <= ateFinal) {
@@ -635,15 +711,17 @@ export class Gerador {
     ate: string;
     varreduraDiaria: boolean;
   } | null = null;
-  private readonly ritmo: ControleRitmo = { ultimaTentativaEm: null };
+  private readonly ritmo: ControleRitmo;
 
   constructor(
     private readonly config: Config,
     private readonly mundo: Mundo,
     private readonly ambiente: AmbienteGerador = ambientePadrao,
-    ultimaConfirmada = ""
+    ultimaConfirmada = "",
+    ritmo: ControleRitmo = criarControleRitmo()
   ) {
     this.ultimaConfirmada = ultimaConfirmada;
+    this.ritmo = ritmo;
   }
 
   async executarCiclo(): Promise<ResultadoJanela> {
@@ -660,7 +738,7 @@ export class Gerador {
       (varreduraDiaria
         ? formatarData(somarDias(agora, -7))
         : menor(this.ultimaConfirmada, formatarData(somarDias(agora, -1))));
-    const ate = pendente?.ate ?? hoje;
+    const ate = hoje;
     const resultado = await enviarJanela(
       this.config,
       this.mundo,
@@ -679,7 +757,7 @@ export class Gerador {
     }
     this.ultimaConfirmada = resultado.confirmada ?? ate;
     const confirmouVarredura = pendente?.varreduraDiaria ?? varreduraDiaria;
-    if (confirmouVarredura) this.ultimaVarreduraDiaria = hoje;
+    if (confirmouVarredura && ate === hoje) this.ultimaVarreduraDiaria = hoje;
     this.janelaPendente = null;
     if (resultado.reenviar) {
       this.ultimaConfirmada = await carregarDe(
@@ -699,11 +777,21 @@ export class Gerador {
 // Configuração e orquestração
 // ---------------------------------------------------------------------------
 
-function lerConfig(argv: string[]): Config {
+export function lerConfig(argv: string[]): Config {
   const flag = (nome: string): string | undefined => {
     const posicao = argv.indexOf(`--${nome}`);
     return posicao >= 0 ? argv[posicao + 1] : undefined;
   };
+  const dryRun = argv.includes("--dry-run");
+  const fusoHorario =
+    flag("fuso") ?? process.env.SCC_FUSO ?? (dryRun ? "America/Fortaleza" : "");
+  if (!fusoHorario)
+    throw new Error("Defina --fuso IANA ou SCC_FUSO para envio real");
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: fusoHorario });
+  } catch {
+    throw new Error("Fuso IANA inválido para o restaurante");
+  }
   return {
     url:
       process.env.SCC_URL ??
@@ -712,7 +800,8 @@ function lerConfig(argv: string[]): Config {
     historicoDias: Number(flag("historico-dias")) || 75,
     intervaloSegundos: Number(flag("intervalo")) || 300,
     pararApos: Number(flag("parar-apos")) || 0,
-    dryRun: argv.includes("--dry-run"),
+    dryRun,
+    fusoHorario,
   };
 }
 
@@ -724,7 +813,8 @@ async function main(): Promise<void> {
     );
   }
 
-  const hoje = new Date();
+  const ambiente = criarAmbientePadrao(config.fusoHorario);
+  const hoje = ambiente.agora();
   const mundo = new Mundo();
   const diaInicial = somarDias(hoje, -(config.historicoDias - 1));
   mundo.gerarHistorico(diaInicial, hoje);
@@ -767,13 +857,21 @@ async function main(): Promise<void> {
   console.log(
     `[gerador] carga inicial de ${inicioS} até ${hojeS}, em janelas de 7 dias`
   );
-  const ultimaConfirmada = await carregarDe(config, mundo, inicioS, hojeS);
+  const ritmo = criarControleRitmo();
+  const ultimaConfirmada = await carregarDe(
+    config,
+    mundo,
+    inicioS,
+    hojeS,
+    ambiente,
+    ritmo
+  );
   console.log(
     `[gerador] carga inicial completa (última confirmada: ${ultimaConfirmada}). Ciclos de ${config.intervaloSegundos} s`
   );
 
   let enviadosOk = 0;
-  const gerador = new Gerador(config, mundo, ambientePadrao, ultimaConfirmada);
+  const gerador = new Gerador(config, mundo, ambiente, ultimaConfirmada, ritmo);
   while (true) {
     if (config.pararApos > 0 && enviadosOk >= config.pararApos) {
       console.log(

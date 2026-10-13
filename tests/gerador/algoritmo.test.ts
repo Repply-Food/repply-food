@@ -1,10 +1,14 @@
+import Decimal from "decimal.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   type AmbienteGerador,
   type Config,
   Gerador,
   Mundo,
+  calcularValoresMonetarios,
   carregarDe,
+  criarControleRitmo,
+  dataCivilNoFuso,
   enviarJanela,
   montarEnvelope,
   validarGerado,
@@ -17,6 +21,7 @@ const config: Config = {
   intervaloSegundos: 20,
   pararApos: 0,
   dryRun: false,
+  fusoHorario: "America/Fortaleza",
 };
 
 function ambienteComIntervalo(
@@ -101,6 +106,37 @@ describe("gerador", () => {
     expect(segunda.em - primeira.em).toBe(20_000);
   });
 
+  it("não divide nem repete uma janela de um único dia recusada por 413", async () => {
+    const { ambiente, tentativas } = ambienteComIntervalo([413]);
+    const resultado = await enviarJanela(
+      config,
+      new Mundo(),
+      "2026-10-10",
+      "2026-10-10",
+      ambiente
+    );
+    expect(resultado.ok).toBe(false);
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-10..2026-10-10",
+    ]);
+  });
+
+  it("interrompe a divisão quando a primeira metade falha", async () => {
+    const { ambiente, tentativas } = ambienteComIntervalo([413, 500]);
+    const resultado = await enviarJanela(
+      config,
+      new Mundo(),
+      "2026-10-09",
+      "2026-10-10",
+      ambiente
+    );
+    expect(resultado.ok).toBe(false);
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-09..2026-10-10",
+      "2026-10-09..2026-10-09",
+    ]);
+  });
+
   it("mantém aberta a conta cujo fechamento calculado ficaria no futuro", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     const mundo = new Mundo();
@@ -171,6 +207,63 @@ describe("gerador", () => {
     avancar(24 * 60 * 60 * 1000);
     await gerador.executarCiclo();
 
-    expect(tentativas[0]?.janela).toBe(tentativas[1]?.janela);
+    expect(tentativas[0]?.janela).toBe("2026-10-03..2026-10-10");
+    expect(tentativas[1]?.janela).toBe("2026-10-03..2026-10-11");
+  });
+
+  it("mantém o ritmo entre a carga inicial e o primeiro ciclo", async () => {
+    const configCurta = { ...config, intervaloSegundos: 1 };
+    const { ambiente, tentativas } = ambienteComIntervalo([200, 200]);
+    const ritmo = criarControleRitmo();
+    await carregarDe(
+      configCurta,
+      new Mundo(),
+      "2026-10-10",
+      "2026-10-10",
+      ambiente,
+      ritmo
+    );
+    const gerador = new Gerador(
+      configCurta,
+      new Mundo(),
+      ambiente,
+      "2026-10-10",
+      ritmo
+    );
+    await gerador.executarCiclo();
+    const [carga, ciclo] = tentativas;
+    if (!carga || !ciclo) throw new Error("faltaram tentativas");
+    expect(ciclo.em - carga.em).toBeGreaterThanOrEqual(20_000);
+  });
+
+  it("usa o fuso configurado, não a hora local do host", () => {
+    const instante = new Date("2026-10-10T03:30:00.000Z");
+    const civil = dataCivilNoFuso(instante, "America/Fortaleza");
+    expect(civil.toISOString()).toBe("2026-10-10T00:30:00.000Z");
+  });
+
+  it("calcula as seis colunas monetárias com centavos exatos", () => {
+    const valores = calcularValoresMonetarios(
+      new Decimal("0.10"),
+      new Decimal("0.20"),
+      new Decimal("0.30"),
+      new Decimal("1.005"),
+      new Decimal("2.675")
+    );
+    expect({
+      itens: valores.itens.toFixed(2),
+      descontos: valores.descontos.toFixed(2),
+      acrescimos: valores.acrescimos.toFixed(2),
+      taxaServico: valores.taxaServico.toFixed(2),
+      complemento: valores.complemento.toFixed(2),
+      consumido: valores.consumido.toFixed(2),
+    }).toEqual({
+      itens: "0.10",
+      descontos: "0.20",
+      acrescimos: "0.30",
+      taxaServico: "1.01",
+      complemento: "2.68",
+      consumido: "3.89",
+    });
   });
 });
