@@ -6,6 +6,21 @@ import ts from "typescript";
 
 const executar = promisify(execFile);
 
+// O único argumento livre é a URL do banco. No Windows ela passa pelo cmd.exe,
+// então só aceita caracteres sem significado especial para o shell.
+const URL_SEGURA = /^postgres(?:ql)?:\/\/[A-Za-z0-9._~:@/?=-]+$/;
+
+function comandoDaCli(argumentosCli) {
+  if (process.platform === "win32") {
+    // No Windows o npx é um arquivo .cmd: o Node só o executa pelo cmd.exe.
+    return [
+      process.env.ComSpec ?? "cmd.exe",
+      ["/d", "/s", "/c", "npx", ...argumentosCli],
+    ];
+  }
+  return ["npx", argumentosCli];
+}
+
 function validarTipos(arquivo, conteudo) {
   if (!conteudo.trim()) throw new Error("saida_vazia");
   const programa = ts.createProgram([arquivo], {
@@ -72,7 +87,9 @@ async function gerarTipos() {
   const argumentos = process.argv.slice(2);
   if (
     argumentos.length &&
-    (argumentos.length !== 2 || argumentos[0] !== "--db-url" || !argumentos[1])
+    (argumentos.length !== 2 ||
+      argumentos[0] !== "--db-url" ||
+      !URL_SEGURA.test(argumentos[1] ?? ""))
   ) {
     throw new Error("argumentos_invalidos");
   }
@@ -83,17 +100,18 @@ async function gerarTipos() {
   try {
     let resultado;
     try {
-      resultado = await executar(
-        "npx",
-        [
-          "supabase",
-          "gen",
-          "types",
-          "typescript",
-          ...(argumentos.length ? argumentos : ["--local"]),
-        ],
-        { timeout: 120_000, maxBuffer: 16 * 1024 * 1024 }
-      );
+      const [comando, argumentosDoComando] = comandoDaCli([
+        "supabase",
+        "gen",
+        "types",
+        "typescript",
+        ...(argumentos.length ? argumentos : ["--local"]),
+      ]);
+      resultado = await executar(comando, argumentosDoComando, {
+        timeout: 120_000,
+        maxBuffer: 16 * 1024 * 1024,
+        windowsHide: true,
+      });
     } catch {
       // Não imprimir comando, URL, stderr ou Error da CLI: pode haver segredo.
       throw new Error("cli_falhou");
