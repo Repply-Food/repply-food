@@ -554,18 +554,20 @@ function criarAmbientePadrao(fusoHorario: string): AmbienteGerador {
 
 async function enviarComRitmo(
   config: Config,
-  envelope: Envelope,
+  montar: () => Envelope,
   ambiente: AmbienteGerador,
   ritmo: ControleRitmo
-): Promise<RespostaEnvio> {
+): Promise<{ envelope: Envelope; resposta: RespostaEnvio }> {
   const agoraEmMs = () => ambiente.agoraEmMs?.() ?? ambiente.agora().getTime();
   const minimo = Math.max(20_000, config.intervaloSegundos * 1000);
   if (ritmo.ultimaTentativaEm !== null) {
     const decorrido = agoraEmMs() - ritmo.ultimaTentativaEm;
     await ambiente.aguardar(Math.max(0, minimo - decorrido));
   }
+  const envelope = montar();
+  validarGerado(envelope);
   ritmo.ultimaTentativaEm = agoraEmMs();
-  return ambiente.enviar(envelope, config);
+  return { envelope, resposta: await ambiente.enviar(envelope, config) };
 }
 
 function corpoJson(corpo: unknown): Corpo200 | null {
@@ -579,27 +581,36 @@ function corpoJson(corpo: unknown): Corpo200 | null {
  * Envia uma janela. 413 divide a janela ao meio (contrato §8); outros erros
  * devolvem ok=false e o chamador repete no próximo ciclo, sem mexer na data
  * confirmada (contrato §6).
+ * `ate` fixo conserva o período; um fornecedor resolve o limite após o ritmo.
+ * As metades de um 413 usam o período efetivamente enviado, sempre fixo.
  */
 export async function enviarJanela(
   config: Config,
   mundo: Mundo,
   desde: string,
-  ate: string,
+  ate: string | (() => string),
   ambiente: AmbienteGerador = criarAmbientePadrao(config.fusoHorario),
   ritmo: ControleRitmo = criarControleRitmo()
 ): Promise<ResultadoJanela> {
-  const envelope = montarEnvelope(
-    desde,
-    ate,
-    mundo.entradasJanela(desde, ate),
-    ambiente.agora()
+  const { envelope, resposta } = await enviarComRitmo(
+    config,
+    () => {
+      const limite = typeof ate === "function" ? ate() : ate;
+      return montarEnvelope(
+        desde,
+        limite,
+        mundo.entradasJanela(desde, limite),
+        ambiente.agora()
+      );
+    },
+    ambiente,
+    ritmo
   );
-  validarGerado(envelope);
-  const resposta = await enviarComRitmo(config, envelope, ambiente, ritmo);
+  const ateEnviado = envelope.janela.ate;
 
   if (resposta.status === 200) {
     const corpo = corpoJson(resposta.corpo);
-    const confirmada = corpo?.janela_confirmada?.ate ?? ate;
+    const confirmada = corpo?.janela_confirmada?.ate ?? ateEnviado;
     return {
       ok: true,
       confirmada,
@@ -608,8 +619,11 @@ export async function enviarJanela(
     };
   }
 
-  if (resposta.status === 413 && desde !== ate) {
-    const meio = somarDiasStr(desde, Math.floor(diasEntre(desde, ate) / 2));
+  if (resposta.status === 413 && desde !== ateEnviado) {
+    const meio = somarDiasStr(
+      desde,
+      Math.floor(diasEntre(desde, ateEnviado) / 2)
+    );
     const metade1 = await enviarJanela(
       config,
       mundo,
@@ -630,7 +644,7 @@ export async function enviarJanela(
       config,
       mundo,
       diaSeguinte(meio),
-      ate,
+      ateEnviado,
       ambiente,
       ritmo
     );
@@ -644,7 +658,7 @@ export async function enviarJanela(
     }
     return {
       ok: true,
-      confirmada: metade2.confirmada ?? ate,
+      confirmada: metade2.confirmada ?? ateEnviado,
       reenviar: metade1.reenviar ?? metade2.reenviar,
       resumo: "413: janela dividida ao meio, as duas metades ok",
     };
@@ -664,6 +678,9 @@ export async function enviarJanela(
  * Carga em janelas de 7 dias, da data `desde` até `ateFinal` (contrato §8):
  * só avança para a próxima depois do 200 da anterior. Devolve a última data
  * confirmada pelo servidor.
+ * `acompanharHoje=true`: até o dia corrente (CLI e reenvio), inclusive após
+ * resposta/ritmo cruzarem meia-noite, sem ultrapassar sete dias por janela.
+ * `false` (padrão): período fixo, mesmo se ateFinal coincidir com hoje.
  */
 export async function carregarDe(
   config: Config,
@@ -671,22 +688,27 @@ export async function carregarDe(
   desde: string,
   ateFinal: string,
   ambiente: AmbienteGerador = criarAmbientePadrao(config.fusoHorario),
-  ritmo: ControleRitmo = criarControleRitmo()
+  ritmo: ControleRitmo = criarControleRitmo(),
+  acompanharHoje = false
 ): Promise<string> {
   let atual = desde;
   let limite = ateFinal;
   let confirmada = "";
-  // Cargas até hoje acompanham a virada; cargas de período fixo continuam fixas.
-  const acompanharHoje = ateFinal === formatarData(ambiente.agora());
   while (true) {
     if (acompanharHoje) limite = maior(limite, formatarData(ambiente.agora()));
     if (atual > limite) break;
-    const fim = menor(somarDiasStr(atual, 6), limite);
+    const maximoDaJanela = somarDiasStr(atual, 6);
+    let fim = menor(maximoDaJanela, limite);
     const resultado = await enviarJanela(
       config,
       mundo,
       atual,
-      fim,
+      () => {
+        if (acompanharHoje)
+          limite = maior(limite, formatarData(ambiente.agora()));
+        fim = menor(maximoDaJanela, limite);
+        return fim;
+      },
       ambiente,
       ritmo
     );
@@ -753,14 +775,17 @@ export class Gerador {
     const desde = pendente
       ? menor(pendente.desde, desdeSolicitado)
       : desdeSolicitado;
-    const ate = pendente ? maior(pendente.ate, hoje) : hoje;
+    let ate = pendente ? maior(pendente.ate, hoje) : hoje;
     const cobriuVarredura =
       (pendente?.varreduraDiaria ?? false) || varreduraDiaria;
     const resultado = await enviarJanela(
       this.config,
       this.mundo,
       desde,
-      ate,
+      () => {
+        ate = maior(ate, formatarData(this.ambiente.agora()));
+        return ate;
+      },
       this.ambiente,
       this.ritmo
     );
@@ -783,10 +808,11 @@ export class Gerador {
         resultado.reenviar,
         hoje,
         this.ambiente,
-        this.ritmo
+        this.ritmo,
+        true
       );
     }
-    return resultado;
+    return { ...resultado, confirmada: this.ultimaConfirmada };
   }
 }
 
@@ -883,7 +909,8 @@ async function main(): Promise<void> {
     inicioS,
     hojeS,
     ambiente,
-    ritmo
+    ritmo,
+    true
   );
   console.log(
     `[gerador] carga inicial completa (última confirmada: ${ultimaConfirmada}). Ciclos de ${config.intervaloSegundos} s`

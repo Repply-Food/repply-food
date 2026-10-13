@@ -382,7 +382,8 @@ describe("gerador", () => {
       "2026-10-10",
       "2026-10-10",
       ambiente,
-      ritmo
+      ritmo,
+      true
     );
     const gerador = new Gerador(
       configCurta,
@@ -615,6 +616,154 @@ describe("gerador", () => {
       });
     }
   );
+
+  it("inclui o novo dia no reenvio quando o 200 inicial demora 20 s desde 23:59:50", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const inicio = Date.UTC(2026, 9, 10, 23, 59, 50);
+    const { ambiente, tentativas, avancar } = ambienteComIntervalo(
+      [
+        {
+          status: 200,
+          corpo: {
+            janela_confirmada: { desde: "2026-10-03", ate: "2026-10-10" },
+            reenviar_desde: "2026-10-09",
+          },
+        },
+        500,
+        200,
+      ],
+      inicio
+    );
+    const enviar = ambiente.enviar;
+    ambiente.enviar = async (envelope, configEnvio) => {
+      const resposta = await enviar(envelope, configEnvio);
+      if (tentativas.length === 1) avancar(20_000);
+      return resposta;
+    };
+    const gerador = new Gerador(config, new Mundo(), ambiente, "2026-10-09");
+    const resultado = await gerador.executarCiclo();
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-03..2026-10-10",
+      "2026-10-09..2026-10-11",
+      "2026-10-09..2026-10-11",
+    ]);
+    expect(tentativas.map(({ em }) => em - inicio)).toEqual([
+      0, 20_000, 40_000,
+    ]);
+    expect(resultado).toMatchObject({ ok: true, confirmada: "2026-10-11" });
+  });
+
+  it("inclui o novo dia no primeiro reenvio após espera do ritmo atravessar meia-noite", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const inicio = Date.UTC(2026, 9, 10, 23, 59, 50);
+    const { ambiente, tentativas } = ambienteComIntervalo(
+      [
+        {
+          status: 200,
+          corpo: {
+            janela_confirmada: { desde: "2026-10-03", ate: "2026-10-10" },
+            reenviar_desde: "2026-10-09",
+          },
+        },
+        500,
+        200,
+      ],
+      inicio
+    );
+    const gerador = new Gerador(config, new Mundo(), ambiente, "2026-10-09");
+    const resultado = await gerador.executarCiclo();
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-03..2026-10-10",
+      "2026-10-09..2026-10-11",
+      "2026-10-09..2026-10-11",
+    ]);
+    expect(tentativas.map(({ em }) => em - inicio)).toEqual([
+      0, 20_000, 40_000,
+    ]);
+    expect(resultado).toMatchObject({ ok: true, confirmada: "2026-10-11" });
+  });
+
+  it("monta o ciclo pendente após o ritmo, incluindo a virada mesmo sem pedido de reenvio", async () => {
+    const inicio = Date.UTC(2026, 9, 10, 23, 59, 50);
+    const { ambiente, tentativas } = ambienteComIntervalo([500, 200], inicio);
+    const ritmo = criarControleRitmo();
+    ritmo.ultimaTentativaEm = inicio;
+    const gerador = new Gerador(
+      config,
+      new Mundo(),
+      ambiente,
+      "2026-10-09",
+      ritmo
+    );
+    expect(await gerador.executarCiclo()).toMatchObject({
+      ok: false,
+      confirmada: null,
+    });
+    expect(await gerador.executarCiclo()).toMatchObject({
+      ok: true,
+      confirmada: "2026-10-11",
+    });
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-03..2026-10-11",
+      "2026-10-03..2026-10-11",
+    ]);
+    expect(tentativas.map(({ em }) => em - inicio)).toEqual([20_000, 40_000]);
+    expect(tentativas[0]?.envelope.enviado_em).toBe("2026-10-11T00:00:10");
+  });
+
+  it("carga explicitamente até hoje acompanha o ritmo sem estender a janela de sete dias", async () => {
+    const inicio = Date.UTC(2026, 9, 10, 23, 59, 50);
+    const { ambiente, tentativas } = ambienteComIntervalo([200, 200], inicio);
+    const ritmo = criarControleRitmo();
+    ritmo.ultimaTentativaEm = inicio;
+    expect(
+      await carregarDe(
+        config,
+        new Mundo(),
+        "2026-10-04",
+        "2026-10-10",
+        ambiente,
+        ritmo,
+        true
+      )
+    ).toBe("2026-10-11");
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-04..2026-10-10",
+      "2026-10-11..2026-10-11",
+    ]);
+    expect(tentativas.map(({ em }) => em - inicio)).toEqual([20_000, 40_000]);
+  });
+
+  it("período explicitamente fixo permanece fixo mesmo quando ate era hoje antes da falha", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const inicio = Date.UTC(2026, 9, 10, 23, 59, 50);
+    const { ambiente, tentativas, avancar } = ambienteComIntervalo(
+      [500, 200],
+      inicio
+    );
+    const enviar = ambiente.enviar;
+    ambiente.enviar = async (envelope, configEnvio) => {
+      const resposta = await enviar(envelope, configEnvio);
+      if (resposta.status === 500) avancar(20_000);
+      return resposta;
+    };
+    expect(
+      await carregarDe(
+        config,
+        new Mundo(),
+        "2026-10-09",
+        "2026-10-10",
+        ambiente,
+        criarControleRitmo(),
+        false
+      )
+    ).toBe("2026-10-10");
+    expect(tentativas.map(({ janela }) => janela)).toEqual([
+      "2026-10-09..2026-10-10",
+      "2026-10-09..2026-10-10",
+    ]);
+    expect(tentativas.map(({ em }) => em - inicio)).toEqual([0, 40_000]);
+  });
 
   it("exige fuso IANA explícito no modo real e declara Fortaleza no dry-run", () => {
     vi.stubEnv("SCC_FUSO", undefined);
