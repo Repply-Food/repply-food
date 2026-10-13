@@ -190,3 +190,13 @@
 - [x] Gerador envia pelo mesmo caminho HTTP com Bearer token.
 - [x] `types/database.types.ts` gerado e compila.
 - [x] Sem `any`, sem PII em log/payload, dinheiro em `numeric`, migrations só acrescentam.
+
+---
+
+## Fechamento complementar autorizado — 13/10/2026
+
+Código verificado: **`29691db`**. Fundação/recepção **aprovada LOCALMENTE**, com checklist complementar **A/B/C + Q1** aprovado na revisão final, sem residual técnico aberto. Verificação independente do controlador: tipos, lint (42 arquivos) e build sem erros; **198 testes em 13 arquivos**, sem skips. Base visual conferida em **390/1280 px**, claro/escuro, paper/ink e estado vazio.
+
+Dados locais preservados: demonstração com **327 contas / 324 ativas / 4 envios**, zero fixtures residuais e jobs ativos nos mesmos horários. Histórico e tarefas anteriores permanecem como registrados; decisões de produto intactas. Esta aprovação não abrange MVP, telas/login/PDF/alarme futuros, produção ou publicação.
+
+Pendências externas: auditoria de dependências de desenvolvimento e histórico de migrations locais aplicadas via `psql`, sem reparo silencioso. **Push e publicação continuam pendentes de autorização.**
