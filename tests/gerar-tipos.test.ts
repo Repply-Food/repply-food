@@ -19,6 +19,8 @@ const executar = promisify(execFile);
 const diretorios: string[] = [];
 const original = await readFile("types/database.types.ts", "utf8");
 const anterior = `// destino anterior da fixture\n${original}`;
+const jsonCanonico = original.match(/export type Json = [^\n]+/)?.[0];
+if (!jsonCanonico) throw new Error("Json canônico gerado não encontrado");
 
 afterEach(async () => {
   for (const diretorio of diretorios.splice(0))
@@ -113,9 +115,16 @@ describe("geração CLI atômica de tipos em destino próprio", () => {
     ],
     ["zero", "0", 0],
     ["Json ausente", "export type Database = { public: { Tables: {} } };", 0],
+    ["Database nulo", `${jsonCanonico}; export type Database = null;`, 0],
+    ["Database ausente com Json válido", `${jsonCanonico};`, 0],
     [
-      "Database nulo",
-      "export type Json = string; export type Database = null;",
+      "Database public incompleto com Json válido",
+      `${jsonCanonico}; export type Database = { public: { Tables: {} } };`,
+      0,
+    ],
+    [
+      "Database área escalar com Json válido",
+      `${jsonCanonico}; export type Database = { public: { Tables: number; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {} } };`,
       0,
     ],
     [
