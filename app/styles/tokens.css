@@ -1,19 +1,120 @@
+/* 1. Primitivas: paleta e famílias da identidade-visual/brandbook.html. */
 :root {
-  --bg: #ffffff;
-  --fg: #0a0a0a;
-  --brand-orange: #ff5a1f;
-  --brand-tomato: #e8371f;
-  --brand-leaf: #2f9e44;
-  --success: #1e9e5a;
-  --danger: #d64545;
-  --warning: #e8a33d;
-  --muted: #737373;
-  --border: #e5e5e5;
+  --palette-orange: #ff5a1f;
+  --palette-orange-deep: #e54a12;
+  --palette-tomato: #e8371f;
+  --palette-leaf: #2f9e44;
+  --palette-success: #1e9e5a;
+  --palette-danger: #d64545;
+  --palette-warning: #e8a33d;
+  --palette-black: #0a0a0a;
+  --palette-char: #1a1a1a;
+  --palette-slate-700: #404040;
+  --palette-slate-400: #a3a3a3;
+  --palette-slate-200: #e5e5e5;
+  --palette-slate-100: #f5f5f5;
+  --palette-white: #ffffff;
+  --font-family-sans: var(
+    --font-local-sans,
+    "Satoshi",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+  --font-family-display: var(
+    --font-local-display,
+    "General Sans",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+  --font-family-mono: var(
+    --font-local-mono,
+    "JetBrains Mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace
+  );
   --radius: 0.5rem;
-  --font-sans: "Satoshi", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  --font-display: "General Sans", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, monospace;
+}
+
+/* 2. Semântica: tema e ilhas independentes, inclusive quando aninhadas.
+   Quiet usa Slate 700/400: Slate 500 sobre Slate 100 reprova 4.5:1. */
+:root,
+.theme-light {
+  color-scheme: light;
+  --color-page: var(--palette-white);
+  --color-surface: var(--palette-slate-100);
+  --color-text: var(--palette-black);
+  --color-quiet: var(--palette-slate-700);
+  --color-border: var(--palette-slate-200);
+  --color-focus: var(--palette-black);
+}
+
+.dark,
+.theme-dark {
+  color-scheme: dark;
+  --color-page: var(--palette-black);
+  --color-surface: var(--palette-char);
+  --color-text: var(--palette-white);
+  --color-quiet: var(--palette-slate-400);
+  --color-border: var(--palette-slate-700);
+  --color-focus: var(--palette-white);
+}
+
+/* Ilhas vêm depois dos temas: prevalecem também no MESMO elemento. */
+.scheme-paper {
+  color-scheme: light;
+  --color-page: var(--palette-white);
+  --color-surface: var(--palette-slate-100);
+  --color-text: var(--palette-black);
+  --color-quiet: var(--palette-slate-700);
+  --color-border: var(--palette-slate-200);
+  --color-focus: var(--palette-black);
+}
+
+.scheme-ink {
+  color-scheme: dark;
+  --color-page: var(--palette-black);
+  --color-surface: var(--palette-char);
+  --color-text: var(--palette-white);
+  --color-quiet: var(--palette-slate-400);
+  --color-border: var(--palette-slate-700);
+  --color-focus: var(--palette-white);
+}
+
+/* 3. Aliases de consumidores. Recalculados em cada escopo: custom properties
+   herdadas já estão computadas e não seguem overrides no filho sozinhas. */
+:root,
+.theme-light,
+.theme-dark,
+.dark,
+.scheme-paper,
+.scheme-ink {
+  --bg: var(--color-page);
+  --fg: var(--color-text);
+  --surface: var(--color-surface);
+  --muted: var(--color-quiet);
+  --border: var(--color-border);
+  --focus-ring: var(--color-focus);
+  --brand-orange: var(--palette-orange);
+  --brand-tomato: var(--palette-tomato);
+  --brand-leaf: var(--palette-leaf);
+  --success: var(--palette-success);
+  --danger: var(--palette-danger);
+  --warning: var(--palette-warning);
+  --action-bg: var(--palette-orange);
+  --action-hover: var(--palette-orange-deep);
+  --action-fg: var(--palette-black);
+  --status-fg: var(--palette-black);
+  --font-sans: var(--font-family-sans);
+  --font-display: var(--font-family-display);
+  --font-mono: var(--font-family-mono);
 }

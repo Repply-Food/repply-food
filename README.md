@@ -2,7 +2,7 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 11/10/2026:** a fundação foi verificada localmente (banco, recepção, isolamento e build). As telas e o MVP ainda não foram implementados; o push desta verificação continua pendente.
+> **Estado em 13/10/2026:** fechamento complementar da fundação em verificação local, sem publicação. Recepção/isolamento e gerador foram revisados; a base visual, geração de tipos e gates combinados aguardam revisão independente. Telas, login completo, PDF e alarme por e-mail não estão implementados. Não é um MVP publicado nem aprovação final da fundação.
 
 ## Ordem de leitura
 
@@ -36,22 +36,52 @@ npm run dev
 
 ### Testes reais locais
 
-Os testes de recepção, isolamento e métricas usam o PostgreSQL local em `127.0.0.1:54322` e a API em `127.0.0.1:54321`; a suíte recusa outros endereços. Inicie o Supabase e mantenha a função em outro terminal:
+Os testes de recepção, isolamento, dia de operação e rotinas usam o PostgreSQL local em `127.0.0.1:54322` e a API em `127.0.0.1:54321`; não apontam para produção. Inicie o Supabase e mantenha a função em outro terminal (se já estiverem ativos, reutilize-os, sem reiniciar):
 
 ```bash
 npx supabase start
 npx supabase functions serve receber-envio
 ```
 
-Então rode `npm run test`. As fixtures criam IDs próprios e removem somente esses IDs ao final; não use `supabase db reset` nem apague a Casa de Demonstração para executar a suíte.
+Antes da suíte, `curl --max-time 5 -o /dev/null -s -w '%{http_code}\n' http://127.0.0.1:54321/functions/v1/receber-envio` deve devolver **405** (GET não é permitido). Se devolver 503 durante uma recarga automática, espere e confira novamente com prazo limitado antes de iniciar cenários; não pule testes nem reinicie um runtime de outro operador.
+
+Então rode `npm run test`. Os arquivos executam **em sequência**, com limites finitos por teste/hook; não rode duas suítes contra o mesmo banco simultaneamente. As fixtures usam IDs próprios, criação/limpeza transacionais e rollback quando há transação externa. Vigia/retenção globais ficam em rollback, sem persistir efeitos: a comparação de sinais usa uma trava curta com espera/execução limitadas, sem desligar o cron. Não use `supabase db reset`, limpeza por prefixo ou a Casa de Demonstração para executar a suíte.
+
+Testes focados reproduzíveis:
+
+```bash
+npm run test -- tests/design-tokens.test.ts tests/brand-assets.test.ts
+npm run test -- tests/gerar-tipos.test.ts
+npm run test -- tests/rotinas/estados-retencao.test.ts
+npm run test -- tests/gerador/algoritmo.test.ts
+```
+
+Os testes de tipos usam destinos temporários próprios e CLI controlada; os do gerador usam relógio/transporte controlados com piso de 20 s. Esses doubles não comprovam RLS: essa garantia vem das suítes HTTP/SQL reais separadas.
 
 **Verificação obrigatória:**
 ```bash
 npx tsc --noEmit  # tipos
 npm run check     # Biome
 npm run test      # Vitest
-npm run build     # build
+NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 npm run build  # build de produção local
 ```
+
+`NEXT_PUBLIC_APP_URL` é **obrigatória em produção, inclusive durante a build**. Na publicação futura, configure o endereço público correto; não use a URL local. A configuração recusa produção sem a variável, mesmo que o desenvolvimento local funcione.
+
+### Tipos do banco
+
+```bash
+# Banco já ativo: leitura do esquema local, sem iniciar/parar Docker
+npm run types -- --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
+# Alternativa quando a CLI local está configurada
+npm run types
+```
+
+O script Node gera em diretório temporário exclusivo junto ao destino, valida TypeScript/exportações `Database` e `Json`, compara a saída e só então substitui `types/database.types.ts` por rename atômico. Falha da CLI/saída vazia ou inválida preserva o destino; sucesso/falha limpa apenas o temporário próprio. Não edite tipos à mão, não aplique migrations para gerar tipos e não coloque credenciais remotas em comandos, logs ou exemplos.
+
+### Base visual
+
+`app/styles/tokens.css` separa primitivas aprovadas, semântica (`theme-light`/`theme-dark`, alias `dark`, ilhas `scheme-paper`/`scheme-ink`) e aliases de consumo (`--bg`, `--fg`, fontes/ações). Ilhas recalculam os aliases, independentemente do tema pai. `brand.css` contém consumidores reutilizáveis, não telas. Texto normal exige contraste 4.5:1, grande 3:1; ponto/logotipo decorativo não é texto. Botão laranja usa quase-preto também no hover, legenda usa cinzas aprovados com contraste e cor de dado acompanha texto/seta. Ícones em `public/` são cópias byte a byte de `identidade-visual/logos/app/`; fontes locais vêm de `identidade-visual/fontes/`.
 
 ## Stack
 
@@ -70,20 +100,29 @@ O sistema SCC envia as contas para a função `receber-envio` a cada ~5 minutos,
 
 Simula o SCC: gera meses de entradas realistas (almoço e jantar, pico de sexta e sábado, mesas abertas agora, contas esquecidas, descontos e garçons) e envia pelo **mesmo** `receber-envio` que o sistema real usa. Detalhes em `docs/arquitetura/recepcao-de-dados.md` §5 e no topo de `scripts/gerador-dados-ficticios.ts`.
 
-**Pré-requisito:** um token próprio de restaurante de teste e o Supabase local rodando (`npx supabase start`). As telas de admin e login ainda não existem: o token da demonstração foi preparado diretamente no banco local e não deve ser reutilizado por outra pessoa ou ambiente.
+**Envio real local:** exige token exclusivo de restaurante de teste, Supabase local ativo e o **fuso IANA do restaurante**, via `--fuso` ou `SCC_FUSO`. As telas de admin/login ainda não existem. Não use o token, o arquivo de configuração ou dados da Casa de Demonstração para testes/cargas.
 
 ```bash
-node --env-file=.env.gerador.local --import tsx scripts/gerador-dados-ficticios.ts
+# Só após autorização de carga, com arquivo próprio de configuração de teste
+node --env-file=.env.gerador.teste.local --import tsx scripts/gerador-dados-ficticios.ts --fuso America/Fortaleza
 ```
 
-O arquivo `.env.gerador.local` é ignorado pelo Git e guarda a URL local e o token do seu ambiente; crie-o localmente, sem colocar token real em exemplos ou no repositório. Para conferir apenas o envelope e o schema sem token nem envio HTTP, use `npm run gerador -- --dry-run`.
+O arquivo de configuração de teste deve ficar ignorado pelo Git, com `SCC_URL`, `SCC_TOKEN` e, se não usar a opção CLI, `SCC_FUSO`. Nunca copie o arquivo de outro operador nem coloque token real em exemplos/repositório. O fuso do host/navegador não substitui o fuso explícito do restaurante.
+
+Sem token e **sem HTTP**, o dry-run declara o fuso fictício `America/Fortaleza` (ou usa o fuso informado), monta/valida os envelopes pelo schema canônico e limita abertura/saída à referência civil atual:
+
+```bash
+npm run gerador -- --dry-run --historico-dias 7
+npm run gerador -- --dry-run --historico-dias 75
+```
 
 | Opção | O que faz |
 |---|---|
 | `SCC_URL` (env) | Endereço da função. Padrão: `http://127.0.0.1:54321/functions/v1/receber-envio` |
 | `SCC_TOKEN` (env) | Token do restaurante de teste (obrigatório para enviar) |
+| `--fuso <IANA>` / `SCC_FUSO` (env) | Fuso do restaurante, obrigatório em envio real; opção CLI tem precedência. Ex.: `America/Fortaleza` |
 | `--historico-dias <n>` | Dias de histórico simulados na carga inicial (padrão 75) |
-| `--intervalo <s>` | Segundos entre ciclos (padrão 300; o servidor responde 429 abaixo de 20 s) |
+| `--intervalo <s>` | Segundos entre ciclos (padrão 300); toda tentativa HTTP respeita no mínimo 20 s, inclusive 413/retry/reenvio |
 | `--parar-apos <n>` | Para de enviar depois de n ciclos com 200 — demonstra o alarme de "parado" |
 | `--dry-run` | Monta e valida os envelopes com o mesmo schema da função, sem enviar nada |
 

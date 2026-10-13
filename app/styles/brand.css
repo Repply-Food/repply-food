@@ -1,11 +1,63 @@
-.scheme-ink {
-  color: var(--bg);
-  background: var(--fg);
-}
-
+.theme-light,
+.theme-dark,
+.dark,
+.scheme-ink,
 .scheme-paper {
   color: var(--fg);
-  background: var(--bg);
+  background-color: var(--bg);
+}
+
+.brand-surface {
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+.text-quiet {
+  color: var(--muted);
+}
+
+.brand-heading {
+  font-family: var(--font-display);
+}
+
+.number-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.brand-action {
+  background-color: var(--action-bg);
+  color: var(--action-fg);
+  border-radius: var(--radius);
+}
+
+.brand-action:hover {
+  background-color: var(--action-hover);
+}
+
+.brand-action:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Cores de dado são preenchimentos acompanhados de texto/seta, nunca
+   texto pequeno isolado sobre branco ou significado apenas pela cor. */
+.status-success,
+.status-danger,
+.status-warning {
+  color: var(--status-fg);
+}
+
+.status-success {
+  background-color: var(--success);
+}
+
+.status-danger {
+  background-color: var(--danger);
+}
+
+.status-warning {
+  background-color: var(--warning);
 }
 
 .label-mono {
@@ -16,6 +68,7 @@
 }
 
 .signature-dot::after {
+  /* Ponto decorativo da assinatura, não rótulo pequeno laranja. */
   content: ".";
   color: var(--brand-orange);
 }
