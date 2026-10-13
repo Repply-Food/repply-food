@@ -1,0 +1,11 @@
+# Todo arquivo de texto entra e sai do git com LF, em qualquer sistema.
+# Sem isto, o Windows (core.autocrlf=true) grava CRLF na pasta de trabalho e o
+# Biome reprova a formatação de todos os arquivos.
+* text=auto eol=lf
+
+# Binários: nunca converter.
+*.png binary
+*.ico binary
+*.webp binary
+*.otf binary
+*.ttf binary
