@@ -1,6 +1,6 @@
 # Contrato de dados SCC → repply food.
 
-- **Versão:** 0.1, proposta da Repply, de 08/10/2026. **A validar com o Pedro (SCC).**
+- **Versão:** 0.2, proposta da Repply, de 13/10/2026. **A validar com o Pedro (SCC).**
 - **Para quem:** o desenvolvedor da SCC que implementa o envio no sistema do restaurante.
 - **Escopo:** como o sistema SCC manda as entradas (mesas e contas) para a nuvem da Repply. O fluxo é só de ida: a Repply nunca escreve no SCC.
 
@@ -48,6 +48,7 @@ Content-Type: application/json; charset=utf-8
 - **Tempo limite sugerido:** 10 s para conectar e 30 s para a resposta. Se estourar, conta como falha.
 - **O envio roda em segundo plano** (thread, serviço do Windows ou um programa pequeno separado, ver pergunta B19). O caixa nunca pode travar esperando a internet.
 - **Os ciclos nunca se sobrepõem.** Se o envio anterior ainda não terminou, o novo ciclo é pulado.
+- **No máximo um envio a cada 20 segundos por restaurante.** Abaixo disso a nuvem responde `429` e não grava nada. A contagem parte do último envio que a nuvem aceitou analisar: uma tentativa recusada com `429` **não** reinicia a contagem. Isso vale também para o envio extra do fechamento do caixa: se ele cair a menos de 20 s do ciclo anterior, espere completar os 20 s antes de mandar.
 
 > **Dica sobre HTTPS no Delphi (a conferir pelo Pedro, pergunta B9):**
 > - O `THTTPClient` (System.Net.HttpClient) usa o HTTPS do próprio Windows. No Windows 7, o TLS 1.2 depende de atualização do sistema.
@@ -145,7 +146,7 @@ Por isso cada envio precisa conter **a janela completa**, nunca só uma parte.
 | **400** | JSON inválido | Bug: registra e continua |
 | **413** | Envio grande demais (mais de **2 MB** ou de **2.000 entradas**) | Divide a janela ao meio e manda cada metade separada (§8) |
 | **422** | Formato errado (versão desconhecida, campo obrigatório faltando) | Registra a lista `erros` da resposta e continua. A Repply também recebe e guarda o envio |
-| **429** | Envios rápidos demais | Espera o próximo ciclo |
+| **429** | Envios rápidos demais: menos de 20 s desde o envio anterior | Não avança a data. Espera pelo menos 20 s (ou o próximo ciclo) e manda de novo a mesma janela |
 | **5xx** ou sem resposta | Problema do lado da Repply ou da rede | Espera o próximo ciclo. Nada se perde |
 
 Exemplo de `200`:
@@ -214,3 +215,4 @@ Estão em `_descoberta/2026-10-05-banco-de-perguntas.md`, blocos B e H.
 | Versão | Data | Mudança |
 |---|---|---|
 | 0.1 | 08/10/2026 | Proposta inicial da Repply, para a reunião com a SCC |
+| 0.2 | 13/10/2026 | Intervalo mínimo de 20 s entre envios explicado no §3 e no §7; o `429` não reinicia a contagem |

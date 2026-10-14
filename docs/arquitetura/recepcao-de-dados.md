@@ -30,7 +30,7 @@ Por que dividir assim:
    - calcula o SHA-256;
    - procura um token válido em `tokens_envio`.
    - Se não achar: `401`, sem detalhar o motivo. Registra só "token inválido" e o prefixo, se houver.
-4. **Ritmo:** se o mesmo restaurante enviou há menos de 20 s, devolve `429`.
+4. **Ritmo:** se o mesmo restaurante teve um envio analisado há menos de 20 s, devolve `429`. O `429` fica registrado em `envios` e em `ultimo_erro_em`, mas **não** mexe em `ultimo_envio_em`: se mexesse, um SCC enviando rápido demais nunca mais seria aceito.
 5. **JSON** inválido recebe `400`.
 6. **Dados pessoais:** remove `NomeCliente`, `RG`, `FoneCliente` e `Sexo` de cada entrada **antes de qualquer outra coisa**, inclusive antes de guardar o JSON original.
 7. **Validação do envelope** (schema com Zod):
@@ -68,7 +68,7 @@ Por que dividir assim:
    - `janela_confirmada`;
    - `proximo_envio_em_segundos`, que vem de `restaurantes.intervalo_envio_segundos`;
    - `reenviar_desde`, se houver pedido pendente.
-10. **Qualquer erro depois do passo 3:** insere em `envios` com `http_status` e uma mensagem **curta e sem dado pessoal**, e atualiza `sinal_de_vida.ultimo_envio_em` e `ultimo_erro_em`. Erro interno recebe `500`, e o SCC tenta no próximo ciclo.
+10. **Qualquer erro depois do passo 3:** insere em `envios` com `http_status` e uma mensagem **curta e sem dado pessoal**, e atualiza `sinal_de_vida.ultimo_envio_em` e `ultimo_erro_em` (no `429`, só o `ultimo_erro_em`). Erro interno recebe `500`, e o SCC tenta no próximo ciclo.
 
 > **Lição do CRM:** em gravação feita por service role, "zero linhas afetadas" não é sucesso. O `processar_envio` confere as contagens, e os testes cobrem o caso de chave que não bate.
 

@@ -88,15 +88,17 @@ async function registrarErro(
           .single();
         return { id: data?.id ?? null, error };
       },
-      async atualizarSinal(id, momento) {
+      async atualizarSinal(id, momento, contaComoEnvio) {
         const { data, error } = await db
           .from("sinal_de_vida")
           .upsert(
-            {
-              restaurante_id: id,
-              ultimo_envio_em: momento,
-              ultimo_erro_em: momento,
-            },
+            contaComoEnvio
+              ? {
+                  restaurante_id: id,
+                  ultimo_envio_em: momento,
+                  ultimo_erro_em: momento,
+                }
+              : { restaurante_id: id, ultimo_erro_em: momento },
             { onConflict: "restaurante_id" }
           )
           .select("restaurante_id")

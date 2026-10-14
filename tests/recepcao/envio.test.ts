@@ -287,6 +287,30 @@ describe("receber-envio no Supabase local", () => {
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(429);
   });
 
+  it("um 429 não reinicia a contagem dos vinte segundos", async () => {
+    expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(200);
+    await banco.query(
+      "update public.sinal_de_vida set ultimo_envio_em = now() - interval '15 seconds' where restaurante_id = $1",
+      [fixture.restauranteA]
+    );
+    expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(429);
+    const sinal = await banco.query(
+      `select ultimo_envio_em < now() - interval '14 seconds' as contagem_preservada,
+              ultimo_erro_em > now() - interval '5 seconds' as erro_registrado
+         from public.sinal_de_vida where restaurante_id = $1`,
+      [fixture.restauranteA]
+    );
+    expect(sinal.rows[0]).toEqual({
+      contagem_preservada: true,
+      erro_registrado: true,
+    });
+    await banco.query(
+      "update public.sinal_de_vida set ultimo_envio_em = ultimo_envio_em - interval '6 seconds' where restaurante_id = $1",
+      [fixture.restauranteA]
+    );
+    expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(200);
+  });
+
   it("aceita envelope vazio como sinal de vida e registra erro autenticado curto", async () => {
     expect((await enviar(fixture.tokenA, envelope([]))).status).toBe(200);
     const sinal = await banco.query<{
