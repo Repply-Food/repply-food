@@ -1,4 +1,5 @@
 import { type SupabaseClient, createClient } from "@supabase/supabase-js";
+import { credencialRecusada } from "./erros";
 
 /**
  * Peças do login que não dependem do Next (testáveis contra o Supabase local).
@@ -12,13 +13,22 @@ export function precisaTrocarSenha(
   return usuario?.app_metadata?.[AVISO_TROCA] === true;
 }
 
+/**
+ * Três respostas, para a tela não chamar de "senha errada" o que foi limite ou
+ * queda de rede: `falhou` leva o `code` do Supabase (quando houver).
+ */
+export type ConferenciaDeSenha =
+  | { tipo: "confere" }
+  | { tipo: "nao_confere" }
+  | { tipo: "falhou"; codigo: string | null };
+
 /** Confere a senha com um cliente descartável: não mexe na sessão do navegador. */
 export async function senhaConfere(
   url: string,
   chavePublica: string,
   email: string,
   senha: string
-): Promise<boolean> {
+): Promise<ConferenciaDeSenha> {
   const descartavel = createClient(url, chavePublica, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -26,9 +36,10 @@ export async function senhaConfere(
     email,
     password: senha,
   });
-  if (error) return false;
+  if (credencialRecusada(error)) return { tipo: "nao_confere" };
+  if (error) return { tipo: "falhou", codigo: error.code ?? null };
   await descartavel.auth.signOut({ scope: "local" });
-  return true;
+  return { tipo: "confere" };
 }
 
 /**

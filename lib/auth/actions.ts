@@ -10,7 +10,11 @@ import {
   conferirCookieRecuperacao,
 } from "./cookie-recuperacao";
 import { destinoDepoisDeEntrar } from "./destino";
-import { MENSAGEM_LOGIN_RECUSADO, mensagemDoErroDeAuth } from "./erros";
+import {
+  MENSAGEM_LOGIN_RECUSADO,
+  credencialRecusada,
+  mensagemDoErroDeAuth,
+} from "./erros";
 import {
   liberarPrimeiroAcesso,
   precisaTrocarSenha,
@@ -62,6 +66,20 @@ async function destinoDe(
   });
 }
 
+/**
+ * Primeiro acesso que parou no meio: o `updateUser` já trocou a senha, mas o
+ * aviso de troca não saiu. Ao repetir com a mesma senha o Supabase devolve
+ * `same_password`; isso não pode prender a pessoa, então a ação segue para tirar
+ * o aviso como se a troca tivesse acabado de dar certo (a senha já é a nova).
+ * `primeiroAcesso` vem do `getUser()` (servidor), nunca do formulário.
+ */
+function senhaJaTrocada(
+  erro: { code?: string | null },
+  primeiroAcesso: boolean
+): boolean {
+  return primeiroAcesso && erro.code === "same_password";
+}
+
 /** Depois de trocar a senha: renova a sessão (novo app_metadata) e tira os outros aparelhos. */
 async function fecharTroca(supabase: ClienteServidor): Promise<void> {
   await supabase.auth.refreshSession();
@@ -84,10 +102,14 @@ export async function entrarAction(
   });
   if (error || !data.user) {
     await segurarLatencia(inicio);
-    const limite = error?.code === "over_request_rate_limit";
+    // "Incorretos" só quando o login recusou a credencial. Limite de tentativas
+    // e falha de infraestrutura têm a própria frase: dizer "incorretos" para
+    // uma queda faria o dono achar que errou a senha.
     return {
       ok: false,
-      error: limite ? mensagemDoErroDeAuth(error) : MENSAGEM_LOGIN_RECUSADO,
+      error: credencialRecusada(error)
+        ? MENSAGEM_LOGIN_RECUSADO
+        : mensagemDoErroDeAuth(error),
     };
   }
   const destino = await destinoDe(supabase, precisaTrocarSenha(data.user));
@@ -123,8 +145,13 @@ export async function pedirNovaSenhaAction(
     }
   );
   await segurarLatencia(inicio);
-  // O Supabase responde igual para e-mail que existe ou não: erro aqui é de
-  // infraestrutura ou de limite, nunca uma pista de quem é cliente.
+  // A resposta tem de ser a mesma exista ou não o e-mail. O Supabase responde
+  // 200 para e-mail que não existe, mas para e-mail que existe e já pediu há
+  // pouco (a frequência é por usuário) devolve `over_email_send_rate_limit`:
+  // mostrar o limite aqui diria quem é cliente. Então esse vira o sucesso de
+  // sempre. Já `over_request_rate_limit` é por endereço de internet e vale
+  // antes de procurar o usuário, então não revela nada e continua visível.
+  if (error?.code === "over_email_send_rate_limit") return { ok: true };
   if (error) return { ok: false, error: mensagemDoErroDeAuth(error) };
   return { ok: true };
 }
@@ -158,14 +185,16 @@ export async function definirNovaSenhaAction(
     };
   }
 
+  const primeiroAcesso = precisaTrocarSenha(user);
   const { error } = await supabase.auth.updateUser({
     password: dados.data.senha,
   });
-  if (error) return { ok: false, error: mensagemDoErroDeAuth(error) };
+  if (error && !senhaJaTrocada(error, primeiroAcesso))
+    return { ok: false, error: mensagemDoErroDeAuth(error) };
 
   // Recuperar a senha também cumpre o primeiro acesso.
   if (
-    precisaTrocarSenha(user) &&
+    primeiroAcesso &&
     !(await liberarPrimeiroAcesso(createServiceClient(), user.id))
   ) {
     return { ok: false, error: mensagemDoErroDeAuth(null) };
@@ -198,13 +227,21 @@ export async function trocarSenhaAction(
       user.email,
       dados.data.senhaAtual
     );
-    if (!confere) return { ok: false, error: "A senha atual não confere." };
+    // Só "não confere" é senha errada; limite e queda de rede têm a própria frase.
+    if (confere.tipo === "nao_confere")
+      return { ok: false, error: "A senha atual não confere." };
+    if (confere.tipo === "falhou")
+      return {
+        ok: false,
+        error: mensagemDoErroDeAuth({ code: confere.codigo }),
+      };
   }
 
   const { error } = await supabase.auth.updateUser({
     password: dados.data.senha,
   });
-  if (error) return { ok: false, error: mensagemDoErroDeAuth(error) };
+  if (error && !senhaJaTrocada(error, primeiroAcesso))
+    return { ok: false, error: mensagemDoErroDeAuth(error) };
 
   if (
     primeiroAcesso &&

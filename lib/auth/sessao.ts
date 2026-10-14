@@ -82,6 +82,7 @@ export async function exigirCasa(
 
 export async function exigirAdmin(): Promise<Sessao> {
   const sessao = await exigirSessao();
+  if (sessao.precisaTrocarSenha) redirect("/trocar-senha");
   if (!sessao.ehAdmin) redirect(destinoDaSessao(sessao));
   return sessao;
 }

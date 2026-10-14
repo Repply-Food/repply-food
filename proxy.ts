@@ -1,3 +1,4 @@
+import { precisaTrocarSenha } from "@/lib/auth/nucleo";
 import { decidirRota, ehArquivoEstatico } from "@/lib/auth/rotas";
 import { atualizarSessao } from "@/lib/supabase/proxy";
 import { type NextRequest, NextResponse } from "next/server";
@@ -12,10 +13,17 @@ export async function proxy(request: NextRequest) {
     pathname: request.nextUrl.pathname,
     search: request.nextUrl.search,
     temUsuario: usuario !== null,
-    precisaTrocarSenha: usuario?.app_metadata?.precisa_trocar_senha === true,
+    precisaTrocarSenha: precisaTrocarSenha(usuario),
   });
   if (decisao.tipo === "segue") return resposta;
 
+  // Endereço ABSOLUTO de propósito. Medido num `next dev` real: o adaptador do
+  // Next recusa um `Location` relativo vindo do proxy (erro 500, "Invalid URL")
+  // e, quando o endereço é o do próprio pedido, ele mesmo o entrega ao
+  // navegador como relativo (`/entrar?next=...`). Assim a pessoa continua em
+  // 127.0.0.1 ou em localhost, como estava, e o login não se perde. Quem
+  // redireciona com endereço relativo à mão é a rota `/auth/confirmar`, que
+  // não passa por esse adaptador (`lib/auth/redirecionar.ts`).
   const redirecionamento = NextResponse.redirect(
     new URL(decisao.para, request.url)
   );
