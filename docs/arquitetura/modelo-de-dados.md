@@ -98,6 +98,7 @@ create table public.envios (
   recebidas      int, gravadas int, inalteradas int, removidas int,
   erro           text,                        -- mensagem curta, sem dado pessoal
   payload        jsonb,                       -- JSON original já sem os campos pessoais
+  campos_desconhecidos text[] not null default '{}', -- nomes (nunca valores) de campos fora da lista (D-51)
   duracao_ms     int
 );
 create index envios_restaurante_recebido_idx on public.envios (restaurante_id, recebido_em desc);
@@ -190,7 +191,8 @@ create table public.metas (
 |---|---|
 | `tem_acesso(restaurante_id)` | O login atual vê este restaurante? (está em `acessos` ou em `admins_repply`) |
 | `eh_admin_repply()` | O login atual é admin da Repply? |
-| `processar_envio(restaurante_id, envelope)` | Toda a gravação de um envio numa transação só (ver [`recepcao-de-dados.md`](recepcao-de-dados.md)) |
+| `processar_envio(restaurante_id, envelope, campos_desconhecidos)` | Toda a gravação de um envio numa transação só; grava apenas os campos da lista do contrato (ver [`recepcao-de-dados.md`](recepcao-de-dados.md)) |
+| `so_valor_simples(valor)` | Devolve o valor só se for texto, número, booleano ou null |
 | `atualizar_estados()` | O vigia: calcula o estado de cada restaurante (pg_cron a cada 5 min) |
 | `recalcular_dia_operacao(restaurante_id)` | Quando a virada ou o fuso mudarem |
 | `atualizar_turnos(restaurante_id, turnos)` | A única escrita do cliente em `restaurantes`: confere o acesso e muda só os turnos (D-35) |

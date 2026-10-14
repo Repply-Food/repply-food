@@ -32,7 +32,7 @@ Por que dividir assim:
    - Se não achar: `401`, sem detalhar o motivo. Registra só "token inválido" e o prefixo, se houver.
 4. **Ritmo:** se o mesmo restaurante teve um envio analisado há menos de 20 s, devolve `429`. O `429` fica registrado em `envios` e em `ultimo_erro_em`, mas **não** mexe em `ultimo_envio_em`: se mexesse, um SCC enviando rápido demais nunca mais seria aceito.
 5. **JSON** inválido recebe `400`.
-6. **Dados pessoais:** remove `NomeCliente`, `RG`, `FoneCliente` e `Sexo` de cada entrada **antes de qualquer outra coisa**, inclusive antes de guardar o JSON original.
+6. **Só entra o que está na lista** (D-29, D-51): fica o que o contrato §5 descreve. `NomeCliente`, `RG`, `FoneCliente` e `Sexo` saem em silêncio; qualquer outro campo desconhecido sai e tem **só o nome** registrado em `envios.campos_desconhecidos`. Isso acontece **antes de qualquer outra coisa**, inclusive antes de guardar o JSON original. A lista vive em `supabase/functions/_shared/campos-permitidos.ts`, e o `processar_envio` a repete como segunda barreira.
 7. **Validação do envelope** (schema com Zod):
    - `versao_formato = 1`;
    - `modo = "janela"`;
@@ -50,7 +50,7 @@ Por que dividir assim:
       - junta data e hora no fuso do restaurante;
       - calcula o `dia_operacao`;
       - converte os valores para `numeric`;
-      - leva os campos desconhecidos para `extras`;
+      - leva para `extras` só os campos listados como extras no contrato §5;
       - calcula o `hash_origem`;
    3. **upsert** por `(restaurante_id, cod_entrada)`:
       - se o `hash_origem` é igual ao gravado, conta como **inalterada** e não regrava;
@@ -101,6 +101,8 @@ As fixtures usam IDs exclusivos e a limpeza remove somente esses registros, incl
 | Dois envios simultâneos do mesmo restaurante | Os dois processados em sequência; contagens corretas |
 | Mesa aberta às 23h30 e fechada à 1h15, com virada às 5h | `dia_operacao` = dia da abertura |
 | Restaurante A envia com o token do B | Grava no B (o token é a identidade); nada vaza para o A |
+| Envio com campo novo (`CPF`) | Valor em lugar nenhum; nome em `envios.campos_desconhecidos` |
+| Segundo envio em menos de 20 s, depois de um `429` | A contagem não reinicia: aceito quando completar 20 s do envio anterior |
 
 ## 5. Gerador de dados fictícios
 

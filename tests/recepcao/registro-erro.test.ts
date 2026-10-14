@@ -9,6 +9,7 @@ const registro = {
   httpStatus: 422,
   erro: "formato inválido",
   payload: null,
+  camposDesconhecidos: [],
 };
 
 async function registrarErroAnterior(

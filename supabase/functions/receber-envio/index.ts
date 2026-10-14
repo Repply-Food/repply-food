@@ -1,16 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database, Json } from "../../../types/database.types.ts";
+import { filtrarEnvelope } from "../_shared/campos-permitidos.ts";
 import { validarEnvelope } from "../_shared/recepcao.ts";
 import { registrarErroNoBanco } from "../_shared/registro-erro.ts";
 
-// Limites e ritmo (contrato-de-dados.md §7 e recepcao-de-dados.md §3).
+// Limites e ritmo (contrato-de-dados.md §3 e §7, recepcao-de-dados.md §3).
 const LIMITE_BYTES = 2 * 1024 * 1024; // 2 MB
 const LIMITE_ENTRADAS = 2000;
 const RITMO_MS = 20 * 1000; // 20 s entre envios do mesmo restaurante
-
-// Dados pessoais descartados na recepção (D-29): nunca entram na nuvem, nem
-// no banco, nem no JSON original guardado em envios.payload.
-const CAMPOS_PESSOAIS = ["NomeCliente", "RG", "FoneCliente", "Sexo"];
 
 const url = Deno.env.get("SUPABASE_URL") ?? "";
 const chaveServico = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -41,24 +38,6 @@ async function sha256Hex(texto: string): Promise<string> {
   ).join("");
 }
 
-/** Remove os campos pessoais do envelope inteiro, em qualquer profundidade. */
-function removerDadosPessoais(valor: unknown): unknown {
-  if (Array.isArray(valor)) {
-    return valor.map((item) => removerDadosPessoais(item));
-  }
-  if (valor === null || typeof valor !== "object") {
-    return valor;
-  }
-  const limpo: Record<string, unknown> = {};
-  for (const [chave, item] of Object.entries(valor)) {
-    if (CAMPOS_PESSOAIS.includes(chave)) {
-      continue;
-    }
-    limpo[chave] = removerDadosPessoais(item);
-  }
-  return limpo;
-}
-
 /**
  * Erro depois do passo 3 (recepcao-de-dados.md §3.10): registra em envios com
  * mensagem curta e sem dado pessoal e atualiza o sinal de vida.
@@ -67,7 +46,8 @@ async function registrarErro(
   restauranteId: string,
   httpStatus: number,
   erro: string,
-  envelope?: unknown
+  envelope?: unknown,
+  camposDesconhecidos: string[] = []
 ): Promise<void> {
   const agora = new Date().toISOString();
   await registrarErroNoBanco(
@@ -83,6 +63,7 @@ async function registrarErro(
               registro.payload === undefined
                 ? null
                 : (registro.payload as Json),
+            campos_desconhecidos: registro.camposDesconhecidos,
           })
           .select("id")
           .single();
@@ -111,6 +92,7 @@ async function registrarErro(
       httpStatus,
       erro,
       payload: envelope,
+      camposDesconhecidos,
     },
     agora
   );
@@ -164,7 +146,8 @@ async function receberEnvio(req: Request): Promise<Response> {
   }
   const restauranteId = linhaToken.restaurante_id;
 
-  // 4. Ritmo (passo 4): mesmo restaurante enviou há menos de 20 s.
+  // 4. Ritmo (passo 4): mesmo restaurante enviou há menos de 20 s. O 429 não
+  //    reinicia a contagem (registro-erro.ts).
   const { data: sinal } = await db
     .from("sinal_de_vida")
     .select("ultimo_envio_em")
@@ -190,12 +173,19 @@ async function receberEnvio(req: Request): Promise<Response> {
     return responder({ ok: false, erro: "json inválido" }, 400);
   }
 
-  // 6. Descarta dados pessoais antes de validar e antes de guardar (passo 6).
-  const envelope = removerDadosPessoais(bruto);
+  // 6. Só entra o que está na lista do contrato (passo 6, D-29 e D-51): dado
+  //    pessoal e campo desconhecido saem antes de validar e antes de guardar.
+  const { envelope, camposDesconhecidos } = filtrarEnvelope(bruto);
 
   // 2.001+ entradas responde 413 (contrato §7), não 422.
   if (contarEntradas(envelope) > LIMITE_ENTRADAS) {
-    await registrarErro(restauranteId, 413, "mais de 2.000 entradas", envelope);
+    await registrarErro(
+      restauranteId,
+      413,
+      "mais de 2.000 entradas",
+      envelope,
+      camposDesconhecidos
+    );
     return responder({ ok: false, erro: "envio grande demais" }, 413);
   }
 
@@ -206,7 +196,13 @@ async function receberEnvio(req: Request): Promise<Response> {
       campo: problema.path.join("."),
       mensagem: problema.message,
     }));
-    await registrarErro(restauranteId, 422, "formato inválido", envelope);
+    await registrarErro(
+      restauranteId,
+      422,
+      "formato inválido",
+      envelope,
+      camposDesconhecidos
+    );
     return responder({ ok: false, erros }, 422);
   }
 
@@ -214,10 +210,17 @@ async function receberEnvio(req: Request): Promise<Response> {
   const { data: contagens, error: erroRpc } = await db.rpc("processar_envio", {
     p_restaurante_id: restauranteId,
     p_envelope: envelope as Json,
+    p_campos_desconhecidos: camposDesconhecidos,
   });
   if (erroRpc) {
     console.error("[receber-envio] processar_envio falhou");
-    await registrarErro(restauranteId, 500, "erro interno", envelope);
+    await registrarErro(
+      restauranteId,
+      500,
+      "erro interno",
+      envelope,
+      camposDesconhecidos
+    );
     return responder({ ok: false, erro: "erro interno" }, 500);
   }
 

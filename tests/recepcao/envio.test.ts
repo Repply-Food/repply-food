@@ -182,6 +182,103 @@ describe("receber-envio no Supabase local", () => {
     }
   });
 
+  it("guarda só os campos conhecidos e registra o nome do campo novo, nunca o valor", async () => {
+    const corpo = {
+      ...envelope([
+        entrada(511, {
+          CPF: "111.222.333-44",
+          EmailCliente: "pessoa@teste.repply.local",
+          Flyer: { indicado_por: "Fulano de Tal" },
+          ECF: 123456,
+          NomeCliente: "Pessoa de teste",
+        }),
+      ]),
+      tenant_name: "Casa que não deveria vir",
+    };
+    expect((await enviar(fixture.tokenA, corpo)).status).toBe(200);
+    const dados = await banco.query(
+      `select e.extras, v.payload, v.campos_desconhecidos
+         from public.entradas e
+         join public.envios v on v.restaurante_id = e.restaurante_id
+        where e.restaurante_id = $1 and e.cod_entrada = 511 and v.http_status = 200
+        order by v.id desc limit 1`,
+      [fixture.restauranteA]
+    );
+    expect(dados.rows[0]?.extras).toEqual({ ECF: 123456 });
+    expect(dados.rows[0]?.campos_desconhecidos).toEqual([
+      "CPF",
+      "EmailCliente",
+      "Flyer",
+      "envelope.tenant_name",
+    ]);
+    const gravado = JSON.stringify(dados.rows[0]);
+    for (const valor of [
+      "111.222.333-44",
+      "pessoa@teste.repply.local",
+      "Fulano de Tal",
+      "Casa que não deveria vir",
+      "Pessoa de teste",
+      "NomeCliente",
+    ]) {
+      expect(gravado).not.toContain(valor);
+    }
+  });
+
+  it("no envio recusado, o campo novo também não fica guardado", async () => {
+    const corpo = envelope([entrada(512, { CPF: "111.222.333-44" })]) as {
+      versao_formato: number;
+    };
+    corpo.versao_formato = 2;
+    expect((await enviar(fixture.tokenA, corpo)).status).toBe(422);
+    const registro = await banco.query(
+      `select payload, campos_desconhecidos from public.envios
+        where restaurante_id = $1 and http_status = 422
+        order by id desc limit 1`,
+      [fixture.restauranteA]
+    );
+    expect(registro.rows[0]?.campos_desconhecidos).toEqual(["CPF"]);
+    expect(JSON.stringify(registro.rows[0]?.payload)).not.toContain(
+      "111.222.333-44"
+    );
+  });
+
+  it("a função do banco barra o campo novo mesmo sem passar pela recepção", async () => {
+    const corpo = JSON.stringify({
+      ...envelope([
+        entrada(513, {
+          CPF: "111.222.333-44",
+          Flyer: { indicado_por: "Fulano de Tal" },
+          COO: 7,
+        }),
+      ]),
+      versao_scc: { nome: "Beltrano de Tal" },
+    });
+    await banco.query("select public.processar_envio($1, $2::jsonb)", [
+      fixture.restauranteA,
+      corpo,
+    ]);
+    const dados = await banco.query(
+      `select e.extras, v.payload, v.campos_desconhecidos, v.versao_scc, v.modo
+         from public.entradas e
+         join public.envios v on v.restaurante_id = e.restaurante_id
+        where e.restaurante_id = $1 and e.cod_entrada = 513
+        order by v.id desc limit 1`,
+      [fixture.restauranteA]
+    );
+    expect(dados.rows[0]?.extras).toEqual({ COO: 7 });
+    expect(dados.rows[0]?.campos_desconhecidos).toEqual(["CPF", "Flyer"]);
+    expect(dados.rows[0]?.versao_scc).toBeNull();
+    expect(dados.rows[0]?.modo).toBe("janela");
+    const gravado = JSON.stringify(dados.rows[0]);
+    for (const valor of [
+      "111.222.333-44",
+      "Fulano de Tal",
+      "Beltrano de Tal",
+    ]) {
+      expect(gravado).not.toContain(valor);
+    }
+  });
+
   it("rejeita token errado, revogado e expirado", async () => {
     expect((await enviar("rf_invalido", envelope([]))).status).toBe(401);
     await banco.query(

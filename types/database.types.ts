@@ -79,14 +79,14 @@ isOneToOne: false
                   ]
                 },"envios": {
                   Row: {
-                    "duracao_ms": number | null,"erro": string | null,"gravadas": number | null,"http_status": number,"id": number,"inalteradas": number | null,"janela_ate": string | null,"janela_desde": string | null,"modo": string | null,"payload": Json | null,"recebidas": number | null,"recebido_em": string,"removidas": number | null,"restaurante_id": string,"versao_formato": number | null,"versao_scc": string | null
+                    "campos_desconhecidos": (string)[],"duracao_ms": number | null,"erro": string | null,"gravadas": number | null,"http_status": number,"id": number,"inalteradas": number | null,"janela_ate": string | null,"janela_desde": string | null,"modo": string | null,"payload": Json | null,"recebidas": number | null,"recebido_em": string,"removidas": number | null,"restaurante_id": string,"versao_formato": number | null,"versao_scc": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "duracao_ms"?: number | null,"erro"?: string | null,"gravadas"?: number | null,"http_status": number,"id"?: never,"inalteradas"?: number | null,"janela_ate"?: string | null,"janela_desde"?: string | null,"modo"?: string | null,"payload"?: Json | null,"recebidas"?: number | null,"recebido_em"?: string,"removidas"?: number | null,"restaurante_id": string,"versao_formato"?: number | null,"versao_scc"?: string | null
+                    "campos_desconhecidos"?: (string)[],"duracao_ms"?: number | null,"erro"?: string | null,"gravadas"?: number | null,"http_status": number,"id"?: never,"inalteradas"?: number | null,"janela_ate"?: string | null,"janela_desde"?: string | null,"modo"?: string | null,"payload"?: Json | null,"recebidas"?: number | null,"recebido_em"?: string,"removidas"?: number | null,"restaurante_id": string,"versao_formato"?: number | null,"versao_scc"?: string | null
                   }
                   Update: {
-                    "duracao_ms"?: number | null,"erro"?: string | null,"gravadas"?: number | null,"http_status"?: number,"id"?: never,"inalteradas"?: number | null,"janela_ate"?: string | null,"janela_desde"?: string | null,"modo"?: string | null,"payload"?: Json | null,"recebidas"?: number | null,"recebido_em"?: string,"removidas"?: number | null,"restaurante_id"?: string,"versao_formato"?: number | null,"versao_scc"?: string | null
+                    "campos_desconhecidos"?: (string)[],"duracao_ms"?: number | null,"erro"?: string | null,"gravadas"?: number | null,"http_status"?: number,"id"?: never,"inalteradas"?: number | null,"janela_ate"?: string | null,"janela_desde"?: string | null,"modo"?: string | null,"payload"?: Json | null,"recebidas"?: number | null,"recebido_em"?: string,"removidas"?: number | null,"restaurante_id"?: string,"versao_formato"?: number | null,"versao_scc"?: string | null
                   }
                   Relationships: [
                     {
@@ -199,10 +199,13 @@ isOneToOne: false
 { Args: { "p_valor": string }; Returns: number
                            },
 "processar_envio":
-{ Args: { "p_envelope": Json,"p_restaurante_id": string }; Returns: Json
+{ Args: { "p_campos_desconhecidos"?: (string)[],"p_envelope": Json,"p_restaurante_id": string }; Returns: Json
                            },
 "recalcular_dia_operacao":
 { Args: { "p_restaurante_id": string }; Returns: undefined
+                           },
+"so_valor_simples":
+{ Args: { "p_valor": Json }; Returns: Json
                            },
 "tem_acesso":
 { Args: { "p_restaurante_id": string }; Returns: boolean

@@ -91,7 +91,7 @@ Copiado do CRM:
 - Troca de token: o antigo para **na hora** (padrão) ou **em 24 h** (D-38).
 - `verify_jwt = false` só na função `receber-envio`, com comentário no `config.toml` explicando por quê.
 - Corpo limitado a 2 MB, até 2.000 entradas, e um envio por restaurante a cada 20 s.
-- **Dados pessoais** (nome, RG, telefone, sexo) são descartados antes de qualquer gravação, inclusive do JSON original (D-29).
+- **Só entra o que está na lista** do contrato §5 (D-29, D-51). Nome, RG, telefone e sexo são descartados; campo desconhecido também, e dele fica só o nome. Vale para as contas e para o JSON original.
 
 ## 7. Navegador
 

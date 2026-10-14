@@ -106,6 +106,8 @@ Cada item da lista é uma **entrada** (sessão de mesa ou cartão), no mesmo for
 - `FoneCliente`
 - `Sexo`
 
+**Campo fora das duas tabelas acima não é guardado.** Se o SCC passar a mandar um campo novo, a nuvem descarta o valor e registra só o nome do campo, que aparece para a Repply no admin. Para um campo novo passar a valer, combine antes: ele entra nesta lista numa versão nova do contrato.
+
 Textos com espaço sobrando no fim ("Masculino ") são aceitos, porque a nuvem corta. Mas, se der, mande já sem.
 
 ## 6. O que entra em cada envio (modo A, janela por data)
@@ -215,4 +217,4 @@ Estão em `_descoberta/2026-10-05-banco-de-perguntas.md`, blocos B e H.
 | Versão | Data | Mudança |
 |---|---|---|
 | 0.1 | 08/10/2026 | Proposta inicial da Repply, para a reunião com a SCC |
-| 0.2 | 13/10/2026 | Intervalo mínimo de 20 s entre envios explicado no §3 e no §7; o `429` não reinicia a contagem |
+| 0.2 | 13/10/2026 | Intervalo mínimo de 20 s entre envios explicado no §3 e no §7; o `429` não reinicia a contagem; campo fora da lista do §5 é descartado (D-51) |

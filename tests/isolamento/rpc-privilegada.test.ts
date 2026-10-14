@@ -9,7 +9,7 @@ import {
 } from "../helpers/supabase-local";
 
 const funcoesReservadas = [
-  "public.processar_envio(uuid,jsonb)",
+  "public.processar_envio(uuid,jsonb,text[])",
   "public.recalcular_dia_operacao(uuid)",
   "public.atualizar_estados()",
 ] as const;

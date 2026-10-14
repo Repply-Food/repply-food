@@ -3,6 +3,8 @@ export type RegistroEnvio = {
   httpStatus: number;
   erro: string;
   payload: unknown;
+  /** Nomes (nunca valores) dos campos descartados por não estarem na lista. */
+  camposDesconhecidos: string[];
 };
 
 export type RegistroErroDb = {
