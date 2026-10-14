@@ -19,7 +19,7 @@
 **Pré-requisitos:**
 - **Node.js 22 ou mais novo.**
 - **Contêineres:** Docker Engine (Linux) ou **Rancher Desktop** em modo `dockerd (moby)` com o Kubernetes desligado (Windows, D-49).
-- **Supabase CLI** (via `npx supabase ...`).
+- **Supabase CLI:** já vem fixada no `package.json` (versão 2.120.0), então não há nada para instalar à parte. Chame-a com `npx supabase ...`.
 
 **Passo a passo:**
 ```bash
