@@ -128,9 +128,11 @@ Há duas pessoas pedindo, e o jeito de responder muda:
 7. Migrations só se **acrescentam**.
 8. Nenhuma credencial no git. A chave de serviço nunca tem prefixo `NEXT_PUBLIC_`.
 
+**8.1.** Função nova no banco nasce fechada. O `grant execute` para `authenticated` é dado de propósito, na própria migration, e a função entra na lista de `tests/isolamento/funcoes-fechadas.test.ts` (`seguranca-e-isolamento.md` §2, item 12).
+
 **Dados:**
 
-9. **Nome, RG, telefone e sexo** de clientes do restaurante são descartados na recepção, inclusive do JSON original guardado (D-29).
+9. **Nome, RG, telefone e sexo** de clientes do restaurante são descartados na recepção. Só é gravado o que está na lista do contrato §5 (D-29, D-51).
 10. Os dados do restaurante **nunca** são usados para nada além do painel dele, nem para propostas do Hub (D-29).
 11. Entrada do SCC nunca é apagada de verdade: vira `removida_em`.
 12. Dado real nunca entra em teste, plano, desenho ou migration. Use o gerador de dados fictícios.

@@ -9,7 +9,7 @@
 | `receber-envio` | Supabase Edge Function (Deno) | Autentica, deixa passar só os campos da lista do contrato (D-51), valida e chama o banco |
 | `processar_envio()` | Função no Postgres (plpgsql) | Grava, reconcilia e atualiza o sinal de vida, **numa transação só** |
 | `atualizar_estados()` | Função no Postgres, pg_cron a cada 5 min | O vigia: em dia, atrasado, parado ou fechado |
-| `enviar-alerta` | Supabase Edge Function | Manda o e-mail de alarme e o de "voltou" (Resend) |
+| `enviar-alerta` | Supabase Edge Function | **Ainda não existe** (alarme por e-mail, etapa 9). Vai mandar o e-mail de alarme e o de "voltou" (Resend) |
 
 Por que dividir assim:
 - a função HTTP fica pequena e fácil de testar;
@@ -30,11 +30,11 @@ Por que dividir assim:
    - calcula o SHA-256;
    - procura um token válido em `tokens_envio`.
    - Se não achar: `401`, sem detalhar o motivo. Registra só "token inválido" e o prefixo, se houver.
-4. **Ritmo:** se o mesmo restaurante teve um envio analisado há menos de 20 s, devolve `429`. O `429` fica registrado em `envios` e em `ultimo_erro_em`, mas **não** mexe em `ultimo_envio_em`: se mexesse, um SCC enviando rápido demais nunca mais seria aceito.
+4. **Ritmo:** se a última resposta desse restaurante que não foi `429` foi há menos de 20 s, devolve `429`. O `429` fica registrado em `envios` e em `ultimo_erro_em`, mas **não** mexe em `ultimo_envio_em`: se mexesse, um SCC enviando rápido demais nunca mais seria aceito.
 5. **JSON** inválido recebe `400`.
-6. **Só entra o que está na lista** (D-29, D-51): fica o que o contrato §5 descreve. `NomeCliente`, `RG`, `FoneCliente` e `Sexo` saem em silêncio; qualquer outro campo desconhecido sai e tem **só o nome** registrado em `envios.campos_desconhecidos`. Isso acontece **antes de qualquer outra coisa**, inclusive antes de guardar o JSON original. A lista vive em `supabase/functions/_shared/campos-permitidos.ts`, e o `processar_envio` a repete como segunda barreira.
+6. **Só entra o que está na lista** (D-29, D-51): fica o que o contrato §5 descreve. `NomeCliente`, `RG`, `FoneCliente` e `Sexo` saem em silêncio; qualquer outro campo desconhecido sai e tem **só o nome** registrado em `envios.campos_desconhecidos`. Isso acontece **antes de qualquer outra coisa**. O JSON original nunca é guardado: o que fica em `envios.payload` é remontado só com os campos da lista. A lista vive em `supabase/functions/_shared/campos-permitidos.ts`, e o `processar_envio` a repete como segunda barreira.
    - Valor composto (objeto ou lista) numa coluna ou num extra não passa. No extra, o campo vira nome desconhecido. Na coluna, ele some sem aviso e a validação do passo 7 responde `422`.
-   - Um nome de campo só é guardado se começar com letra e tiver até 40 caracteres (letras, números, `_` e `.`). Qualquer outro, como um CPF ou telefone usado como nome, vira `(nome fora do padrão)`. A lista guarda no máximo 20 nomes.
+   - Um nome de campo só é guardado se começar com letra e tiver até 40 caracteres (letras, números, `_` e `.`). Qualquer outro, como um CPF ou telefone usado como nome, vira `(nome fora do padrão)`. O teste vale em qualquer nível (entrada, envelope, `janela` e `lote`) e é feito no nome como veio, antes de colocar o prefixo `envelope.`, `janela.` ou `lote.`. A lista guarda no máximo 20 nomes.
 7. **Validação do envelope** (schema com Zod):
    - `versao_formato = 1`;
    - `modo = "janela"`;
@@ -104,6 +104,9 @@ As fixtures usam IDs exclusivos e a limpeza remove somente esses registros, incl
 | Mesa aberta às 23h30 e fechada à 1h15, com virada às 5h | `dia_operacao` = dia da abertura |
 | Restaurante A envia com o token do B | Grava no B (o token é a identidade); nada vaza para o A |
 | Envio com campo novo (`CPF`) | Valor em lugar nenhum; nome em `envios.campos_desconhecidos` |
+| Extra conhecido com valor composto (objeto ou lista) | Valor descartado; o nome do extra fica em `envios.campos_desconhecidos` |
+| Coluna conhecida com valor composto (objeto ou lista) | Descartada em silêncio, sem nome registrado; pela recepção, o envio recebe 422 |
+| Nome de campo só com dígitos (um CPF usado como nome), no envelope, na `janela`, no `lote` ou na entrada | Vira `(nome fora do padrão)` em `envios.campos_desconhecidos`; o número em lugar nenhum |
 | Segundo envio em menos de 20 s, depois de um `429` | A contagem não reinicia: aceito quando completar 20 s do envio anterior |
 
 ## 5. Gerador de dados fictícios

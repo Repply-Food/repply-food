@@ -31,7 +31,7 @@
     - O `.env.example` não tem valores.
     - A chave de serviço só existe no servidor e nas Edge Functions.
 11. **Dado real nunca entra em teste, plano, desenho ou migration.** Use os dados fictícios do gerador.
-12. **Função nova nasce fechada.** Desde a migration `20261013120000`, função criada em `public` não pode ser executada por `anon` nem por `authenticated`. Se o painel precisa chamar:
+12. **Função nova nasce fechada.** Desde a migration `20261013120000`, função criada em `public` não pode ser executada por `anon` nem por `authenticated`. A regra vale para função criada pelas migrations, que rodam com o papel `postgres`. Função criada por outro papel (por exemplo, direto no painel do Supabase) não é coberta, então crie função só por migration. Se o painel precisa chamar:
     - dê o `grant execute ... to authenticated` na mesma migration;
     - a função confere `tem_acesso(restaurante_id)` por dentro, ou é `security invoker` e deixa a RLS trabalhar;
     - acrescente-a à lista do teste `tests/isolamento/funcoes-fechadas.test.ts`.

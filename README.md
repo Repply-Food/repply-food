@@ -26,22 +26,34 @@
 # 1) Instalar dependências
 npm i
 
-# 2) Iniciar o banco local (a primeira vez aplica todas as migrations num banco vazio)
+# 2) Iniciar o banco local (a primeira vez aplica todas as migrations num banco vazio;
+#    no Windows com HD, veja os cuidados abaixo)
 npx supabase start
 
-# 3) Configurar variáveis: copie o exemplo e preencha com os valores de `npx supabase status`
-cp .env.example .env.local
+# 3) Configurar variáveis: copie o exemplo, sem sobrescrever um .env.local que já exista,
+#    e preencha com os valores de `npx supabase status -o env` (tabela abaixo)
+cp -n .env.example .env.local
 
 # 4) Rodar em desenvolvimento
 npm run dev
 ```
 
-O `.env.local` aponta **sempre** para o banco local. As chaves da nuvem ficam em `.env.nuvem.local`, que o git ignora e o Next.js não lê.
+Valores do `npx supabase status -o env` e a variável do `.env.local` que recebe cada um:
 
-**Windows com o Rancher num HD (disco mecânico).** O banco funciona, mas o disco lento pede três cuidados:
+| Valor do `status -o env` | Variável do `.env.local` |
+|---|---|
+| `API_URL` | `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_URL` (o mesmo valor nas duas) |
+| `ANON_KEY` | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| `SERVICE_ROLE_KEY` | `SUPABASE_SERVICE_ROLE_KEY` (nunca com `NEXT_PUBLIC_`) |
+
+O `.env.local` aponta **sempre** para o banco local. As chaves da nuvem ficam em `.env.nuvem.local`, que o git ignora e o Next.js não lê. O `cp -n` não sobrescreve: se o seu `.env.local` atual tiver chaves da nuvem (endereço com `supabase.co`), renomeie-o para `.env.nuvem.local` **antes** do passo 3.
+
+**Windows, com ou sem HD.** Se a subida falhar nos contêineres `vector` ou `logflare`, rode `npx supabase stop` e depois `npx supabase start -x vector,logflare`.
+
+**Windows com o Rancher num HD (disco mecânico).** O banco funciona, mas o disco lento pede três cuidados. Os comandos abaixo são do Git Bash:
 - suba só o que os testes usam e dê mais tempo para o Postgres ficar pronto:
   `SUPABASE_DB_HEALTH_TIMEOUT=10m npx supabase start -x studio,logflare,vector,storage-api,imgproxy,realtime,mailpit,postgres-meta`;
-- se o Docker não responder depois de abrir o Rancher (no registro `docker.log` aparece `timeout waiting for containerd to start`), religue só o serviço dele:
+- se o Docker não responder depois de abrir o Rancher (no registro `docker.log`, na pasta `%LOCALAPPDATA%\rancher-desktop\logs\`, aparece `timeout waiting for containerd to start`), religue só o serviço dele:
   `MSYS_NO_PATHCONV=1 wsl.exe -d rancher-desktop --exec /usr/local/bin/wsl-service docker restart`;
 - download interrompido pode deixar imagem corrompida (erro `unable to find user` ou `exec format error`): apague a imagem com `docker image rm` e suba de novo.
 

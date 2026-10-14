@@ -14,7 +14,7 @@
   - `ALERTA_EMAIL_PARA`
   - `ALERTA_EMAIL_DE`
 - **Vault:** a chave que o pg_net usa para chamar `enviar-alerta`.
-- **pg_cron:** rotinas `vigia` (5 min) e `retencao-envios` (diária).
+- **pg_cron:** as rotinas automáticas se chamam `rf-vigia` (a cada 5 min) e `rf-retencao` (diária).
 - **Auth** (os mesmos valores de `supabase/config.toml`; na nuvem se configura no painel ou por `config push`, com autorização):
   - **cadastro público desligado**: a conta é criada pelo admin (D-11);
   - o login por e-mail continua ligado;
