@@ -13,8 +13,13 @@ describe("selo quando a leitura do sinal de vida falha", () => {
       agora,
       fuso,
     });
-    expect(selo).toEqual({ tom: "neutro", texto: "sem leitura agora" });
+    expect(selo).toEqual({
+      tom: "neutro",
+      texto: "sem leitura agora",
+      textoCurto: "sem leitura",
+    });
     expect(selo.texto).not.toContain("aguardando");
+    expect(selo.textoCurto).not.toContain("aguardando");
   });
 
   it("com erro, ignora qualquer dado que tenha vindo junto", () => {
@@ -25,13 +30,18 @@ describe("selo quando a leitura do sinal de vida falha", () => {
         agora,
         fuso,
       })
-    ).toEqual({ tom: "neutro", texto: "sem leitura agora" });
+    ).toEqual({
+      tom: "neutro",
+      texto: "sem leitura agora",
+      textoCurto: "sem leitura",
+    });
   });
 
   it("sem erro e sem linha de sinal de vida continua 'aguardando o 1º envio'", () => {
     expect(seloDaLeitura({ dados: null, erro: null, agora, fuso })).toEqual({
       tom: "neutro",
       texto: "aguardando o 1º envio",
+      textoCurto: "aguardando",
     });
   });
 
@@ -60,7 +70,11 @@ describe("selo quando a leitura do sinal de vida falha", () => {
         agora,
         fuso,
       })
-    ).toEqual({ tom: "neutro", texto: "aguardando o 1º envio" });
+    ).toEqual({
+      tom: "neutro",
+      texto: "aguardando o 1º envio",
+      textoCurto: "aguardando",
+    });
   });
 });
 

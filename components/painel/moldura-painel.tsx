@@ -23,7 +23,7 @@ export function MolduraPainel({ casa, selo, children }: Props) {
         <MenuPainel slug={casa.slug} variante="lateral" />
         <div className="mt-auto flex flex-col gap-2 px-1 pb-2">
           <strong className="text-sm">{casa.nome}</strong>
-          <SeloDados selo={selo} compacto />
+          <SeloDados selo={selo} />
         </div>
       </aside>
 

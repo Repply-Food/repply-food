@@ -6,73 +6,93 @@ const agora = new Date("2026-10-10T00:40:00Z"); // sexta 21:40 em Fortaleza
 
 describe("selo do painel (D-53: segue o estado do vigia)", () => {
   it.each([
-    ["em_dia", "2026-10-10T00:38:00Z", "ok", "atualizado há 2 min"],
+    ["em_dia", "2026-10-10T00:38:00Z", "ok", "atualizado há 2 min", "há 2 min"],
     [
       "atrasado",
       "2026-10-10T00:20:00Z",
       "atencao",
       "atrasado · últimos dados há 20 min",
+      "atrasado · há 20 min",
     ],
-    ["parado", "2026-10-09T22:40:00Z", "alerta", "sem dados há 2 h"],
+    [
+      "parado",
+      "2026-10-09T22:40:00Z",
+      "alerta",
+      "sem dados há 2 h",
+      "sem dados há 2 h",
+    ],
     [
       "fechado",
       "2026-10-09T05:14:00Z",
       "neutro",
       "fechado agora · últimos dados às 02:14",
+      "fechado",
     ],
-    ["aguardando", null, "neutro", "aguardando o 1º envio"],
-  ] as const)("%s", (estado, ultimo, tom, texto) => {
+    ["aguardando", null, "neutro", "aguardando o 1º envio", "aguardando"],
+  ] as const)("%s", (estado, ultimo, tom, texto, textoCurto) => {
     expect(
       seloDoSinal({ estado, ultimoEnvioOkEm: ultimo, agora, fuso })
-    ).toEqual({ tom, texto });
+    ).toEqual({ tom, texto, textoCurto });
   });
 
   it("sem linha de sinal de vida é 'aguardando o 1º envio'", () => {
     expect(
       seloDoSinal({ estado: null, ultimoEnvioOkEm: null, agora, fuso })
-    ).toEqual({ tom: "neutro", texto: "aguardando o 1º envio" });
+    ).toEqual({
+      tom: "neutro",
+      texto: "aguardando o 1º envio",
+      textoCurto: "aguardando",
+    });
   });
 
   it("fechado sem nenhum envio diz só 'fechado agora'", () => {
     expect(
       seloDoSinal({ estado: "fechado", ultimoEnvioOkEm: null, agora, fuso })
-    ).toEqual({ tom: "neutro", texto: "fechado agora" });
+    ).toEqual({
+      tom: "neutro",
+      texto: "fechado agora",
+      textoCurto: "fechado",
+    });
   });
 
   it.each([
-    ["em_dia", "ok", "atualizado"],
-    ["atrasado", "atencao", "atrasado"],
-    ["parado", "alerta", "sem dados"],
-  ] as const)("%s sem nenhum envio não inventa tempo", (estado, tom, texto) => {
-    expect(seloDoSinal({ estado, ultimoEnvioOkEm: null, agora, fuso })).toEqual(
-      { tom, texto }
-    );
-  });
+    ["em_dia", "ok", "atualizado", "atualizado"],
+    ["atrasado", "atencao", "atrasado", "atrasado"],
+    ["parado", "alerta", "sem dados", "sem dados"],
+  ] as const)(
+    "%s sem nenhum envio não inventa tempo",
+    (estado, tom, texto, textoCurto) => {
+      expect(
+        seloDoSinal({ estado, ultimoEnvioOkEm: null, agora, fuso })
+      ).toEqual({ tom, texto, textoCurto });
+    }
+  );
 
   describe("data do último envio que não vira data", () => {
     it.each([
-      ["em_dia", "ok", "atualizado"],
-      ["atrasado", "atencao", "atrasado"],
-      ["parado", "alerta", "sem dados"],
-      ["fechado", "neutro", "fechado agora"],
+      ["em_dia", "ok", "atualizado", "atualizado"],
+      ["atrasado", "atencao", "atrasado", "atrasado"],
+      ["parado", "alerta", "sem dados", "sem dados"],
+      ["fechado", "neutro", "fechado agora", "fechado"],
     ] as const)(
       "%s trata 'lixo' como ausente, nunca 'há NaN dias'",
-      (estado, tom, texto) => {
+      (estado, tom, texto, textoCurto) => {
         const selo = seloDoSinal({
           estado,
           ultimoEnvioOkEm: "lixo",
           agora,
           fuso,
         });
-        expect(selo).toEqual({ tom, texto });
+        expect(selo).toEqual({ tom, texto, textoCurto });
         expect(selo.texto).not.toContain("NaN");
+        expect(selo.textoCurto).not.toContain("NaN");
       }
     );
 
     it("texto vazio também vale como ausente", () => {
       expect(
         seloDoSinal({ estado: "em_dia", ultimoEnvioOkEm: "", agora, fuso })
-      ).toEqual({ tom: "ok", texto: "atualizado" });
+      ).toEqual({ tom: "ok", texto: "atualizado", textoCurto: "atualizado" });
     });
   });
 
@@ -89,6 +109,7 @@ describe("selo do painel (D-53: segue o estado do vigia)", () => {
       expect(chamar()).toEqual({
         tom: "neutro",
         texto: "fechado agora · últimos dados há 19 h",
+        textoCurto: "fechado",
       });
     });
 
@@ -100,7 +121,11 @@ describe("selo do painel (D-53: segue o estado do vigia)", () => {
           agora,
           fuso: "Fuso/Inexistente",
         })
-      ).toEqual({ tom: "neutro", texto: "fechado agora" });
+      ).toEqual({
+        tom: "neutro",
+        texto: "fechado agora",
+        textoCurto: "fechado",
+      });
     });
 
     it("com o último dado de exatas 24 h atrás ainda mostra a hora", () => {
@@ -114,6 +139,7 @@ describe("selo do painel (D-53: segue o estado do vigia)", () => {
       ).toEqual({
         tom: "neutro",
         texto: "fechado agora · últimos dados às 21:40",
+        textoCurto: "fechado",
       });
     });
 
@@ -133,6 +159,7 @@ describe("selo do painel (D-53: segue o estado do vigia)", () => {
         ).toEqual({
           tom: "neutro",
           texto: `fechado agora · últimos dados ${relativo}`,
+          textoCurto: "fechado",
         });
       }
     );

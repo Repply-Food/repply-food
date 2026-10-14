@@ -15,7 +15,13 @@ export type EstadoSinal = (typeof ESTADOS)[number];
 
 export type Selo = {
   tom: "ok" | "atencao" | "alerta" | "neutro";
+  /** Frase completa: barra lateral do computador e leitor de tela. */
   texto: string;
+  /**
+   * Versão de uma linha só para o cabeçalho do celular (`● há 2 min`, como na
+   * tela aprovada). Continua dizendo o estado: a cor nunca é o único canal.
+   */
+  textoCurto: string;
 };
 
 export function estadoDoSinal(
@@ -80,35 +86,36 @@ export function seloDoSinal(e: {
   fuso: string;
 }): Selo {
   const ultimo = lerUltimoEnvio(e.ultimoEnvioOkEm);
+  const tempo = ultimo ? tempoDesde(ultimo, e.agora) : null;
   switch (e.estado) {
     case "em_dia":
       return {
         tom: "ok",
-        texto: ultimo
-          ? `atualizado ${tempoDesde(ultimo, e.agora)}`
-          : "atualizado",
+        texto: tempo ? `atualizado ${tempo}` : "atualizado",
+        textoCurto: tempo ?? "atualizado",
       };
     case "atrasado":
       return {
         tom: "atencao",
-        texto: ultimo
-          ? `atrasado · últimos dados ${tempoDesde(ultimo, e.agora)}`
-          : "atrasado",
+        texto: tempo ? `atrasado · últimos dados ${tempo}` : "atrasado",
+        textoCurto: tempo ? `atrasado · ${tempo}` : "atrasado",
       };
-    case "parado":
-      return {
-        tom: "alerta",
-        texto: ultimo
-          ? `sem dados ${tempoDesde(ultimo, e.agora)}`
-          : "sem dados",
-      };
+    case "parado": {
+      const texto = tempo ? `sem dados ${tempo}` : "sem dados";
+      return { tom: "alerta", texto, textoCurto: texto };
+    }
     case "fechado":
       return {
         tom: "neutro",
         texto: ultimo ? textoFechado(ultimo, e.agora, e.fuso) : "fechado agora",
+        textoCurto: "fechado",
       };
     default:
-      return { tom: "neutro", texto: "aguardando o 1º envio" };
+      return {
+        tom: "neutro",
+        texto: "aguardando o 1º envio",
+        textoCurto: "aguardando",
+      };
   }
 }
 
@@ -124,7 +131,13 @@ export function seloDaLeitura(e: {
   agora: Date;
   fuso: string;
 }): Selo {
-  if (e.erro) return { tom: "neutro", texto: "sem leitura agora" };
+  if (e.erro) {
+    return {
+      tom: "neutro",
+      texto: "sem leitura agora",
+      textoCurto: "sem leitura",
+    };
+  }
   return seloDoSinal({
     estado: estadoDoSinal(e.dados?.estado),
     ultimoEnvioOkEm: e.dados?.ultimo_envio_ok_em ?? null,
