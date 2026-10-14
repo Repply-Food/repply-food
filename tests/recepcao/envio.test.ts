@@ -1,6 +1,7 @@
 import type { Client } from "pg";
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { EXTRAS_CONHECIDOS } from "../../supabase/functions/_shared/campos-permitidos";
 import {
   type Fixture,
   conectarBanco,
@@ -281,19 +282,12 @@ describe("receber-envio no Supabase local", () => {
     }
   });
 
-  it("a função do banco aceita os 10 extras do contrato com valor simples", async () => {
-    const extras = {
-      Reabilitado: null,
-      Flyer: null,
-      ConferenciaDeMesa: null,
-      HabilitacaoAutomatica: null,
-      DesabilitacaoAutomatica: null,
-      LimiteMinimo: 0,
-      LimiteMaximo: 10000,
-      ECF: 1,
-      CER: 2,
-      COO: 3,
-    };
+  it("a função do banco aceita todos os extras da lista do TypeScript", async () => {
+    // Montado a partir da lista em TypeScript: se a lista do SQL ficar
+    // diferente dela, um extra some e este teste falha.
+    const extras = Object.fromEntries(
+      EXTRAS_CONHECIDOS.map((nome, i) => [nome, i < 5 ? null : i])
+    );
     await banco.query("select public.processar_envio($1, $2::jsonb)", [
       fixture.restauranteA,
       JSON.stringify(envelope([entrada(514, extras)])),
@@ -308,6 +302,29 @@ describe("receber-envio no Supabase local", () => {
     );
     expect(dados.rows[0]?.extras).toEqual(extras);
     expect(dados.rows[0]?.campos_desconhecidos).toEqual([]);
+  });
+
+  it("a função do banco não grava como nome de campo um número vindo de fora", async () => {
+    await banco.query(
+      "select public.processar_envio($1, $2::jsonb, $3::text[])",
+      [
+        fixture.restauranteA,
+        JSON.stringify(envelope([entrada(515)])),
+        ["11122233344", "CampoNovo"],
+      ]
+    );
+    const dados = await banco.query(
+      `select v.*
+         from public.envios v
+        where v.restaurante_id = $1
+        order by v.id desc limit 1`,
+      [fixture.restauranteA]
+    );
+    expect(dados.rows[0]?.campos_desconhecidos).toEqual([
+      "(nome fora do padrão)",
+      "CampoNovo",
+    ]);
+    expect(JSON.stringify(dados.rows[0])).not.toContain("11122233344");
   });
 
   it("rejeita token errado, revogado e expirado", async () => {

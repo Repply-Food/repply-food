@@ -151,4 +151,22 @@ describe("lista do que a nuvem aceita guardar", () => {
     expect(JSON.stringify(resultado)).not.toContain("Maria da Silva");
     expect(JSON.stringify(resultado)).not.toContain("11122233344");
   });
+
+  it("nome só de dígitos no envelope, na janela ou no lote vira nome fora do padrão", () => {
+    const noEnvelope = filtrarEnvelope(
+      envelopeCompleto([], { "11122233344": 1 })
+    );
+    const naJanela = filtrarEnvelope(
+      envelopeCompleto([], {
+        janela: { desde: "2026-10-08", ate: "2026-10-09", "11122233344": 1 },
+      })
+    );
+    const noLote = filtrarEnvelope(
+      envelopeCompleto([], { lote: { numero: 1, total: 1, "11122233344": 1 } })
+    );
+    for (const resultado of [noEnvelope, naJanela, noLote]) {
+      expect(resultado.camposDesconhecidos).toEqual(["(nome fora do padrão)"]);
+      expect(JSON.stringify(resultado)).not.toContain("11122233344");
+    }
+  });
 });

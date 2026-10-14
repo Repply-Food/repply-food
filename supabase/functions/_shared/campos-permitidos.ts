@@ -67,6 +67,7 @@ const CAMPOS_DO_LOTE: readonly string[] = ["numero", "total"];
  * letra, então um CPF ou telefone usado como nome (só dígitos) não passa.
  */
 const NOME_SEGURO = /^[A-Za-z][A-Za-z0-9_.]{0,39}$/;
+const NOME_FORA_DO_PADRAO = "(nome fora do padrão)";
 const LIMITE_DE_NOMES = 20;
 
 export type EnvelopeFiltrado = {
@@ -86,6 +87,21 @@ function ehSimples(valor: unknown): boolean {
   );
 }
 
+/**
+ * Registra o nome de um campo descartado. A chave CRUA é que precisa ter cara
+ * de nome de campo: testar só o nome já com o prefixo deixaria passar um CPF
+ * usado como nome (`janela.11122233344` começa com letra).
+ */
+function registrarDescartado(
+  desconhecidos: Set<string>,
+  prefixo: string,
+  chave: string
+): void {
+  desconhecidos.add(
+    NOME_SEGURO.test(chave) ? `${prefixo}${chave}` : NOME_FORA_DO_PADRAO
+  );
+}
+
 function filtrarBloco(
   bloco: unknown,
   permitidos: readonly string[],
@@ -100,7 +116,7 @@ function filtrarBloco(
     if (permitidos.includes(chave) && ehSimples(valor)) {
       limpo[chave] = valor;
     } else {
-      desconhecidos.add(`${prefixo}${chave}`);
+      registrarDescartado(desconhecidos, prefixo, chave);
     }
   }
   return limpo;
@@ -129,7 +145,7 @@ function filtrarEntrada(entrada: unknown, desconhecidos: Set<string>): unknown {
 function nomesSeguros(nomes: Set<string>): string[] {
   const seguros = new Set<string>();
   for (const nome of nomes) {
-    seguros.add(NOME_SEGURO.test(nome) ? nome : "(nome fora do padrão)");
+    seguros.add(NOME_SEGURO.test(nome) ? nome : NOME_FORA_DO_PADRAO);
   }
   return [...seguros].sort().slice(0, LIMITE_DE_NOMES);
 }
@@ -166,7 +182,7 @@ export function filtrarEnvelope(bruto: unknown): EnvelopeFiltrado {
         ? valor.map((item) => filtrarEntrada(item, desconhecidos))
         : null;
     } else {
-      desconhecidos.add(`envelope.${chave}`);
+      registrarDescartado(desconhecidos, "envelope.", chave);
     }
   }
   return { envelope, camposDesconhecidos: nomesSeguros(desconhecidos) };

@@ -375,11 +375,31 @@ describe("isolamento nas 8 tabelas", () => {
     return resultado.rows.map((linha) => linha.dono);
   }
 
-  async function tentar(usuario: string, tentativa: Tentativa): Promise<void> {
+  /** Executa `executar` como visitante sem login (papel anon), no padrão do `ler`. */
+  async function comoAnon<T>(executar: () => Promise<T>): Promise<T> {
+    await banco.query("begin");
+    try {
+      await banco.query("set local role anon");
+      const resultado = await executar();
+      await banco.query("commit");
+      return resultado;
+    } catch (erro) {
+      await banco.query("rollback");
+      throw erro;
+    }
+  }
+
+  /** `quem` é o id de um login ou "anon", o visitante sem login. */
+  async function tentar(
+    quem: string | "anon",
+    tentativa: Tentativa
+  ): Promise<void> {
+    const consulta = () =>
+      banco.query(tentativa.sql, tentativa.parametros(fixture));
     const executar = () =>
-      comoAutenticado(banco, usuario, () =>
-        banco.query(tentativa.sql, tentativa.parametros(fixture))
-      );
+      quem === "anon"
+        ? comoAnon(consulta)
+        : comoAutenticado(banco, quem, consulta);
     if (tentativa.esperado === "recusa") {
       await expect(executar()).rejects.toMatchObject({ code: "42501" });
       return;
@@ -403,7 +423,21 @@ describe("isolamento nas 8 tabelas", () => {
     }
   );
 
-  it("depois de todas as tentativas do cliente, nada mudou", async () => {
+  it.each(escritasDoCliente)(
+    "o login sem acesso não consegue $descricao ($esperado)",
+    async (tentativa) => {
+      await tentar(fixture.usuarioSemAcesso, tentativa);
+    }
+  );
+
+  it.each(escritasDoCliente)(
+    "sem login ninguém consegue $descricao ($esperado)",
+    async (tentativa) => {
+      await tentar("anon", tentativa);
+    }
+  );
+
+  it("depois de todas as tentativas de quem não é admin, nada mudou", async () => {
     const estado = await banco.query(
       `select
          (select string_agg(nome, '|' order by nome) from public.restaurantes where id = any($1::uuid[])) as restaurantes,
