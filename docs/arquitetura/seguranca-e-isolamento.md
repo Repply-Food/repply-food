@@ -31,6 +31,10 @@
     - O `.env.example` não tem valores.
     - A chave de serviço só existe no servidor e nas Edge Functions.
 11. **Dado real nunca entra em teste, plano, desenho ou migration.** Use os dados fictícios do gerador.
+12. **Função nova nasce fechada.** Desde a migration `20261013120000`, função criada em `public` não pode ser executada por `anon` nem por `authenticated`. Se o painel precisa chamar:
+    - dê o `grant execute ... to authenticated` na mesma migration;
+    - a função confere `tem_acesso(restaurante_id)` por dentro, ou é `security invoker` e deixa a RLS trabalhar;
+    - acrescente-a à lista do teste `tests/isolamento/funcoes-fechadas.test.ts`.
 
 ## 3. Políticas por tabela
 
@@ -69,6 +73,7 @@ Copiado do CRM:
 - [ ] Nenhuma credencial ou dado pessoal sem necessidade.
 - [ ] Teste: o login do restaurante A tenta ler e escrever no B e é recusado.
 - [ ] Tipos regenerados (`npm run types`).
+- [ ] Função nova: `grant` explícito só para quem precisa, e entrada na lista de `funcoes-fechadas.test.ts`.
 
 ## 5. Login e senha
 
