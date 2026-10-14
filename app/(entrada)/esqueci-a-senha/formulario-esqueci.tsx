@@ -1,6 +1,7 @@
 "use client";
 
 import { TextField } from "@/components/forms/form-field";
+import { useHidratado } from "@/components/forms/use-hidratado";
 import { Button } from "@/components/ui/button";
 import { pedirNovaSenhaAction } from "@/lib/auth/actions";
 import { type EsqueciInput, esqueciSchema } from "@/lib/auth/schemas";
@@ -10,6 +11,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 export function FormularioEsqueci() {
+  // Botão desligado até a página carregar: sem ele, Enter num campo enviaria o
+  // formulário sozinho, sem JavaScript.
+  const hidratado = useHidratado();
   const [enviando, iniciar] = useTransition();
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -61,7 +65,10 @@ export function FormularioEsqueci() {
 
   return (
     <FormProvider {...form}>
+      {/* `method="post"`: se o envio escapar do JavaScript (Enter antes de a
+          página carregar), o navegador nunca põe o e-mail na URL. */}
       <form
+        method="post"
         onSubmit={form.handleSubmit(enviar)}
         className="flex flex-col gap-4"
         noValidate
@@ -85,7 +92,7 @@ export function FormularioEsqueci() {
           type="submit"
           size="toque"
           className="w-full"
-          disabled={enviando}
+          disabled={!hidratado || enviando}
         >
           {enviando ? "Enviando…" : "Mandar o link"}
         </Button>

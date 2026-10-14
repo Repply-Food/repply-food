@@ -7,6 +7,11 @@ if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_APP_URL) {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Só no desenvolvimento: o login local roda em 127.0.0.1 (é o `site_url` do
+  // Supabase local, para onde o link do e-mail volta). Sem isto o Next bloqueia
+  // os recursos de desenvolvimento (`/_next/hmr`) fora de `localhost`, a página
+  // nunca hidrata e o formulário cai no envio nativo do navegador.
+  allowedDevOrigins: ["127.0.0.1"],
   async headers() {
     return [
       {

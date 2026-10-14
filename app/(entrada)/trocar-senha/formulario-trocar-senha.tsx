@@ -1,6 +1,7 @@
 "use client";
 
 import { TextField } from "@/components/forms/form-field";
+import { useHidratado } from "@/components/forms/use-hidratado";
 import { Button } from "@/components/ui/button";
 import { trocarSenhaAction } from "@/lib/auth/actions";
 import { type TrocarSenhaInput, trocarSenhaSchema } from "@/lib/auth/schemas";
@@ -19,6 +20,9 @@ export function FormularioTrocarSenha({
   depois: string | null;
 }) {
   const router = useRouter();
+  // Botão desligado até a página carregar: sem ele, Enter num campo enviaria o
+  // formulário sozinho, sem JavaScript.
+  const hidratado = useHidratado();
   const [enviando, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const form = useForm<TrocarSenhaInput>({
@@ -41,7 +45,10 @@ export function FormularioTrocarSenha({
 
   return (
     <FormProvider {...form}>
+      {/* `method="post"`: se o envio escapar do JavaScript (Enter antes de a
+          página carregar), o navegador nunca põe a senha na URL. */}
       <form
+        method="post"
         onSubmit={form.handleSubmit(enviar)}
         className="flex flex-col gap-4"
         noValidate
@@ -76,7 +83,7 @@ export function FormularioTrocarSenha({
           type="submit"
           size="toque"
           className="w-full"
-          disabled={enviando}
+          disabled={!hidratado || enviando}
         >
           {enviando ? "Salvando…" : "Salvar e continuar"}
         </Button>
