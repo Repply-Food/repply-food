@@ -15,8 +15,10 @@
   - `ALERTA_EMAIL_DE`
 - **Vault:** a chave que o pg_net usa para chamar `enviar-alerta`.
 - **pg_cron:** rotinas `vigia` (5 min) e `retencao-envios` (diária).
-- **Auth:**
-  - senha mínima de 8;
+- **Auth** (os mesmos valores de `supabase/config.toml`; na nuvem se configura no painel ou por `config push`, com autorização):
+  - **cadastro público desligado**: a conta é criada pelo admin (D-11);
+  - o login por e-mail continua ligado;
+  - senha mínima de 8 (`lib/auth/senha.ts`);
   - URL do site = `food.repplyhub.com.br`;
   - modelos de e-mail na marca;
   - **SMTP próprio (Resend)** antes do primeiro cliente, porque o SMTP padrão do Supabase tem limite baixo de envios.
