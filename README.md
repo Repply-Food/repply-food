@@ -18,7 +18,7 @@
 
 **Pré-requisitos:**
 - **Node.js 22 ou mais novo.**
-- **Docker Engine** para rodar o banco local do Supabase (validado nesta máquina). O Rancher Desktop, em modo `dockerd` e com Kubernetes desligado, continua sendo alternativa.
+- **Contêineres:** Docker Engine (Linux) ou **Rancher Desktop** em modo `dockerd (moby)` com o Kubernetes desligado (Windows, D-49).
 - **Supabase CLI** (via `npx supabase ...`).
 
 **Passo a passo:**
@@ -26,15 +26,24 @@
 # 1) Instalar dependências
 npm i
 
-# 2) Configurar variáveis
-cp .env.example .env.local
-
-# 3) Iniciar banco local
+# 2) Iniciar o banco local (a primeira vez aplica todas as migrations num banco vazio)
 npx supabase start
+
+# 3) Configurar variáveis: copie o exemplo e preencha com os valores de `npx supabase status`
+cp .env.example .env.local
 
 # 4) Rodar em desenvolvimento
 npm run dev
 ```
+
+O `.env.local` aponta **sempre** para o banco local. As chaves da nuvem ficam em `.env.nuvem.local`, que o git ignora e o Next.js não lê.
+
+**Windows com o Rancher num HD (disco mecânico).** O banco funciona, mas o disco lento pede três cuidados:
+- suba só o que os testes usam e dê mais tempo para o Postgres ficar pronto:
+  `SUPABASE_DB_HEALTH_TIMEOUT=10m npx supabase start -x studio,logflare,vector,storage-api,imgproxy,realtime,mailpit,postgres-meta`;
+- se o Docker não responder depois de abrir o Rancher (no registro `docker.log` aparece `timeout waiting for containerd to start`), religue só o serviço dele:
+  `MSYS_NO_PATHCONV=1 wsl.exe -d rancher-desktop --exec /usr/local/bin/wsl-service docker restart`;
+- download interrompido pode deixar imagem corrompida (erro `unable to find user` ou `exec format error`): apague a imagem com `docker image rm` e suba de novo.
 
 ### Testes reais locais
 
