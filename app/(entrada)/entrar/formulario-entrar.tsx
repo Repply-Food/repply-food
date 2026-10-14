@@ -3,6 +3,7 @@
 import { TextField } from "@/components/forms/form-field";
 import { Button } from "@/components/ui/button";
 import { entrarAction } from "@/lib/auth/actions";
+import { MENSAGEM_LOGIN_RECUSADO } from "@/lib/auth/erros";
 import { safeNextOr } from "@/lib/auth/safe-next";
 import { type EntrarInput, entrarSchema } from "@/lib/auth/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,13 +62,20 @@ export function FormularioEntrar({ next }: { next: string | null }) {
         />
         {erro ? (
           <p role="alert" className="text-sm text-destructive">
-            {erro}{" "}
-            <Link
-              href="/esqueci-a-senha"
-              className="font-bold underline underline-offset-4"
-            >
-              Criar uma senha nova
-            </Link>
+            {erro}
+            {/* O convite só faz sentido quando a credencial foi recusada; no
+                limite de tentativas e na falha genérica, é só a frase. */}
+            {erro === MENSAGEM_LOGIN_RECUSADO ? (
+              <>
+                {" "}
+                <Link
+                  href="/esqueci-a-senha"
+                  className="font-bold underline underline-offset-4"
+                >
+                  Criar uma senha nova
+                </Link>
+              </>
+            ) : null}
           </p>
         ) : null}
         <Button

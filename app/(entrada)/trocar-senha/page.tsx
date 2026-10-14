@@ -1,6 +1,10 @@
 import { BotaoSair } from "@/components/entrada/botao-sair";
 import { safeNext } from "@/lib/auth/safe-next";
 import { destinoDaSessao, exigirSessao } from "@/lib/auth/sessao";
+import {
+  type ParametroDaUrl,
+  textoDoParametro,
+} from "@/lib/entrada/parametros";
 import Link from "next/link";
 import { FormularioTrocarSenha } from "./formulario-trocar-senha";
 
@@ -9,7 +13,7 @@ export const metadata = { title: "Trocar a senha · repply food." };
 export default async function PaginaTrocarSenha({
   searchParams,
 }: {
-  searchParams: Promise<{ voltar?: string }>;
+  searchParams: Promise<{ voltar?: ParametroDaUrl }>;
 }) {
   const sessao = await exigirSessao();
   const primeiroAcesso = sessao.precisaTrocarSenha;
@@ -17,9 +21,13 @@ export default async function PaginaTrocarSenha({
   // lá (`?voltar=`, só caminho do próprio site). Sem ele, o destino da conta.
   // A origem fixa existe só para a validação resolver o endereço como o
   // navegador resolveria (pega truques como "/<tab>/outro-site.com").
+  // `?voltar=a&voltar=b` chega como lista: vale como ausente.
   const voltar = primeiroAcesso
     ? null
-    : safeNext((await searchParams).voltar, "https://painel.invalid");
+    : safeNext(
+        textoDoParametro((await searchParams).voltar),
+        "https://painel.invalid"
+      );
   const voltarPara = voltar ?? destinoDaSessao(sessao);
 
   return (

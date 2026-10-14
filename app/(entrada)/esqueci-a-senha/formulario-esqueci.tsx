@@ -6,17 +6,22 @@ import { pedirNovaSenhaAction } from "@/lib/auth/actions";
 import { type EsqueciInput, esqueciSchema } from "@/lib/auth/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 export function FormularioEsqueci() {
   const [enviando, iniciar] = useTransition();
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const avisoRef = useRef<HTMLOutputElement>(null);
   const form = useForm<EsqueciInput>({
     resolver: zodResolver(esqueciSchema),
     defaultValues: { email: "" },
   });
+
+  useEffect(() => {
+    if (enviado) avisoRef.current?.focus();
+  }, [enviado]);
 
   function enviar(valores: EsqueciInput) {
     setErro(null);
@@ -33,11 +38,17 @@ export function FormularioEsqueci() {
   if (enviado) {
     return (
       <div className="flex flex-col gap-4">
-        {/* biome-ignore lint/a11y/useSemanticElements: aviso de confirmação em região viva; o <output> é de resultado de cálculo e nasce inline. */}
-        <p role="status" className="brand-surface rounded-md p-4 text-sm">
+        {/* O formulário some ao enviar e o foco cairia no <body>; o aviso
+            nasce já com texto (alguns leitores não anunciam isso). Levar o
+            foco para ele resolve os dois. <output> tem role="status". */}
+        <output
+          ref={avisoRef}
+          tabIndex={-1}
+          className="brand-surface block rounded-md p-4 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
           Se esse e-mail tiver acesso ao repply food., você vai receber um link
           para criar a senha nova. Confira também a caixa de spam.
-        </p>
+        </output>
         <Link
           href="/entrar"
           className="flex min-h-11 items-center justify-center text-center text-sm underline underline-offset-4"

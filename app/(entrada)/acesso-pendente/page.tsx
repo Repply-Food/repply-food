@@ -1,7 +1,8 @@
 import { BotaoSair } from "@/components/entrada/botao-sair";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { destinoDaSessao, exigirSessao } from "@/lib/auth/sessao";
 import { WHATSAPP_REPPLY } from "@/lib/contato";
+import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 export const metadata = { title: "Acesso · repply food." };
@@ -25,21 +26,21 @@ export default async function PaginaAcessoPendente() {
             : "Fale com a Repply para liberar o painel da sua casa."}
         </p>
       </div>
-      <Button
-        size="toque"
-        className="w-full"
-        render={
-          // biome-ignore lint/a11y/useAnchorContent: o texto vem do <Button>, que injeta os filhos dentro do <a> do `render`.
-          <a
-            href={WHATSAPP_REPPLY.link}
-            target="_blank"
-            rel="noopener noreferrer"
-          />
-        }
-        nativeButton={false}
+      {/* <a> comum com o visual do botão: o `render` do base-ui poria
+          role="button" no link e o leitor de tela perderia o "link". Em 320 px
+          o texto não cabe numa linha só, então o `nowrap` do botão sai. */}
+      <a
+        href={WHATSAPP_REPPLY.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(
+          buttonVariants({ size: "toque" }),
+          "h-auto min-h-11 w-full whitespace-normal py-2 text-center"
+        )}
       >
         Falar com a Repply no WhatsApp
-      </Button>
+        <span className="sr-only">, abre em nova aba</span>
+      </a>
       <BotaoSair />
     </section>
   );

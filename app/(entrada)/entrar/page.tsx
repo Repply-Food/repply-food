@@ -1,21 +1,25 @@
 import { BotaoSair } from "@/components/entrada/botao-sair";
 import { destinoDaSessao, obterSessao } from "@/lib/auth/sessao";
+import {
+  type ParametroDaUrl,
+  avisoDaEntrada,
+  textoDoParametro,
+} from "@/lib/entrada/parametros";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FormularioEntrar } from "./formulario-entrar";
 
 export const metadata = { title: "Entrar · repply food." };
 
-const AVISOS: Record<string, string> = {
-  link_invalido: "Este link não vale mais. Peça um novo em “Esqueci a senha”.",
-};
-
 export default async function PaginaEntrar({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; erro?: string }>;
+  searchParams: Promise<{ next?: ParametroDaUrl; erro?: ParametroDaUrl }>;
 }) {
-  const { next, erro } = await searchParams;
+  // Parâmetro repetido (`?next=a&next=b`) chega como lista: vale como ausente.
+  const params = await searchParams;
+  const next = textoDoParametro(params.next);
+  const erro = textoDoParametro(params.erro);
   const sessao = await obterSessao();
 
   if (sessao) {
@@ -40,7 +44,7 @@ export default async function PaginaEntrar({
     );
   }
 
-  const aviso = erro ? AVISOS[erro] : undefined;
+  const aviso = avisoDaEntrada(erro);
 
   return (
     <section className="flex flex-col gap-6">
@@ -50,7 +54,7 @@ export default async function PaginaEntrar({
           {aviso}
         </p>
       ) : null}
-      <FormularioEntrar next={next ?? null} />
+      <FormularioEntrar next={next} />
     </section>
   );
 }

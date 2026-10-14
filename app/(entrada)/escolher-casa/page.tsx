@@ -9,7 +9,9 @@ export const metadata = { title: "Escolha a casa · repply food." };
 export default async function PaginaEscolherCasa() {
   const sessao = await exigirSessao();
   const ativas = sessao.casas.filter((c) => c.situacao === "ativo");
-  if (sessao.ehAdmin || ativas.length < 2) redirect(destinoDaSessao(sessao));
+  // A troca de senha pendente vem antes de tudo (o destino da sessão cuida disso).
+  if (sessao.precisaTrocarSenha || sessao.ehAdmin || ativas.length < 2)
+    redirect(destinoDaSessao(sessao));
 
   return (
     <section className="flex flex-col gap-6">
