@@ -6,7 +6,7 @@
 
 | Peça | Onde roda | Faz |
 |---|---|---|
-| `receber-envio` | Supabase Edge Function (Deno) | Autentica, valida, tira dados pessoais e chama o banco |
+| `receber-envio` | Supabase Edge Function (Deno) | Autentica, deixa passar só os campos da lista do contrato (D-51), valida e chama o banco |
 | `processar_envio()` | Função no Postgres (plpgsql) | Grava, reconcilia e atualiza o sinal de vida, **numa transação só** |
 | `atualizar_estados()` | Função no Postgres, pg_cron a cada 5 min | O vigia: em dia, atrasado, parado ou fechado |
 | `enviar-alerta` | Supabase Edge Function | Manda o e-mail de alarme e o de "voltou" (Resend) |
@@ -33,6 +33,8 @@ Por que dividir assim:
 4. **Ritmo:** se o mesmo restaurante teve um envio analisado há menos de 20 s, devolve `429`. O `429` fica registrado em `envios` e em `ultimo_erro_em`, mas **não** mexe em `ultimo_envio_em`: se mexesse, um SCC enviando rápido demais nunca mais seria aceito.
 5. **JSON** inválido recebe `400`.
 6. **Só entra o que está na lista** (D-29, D-51): fica o que o contrato §5 descreve. `NomeCliente`, `RG`, `FoneCliente` e `Sexo` saem em silêncio; qualquer outro campo desconhecido sai e tem **só o nome** registrado em `envios.campos_desconhecidos`. Isso acontece **antes de qualquer outra coisa**, inclusive antes de guardar o JSON original. A lista vive em `supabase/functions/_shared/campos-permitidos.ts`, e o `processar_envio` a repete como segunda barreira.
+   - Valor composto (objeto ou lista) numa coluna ou num extra não passa. No extra, o campo vira nome desconhecido. Na coluna, ele some sem aviso e a validação do passo 7 responde `422`.
+   - Um nome de campo só é guardado se começar com letra e tiver até 40 caracteres (letras, números, `_` e `.`). Qualquer outro, como um CPF ou telefone usado como nome, vira `(nome fora do padrão)`. A lista guarda no máximo 20 nomes.
 7. **Validação do envelope** (schema com Zod):
    - `versao_formato = 1`;
    - `modo = "janela"`;
@@ -42,7 +44,7 @@ Por que dividir assim:
    - campos obrigatórios das entradas presentes.
 
    Se falhar: `422` com a lista `erros`, e o envio é guardado como erro.
-8. **`processar_envio(restaurante_id, envelope)`**, numa transação:
+8. **`processar_envio(restaurante_id, envelope, campos_desconhecidos)`**, numa transação. O terceiro argumento traz os nomes que a recepção descartou no passo 6, e a função junta com os que ela mesma descarta:
    1. trava por restaurante (`pg_advisory_xact_lock`), para que dois envios ao mesmo tempo sejam processados em fila;
    2. **normaliza** cada entrada:
       - corta espaços;
@@ -61,7 +63,7 @@ Por que dividir assim:
       - foram fechadas (`fechada_em` local) dentro de `[janela.desde, janela.ate]`;
    5. atualiza `sinal_de_vida`: `ultimo_envio_em`, `ultimo_envio_ok_em` e, se for o primeiro, `primeiro_envio_em`;
    6. atualiza `tokens_envio.ultimo_uso_em`;
-   7. insere a linha em `envios` (contagens, duração, JSON original sem os dados pessoais);
+   7. insere a linha em `envios` (contagens, duração, nomes dos campos descartados e o JSON guardado, remontado só com os campos da lista, nunca o original);
    8. se `restaurantes.pedido_reenvio_desde` está preenchido e `janela.desde ≤ pedido_reenvio_desde`, limpa o pedido, porque o reenvio começou.
 9. **Resposta `200`** com:
    - `recebidas`, `gravadas`, `inalteradas`, `removidas`;

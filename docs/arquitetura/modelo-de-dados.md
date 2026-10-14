@@ -97,7 +97,7 @@ create table public.envios (
   janela_ate     date,
   recebidas      int, gravadas int, inalteradas int, removidas int,
   erro           text,                        -- mensagem curta, sem dado pessoal
-  payload        jsonb,                       -- JSON original já sem os campos pessoais
+  payload        jsonb,                       -- remontado só com os campos da lista do contrato (D-51), nunca o JSON original
   campos_desconhecidos text[] not null default '{}', -- nomes (nunca valores) de campos fora da lista (D-51)
   duracao_ms     int
 );

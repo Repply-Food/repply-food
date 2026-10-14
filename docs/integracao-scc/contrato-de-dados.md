@@ -48,7 +48,7 @@ Content-Type: application/json; charset=utf-8
 - **Tempo limite sugerido:** 10 s para conectar e 30 s para a resposta. Se estourar, conta como falha.
 - **O envio roda em segundo plano** (thread, serviço do Windows ou um programa pequeno separado, ver pergunta B19). O caixa nunca pode travar esperando a internet.
 - **Os ciclos nunca se sobrepõem.** Se o envio anterior ainda não terminou, o novo ciclo é pulado.
-- **No máximo um envio a cada 20 segundos por restaurante.** Abaixo disso a nuvem responde `429` e não grava nada. A contagem parte do último envio que a nuvem aceitou analisar: uma tentativa recusada com `429` **não** reinicia a contagem. Isso vale também para o envio extra do fechamento do caixa: se ele cair a menos de 20 s do ciclo anterior, espere completar os 20 s antes de mandar.
+- **No máximo um envio a cada 20 segundos por restaurante.** Abaixo disso a nuvem responde `429` e não processa o envio. A contagem parte da última resposta que não foi `429`: uma tentativa recusada com `429` **não** reinicia a contagem. Isso vale também para o envio extra do fechamento do caixa: se ele cair a menos de 20 s do ciclo anterior, espere completar os 20 s antes de mandar.
 
 > **Dica sobre HTTPS no Delphi (a conferir pelo Pedro, pergunta B9):**
 > - O `THTTPClient` (System.Net.HttpClient) usa o HTTPS do próprio Windows. No Windows 7, o TLS 1.2 depende de atualização do sistema.
@@ -97,7 +97,7 @@ Cada item da lista é uma **entrada** (sessão de mesa ou cartão), no mesmo for
 | `codCartaoMesa`, `CodGarcon`, `codOperadorHab`, `codOperadorDesab`, `codCliente` | inteiro ou `null` | sim (podem ser `null`) | Códigos do próprio SCC |
 | `NumeroOcupantes` | inteiro | sim | Pessoas na mesa |
 | `TipoOcupacao`, `TipoCartao` | texto | sim | Lista de valores possíveis: pergunta H4 |
-| `Reabilitado`, `Flyer`, `ConferenciaDeMesa`, `HabilitacaoAutomatica`, `DesabilitacaoAutomatica`, `LimiteMinimo`, `LimiteMaximo`, `ECF`, `CER`, `COO` | como vierem | não | Guardados como "extras" até o significado ser confirmado (H3, B17) |
+| `Reabilitado`, `Flyer`, `ConferenciaDeMesa`, `HabilitacaoAutomatica`, `DesabilitacaoAutomatica`, `LimiteMinimo`, `LimiteMaximo`, `ECF`, `CER`, `COO` | valor simples: texto, número, sim/não (`true`/`false`) ou vazio (`null`) | não | Guardados como "extras" até o significado ser confirmado (H3, B17). Se algum vier com valor composto (um objeto ou uma lista), a nuvem descarta o valor e registra só o nome do campo |
 
 **Não envie** os campos abaixo. Mesmo que cheguem, a nuvem descarta antes de gravar. São dados pessoais sem finalidade no produto (LGPD):
 
@@ -170,6 +170,7 @@ Exemplo de `200`:
 - **Carga inicial.** Na instalação, o SCC manda todo o histórico que tiver (D-21), da data mais antiga até hoje:
   - envia em **janelas de 7 dias**, uma por vez, e só manda a próxima depois do `200` da anterior;
   - se uma janela passar do limite (`413`), divide ao meio, até chegar a um dia por envio;
+  - cada janela, e cada metade depois de um `413`, também respeita os 20 segundos do §3: conte a partir da última resposta que não foi `429` antes de mandar a próxima;
   - pode rodar devagar, em segundo plano, por horas, sem atrapalhar o caixa;
   - terminada a carga, passa ao ciclo normal com `UltimaDataConfirmada = hoje`.
 - **Recomeçar do zero.** Se a Repply precisar de tudo de novo (correção de conversão, troca de conta), o `200` traz `"reenviar_desde": "AAAA-MM-DD"`. O SCC volta `UltimaDataConfirmada` para essa data e refaz a carga a partir dela. Assim a Repply pede o reenvio sem precisar de ninguém no computador do restaurante.
@@ -217,4 +218,4 @@ Estão em `_descoberta/2026-10-05-banco-de-perguntas.md`, blocos B e H.
 | Versão | Data | Mudança |
 |---|---|---|
 | 0.1 | 08/10/2026 | Proposta inicial da Repply, para a reunião com a SCC |
-| 0.2 | 13/10/2026 | Intervalo mínimo de 20 s entre envios explicado no §3 e no §7; o `429` não reinicia a contagem; campo fora da lista do §5 é descartado (D-51) |
+| 0.2 | 13/10/2026 | Intervalo mínimo de 20 s entre envios explicado no §3 e no §7; o `429` não reinicia a contagem; campo fora da lista do §5 é descartado (D-51); extra com valor composto é descartado; a carga inicial (§8) também respeita os 20 s |
