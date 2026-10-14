@@ -66,20 +66,6 @@ async function destinoDe(
   });
 }
 
-/**
- * Primeiro acesso que parou no meio: o `updateUser` já trocou a senha, mas o
- * aviso de troca não saiu. Ao repetir com a mesma senha o Supabase devolve
- * `same_password`; isso não pode prender a pessoa, então a ação segue para tirar
- * o aviso como se a troca tivesse acabado de dar certo (a senha já é a nova).
- * `primeiroAcesso` vem do `getUser()` (servidor), nunca do formulário.
- */
-function senhaJaTrocada(
-  erro: { code?: string | null },
-  primeiroAcesso: boolean
-): boolean {
-  return primeiroAcesso && erro.code === "same_password";
-}
-
 /** Depois de trocar a senha: renova a sessão (novo app_metadata) e tira os outros aparelhos. */
 async function fecharTroca(supabase: ClienteServidor): Promise<void> {
   await supabase.auth.refreshSession();
@@ -185,16 +171,14 @@ export async function definirNovaSenhaAction(
     };
   }
 
-  const primeiroAcesso = precisaTrocarSenha(user);
   const { error } = await supabase.auth.updateUser({
     password: dados.data.senha,
   });
-  if (error && !senhaJaTrocada(error, primeiroAcesso))
-    return { ok: false, error: mensagemDoErroDeAuth(error) };
+  if (error) return { ok: false, error: mensagemDoErroDeAuth(error) };
 
   // Recuperar a senha também cumpre o primeiro acesso.
   if (
-    primeiroAcesso &&
+    precisaTrocarSenha(user) &&
     !(await liberarPrimeiroAcesso(createServiceClient(), user.id))
   ) {
     return { ok: false, error: mensagemDoErroDeAuth(null) };
@@ -240,8 +224,7 @@ export async function trocarSenhaAction(
   const { error } = await supabase.auth.updateUser({
     password: dados.data.senha,
   });
-  if (error && !senhaJaTrocada(error, primeiroAcesso))
-    return { ok: false, error: mensagemDoErroDeAuth(error) };
+  if (error) return { ok: false, error: mensagemDoErroDeAuth(error) };
 
   if (
     primeiroAcesso &&

@@ -311,24 +311,22 @@ describe("troca voluntária: falha da conferência não vira 'senha atual não c
   });
 });
 
-describe("primeiro acesso que parou no meio não prende a pessoa", () => {
+describe("primeiro acesso: repetir a senha provisória não libera nada", () => {
+  // A provisória é conhecida pela equipe da Repply. Se a pessoa "trocá-la" pela
+  // mesma, o Supabase devolve `same_password`; a ação tem de recusar e deixar o
+  // aviso de troca ligado, senão a troca obrigatória não serve para nada.
   const sameSenha = { error: { code: "same_password" } };
 
   describe("na troca de senha (trocarSenhaAction)", () => {
-    it("same_password com o aviso ainda ligado: a senha já é a nova, então tira o aviso", async () => {
+    it("same_password no primeiro acesso é recusado e o aviso de troca fica ligado", async () => {
       getUser.mockResolvedValue({ data: { user: donoComTroca } });
       updateUser.mockResolvedValue(sameSenha);
       const resultado = await trocarSenhaAction({
         senhaAtual: "",
         ...novaSenha,
       });
-      expect(resultado).toEqual({
-        ok: true,
-        data: { destino: "/r/casa-x/hoje" },
-      });
-      expect(updateUserById).toHaveBeenCalledWith("u1", {
-        app_metadata: { precisa_trocar_senha: false },
-      });
+      expect(resultado).toEqual({ ok: false, error: FRASE_SENHA_IGUAL });
+      expect(updateUserById).not.toHaveBeenCalled();
     });
 
     it("same_password numa troca voluntária continua sendo erro", async () => {
@@ -354,9 +352,8 @@ describe("primeiro acesso que parou no meio não prende a pessoa", () => {
       expect(updateUserById).not.toHaveBeenCalled();
     });
 
-    it("se o servidor não conseguir tirar o aviso, não diz que deu certo", async () => {
+    it("se a senha trocou mas o servidor não consegue tirar o aviso, não diz que deu certo", async () => {
       getUser.mockResolvedValue({ data: { user: donoComTroca } });
-      updateUser.mockResolvedValue(sameSenha);
       updateUserById.mockResolvedValue({
         data: { user: null },
         error: { code: "unexpected_failure" },
@@ -374,17 +371,12 @@ describe("primeiro acesso que parou no meio não prende a pessoa", () => {
       cookieGet.mockReturnValue({ value: criarCookieRecuperacao("u1") });
     });
 
-    it("same_password com o aviso ainda ligado: tira o aviso", async () => {
+    it("same_password no primeiro acesso é recusado e o aviso de troca fica ligado", async () => {
       getUser.mockResolvedValue({ data: { user: donoComTroca } });
       updateUser.mockResolvedValue(sameSenha);
       const resultado = await definirNovaSenhaAction(novaSenha);
-      expect(resultado).toEqual({
-        ok: true,
-        data: { destino: "/r/casa-x/hoje" },
-      });
-      expect(updateUserById).toHaveBeenCalledWith("u1", {
-        app_metadata: { precisa_trocar_senha: false },
-      });
+      expect(resultado).toEqual({ ok: false, error: FRASE_SENHA_IGUAL });
+      expect(updateUserById).not.toHaveBeenCalled();
     });
 
     it("same_password sem aviso de troca continua sendo erro", async () => {
