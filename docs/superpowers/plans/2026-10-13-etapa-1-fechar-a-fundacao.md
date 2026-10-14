@@ -70,7 +70,7 @@
 
 **Interfaces:** Consome: nada. Produz: repositório atualizado e este plano commitado.
 
-- [ ] **Passo 1: Conferir o que entrou no repositório**
+- [x] **Passo 1: Conferir o que entrou no repositório**
 
 ```bash
 git fetch --all --prune
@@ -80,7 +80,7 @@ git log --oneline -5 origin/main
 
 Esperado: `## main...origin/main` sem `[behind N]`. Se houver commits novos, leia-os (`git log -p HEAD..origin/main`) antes de seguir. Se mexerem em `supabase/`, `tests/` ou `scripts/`, pare e avise o Lucas Ferreira.
 
-- [ ] **Passo 2: Commitar este plano**
+- [x] **Passo 2: Commitar este plano**
 
 ```bash
 git status --short
@@ -100,7 +100,7 @@ git commit -m "Adiciona o plano da etapa 1: fechar a fundação" -m "Co-Authored
 
 **Interfaces:** Consome: nada. Produz: `npm run check` verde no Windows.
 
-- [ ] **Passo 1: Escrever o teste que falha**
+- [x] **Passo 1: Escrever o teste que falha**
 
 Crie `tests/repositorio/fim-de-linha.test.ts`:
 
@@ -129,12 +129,12 @@ describe("fim de linha do repositório", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/repositorio/fim-de-linha.test.ts`
 Esperado no Windows: FALHA nos dois (`ENOENT ... .gitattributes` e uma lista de ~150 arquivos com CRLF). No Linux o segundo já passa.
 
-- [ ] **Passo 3: Criar o `.gitattributes`**
+- [x] **Passo 3: Criar o `.gitattributes`**
 
 ```gitattributes
 # Todo arquivo de texto entra e sai do git com LF, em qualquer sistema.
@@ -150,7 +150,7 @@ Esperado no Windows: FALHA nos dois (`ENOENT ... .gitattributes` e uma lista de 
 *.ttf binary
 ```
 
-- [ ] **Passo 4: Regravar a pasta de trabalho com a regra nova**
+- [x] **Passo 4: Regravar a pasta de trabalho com a regra nova**
 
 Só faça isto com a pasta sem mudanças pendentes em arquivos versionados. O comando reescreve os arquivos a partir do que já está no git; não descarta nada que esteja commitado.
 
@@ -161,9 +161,11 @@ git checkout-index --force --all
 git status --short
 ```
 
+**Nota da execução (13/10):** `git checkout-index --force --all` sozinho não regrava os arquivos cujo carimbo de data bate com o do índice, então os arquivos continuaram com fim de linha do Windows (CRLF). O que funcionou foi, nesta ordem: `git ls-files -z | xargs -0 touch`, depois `git checkout-index --force --all`, depois `git ls-files -m -z | xargs -0 git add --renormalize --`. Quem já tinha um clone no Windows antes do `.gitattributes` precisa rodar esses três comandos uma vez; um clone novo já vem certo.
+
 Esperado: `git status --short` mostra só os dois arquivos novos (`A  .gitattributes` e `A  tests/repositorio/fim-de-linha.test.ts`).
 
-- [ ] **Passo 5: Rodar e ver passar**
+- [x] **Passo 5: Rodar e ver passar**
 
 ```bash
 npx biome check --write tests/repositorio/fim-de-linha.test.ts
@@ -174,7 +176,7 @@ npm run check
 
 Esperado: 2 testes passam; o Biome termina com `Checked NN files` e **nenhum** erro. Se sobrar erro que não seja de fim de linha, pare e relate: é problema real que estava escondido.
 
-- [ ] **Passo 6: Commit**
+- [x] **Passo 6: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -193,7 +195,7 @@ git commit -m "Padroniza o fim de linha com .gitattributes" -m "Co-Authored-By: 
 
 **Interfaces:** Consome: nada. Produz: `npm run types [-- --db-url <url>]` funcionando em Windows e Linux. A URL aceita só os caracteres `A-Z a-z 0-9 . _ ~ : @ / ? = -`.
 
-- [ ] **Passo 1: Reescrever o preparo do teste para ser portátil**
+- [x] **Passo 1: Reescrever o preparo do teste para ser portátil**
 
 Em `tests/gerar-tipos.test.ts`, substitua **do início do arquivo até o fim da função `cenario`** (linhas 1 a 104) por:
 
@@ -352,12 +354,12 @@ E acrescente, **antes do fechamento do `describe`**, estes dois testes:
   });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/gerar-tipos.test.ts`
 Esperado no Windows: os testes de "sucesso válido" e "saída igual" FALHAM (o script não consegue executar `npx`); o da URL passa por acaso, porque a CLI nunca é chamada. No Linux é o contrário: só o da URL falha (`cliChamada` vem `true`).
 
-- [ ] **Passo 3: Fazer o script chamar a CLI nos dois sistemas**
+- [x] **Passo 3: Fazer o script chamar a CLI nos dois sistemas**
 
 Em `scripts/gerar-tipos.mjs`, logo abaixo de `const executar = promisify(execFile);`, acrescente:
 
@@ -409,7 +411,7 @@ E troque a chamada `executar("npx", [...], {...})` por:
       });
 ```
 
-- [ ] **Passo 4: Rodar e ver passar**
+- [x] **Passo 4: Rodar e ver passar**
 
 ```bash
 npx biome check --write scripts/gerar-tipos.mjs tests/gerar-tipos.test.ts
@@ -419,7 +421,7 @@ npx tsc --noEmit
 
 Esperado: os 16 testes do arquivo passam (12 da tabela, 2 de sucesso, 2 novos); `tsc` sem erros.
 
-- [ ] **Passo 5: Commit**
+- [x] **Passo 5: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -441,12 +443,12 @@ git commit -m "Faz a geração de tipos rodar no Windows" -m "Co-Authored-By: Cl
 
 **Interfaces:** Consome: Tarefas 1 e 2. Produz: Supabase local no ar em `127.0.0.1:54321/54322`, função `receber-envio` servida, suíte inteira verde. Todas as tarefas seguintes dependem disto.
 
-- [ ] **Passo 1: Conferir que o Rancher Desktop está ligado**
+- [x] **Passo 1: Conferir que o Rancher Desktop está ligado**
 
 Rode: `docker ps`
 Esperado: uma tabela (pode estar vazia). Se vier `failed to connect to the docker API`, peça ao Lucas Ferreira para abrir o Rancher Desktop (modo `dockerd (moby)`, Kubernetes desligado, D-49) e espere.
 
-- [ ] **Passo 2: Guardar as chaves da nuvem fora do caminho**
+- [x] **Passo 2: Guardar as chaves da nuvem fora do caminho**
 
 O `.env.local` atual tem o endereço e a chave de serviço da nuvem. Ele vira `.env.nuvem.local`, que o Next.js não carrega e o git ignora. **Não imprima o conteúdo desses arquivos.**
 
@@ -458,14 +460,14 @@ git check-ignore .env.nuvem.local
 
 Esperado: a última linha imprime `.env.nuvem.local` (está ignorado). Se o `grep` não achar `supabase.co`, o arquivo já é local: não mova, siga para o Passo 3 e **pule o Passo 5** (ele não sobrescreve um `.env.local` que já existe).
 
-- [ ] **Passo 3: Subir o banco local pela primeira vez**
+- [x] **Passo 3: Subir o banco local pela primeira vez**
 
 Rode: `npx supabase start` (a primeira vez baixa as imagens e pode levar mais de 10 minutos).
 Esperado: termina com a lista de endereços (`API URL: http://127.0.0.1:54321`, `DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres`).
 
 Se a subida falhar nos contêineres `vector` ou `logflare` (acontece no Windows), rode `npx supabase stop` e depois `npx supabase start -x vector,logflare`. Qualquer outro erro: pare, use `superpowers:systematic-debugging` e relate. Um erro ao aplicar migration aqui é exatamente o que esta tarefa existe para descobrir.
 
-- [ ] **Passo 4: Provar que as migrations montaram o banco**
+- [x] **Passo 4: Provar que as migrations montaram o banco**
 
 ```bash
 npx supabase migration list --local
@@ -473,7 +475,7 @@ npx supabase migration list --local
 
 Esperado: as 4 migrations existentes (`20261009120000`, `20261011201500`, `20261011213000`, `20261011213100`) aparecem como aplicadas na coluna local.
 
-- [ ] **Passo 5: Apontar o desenvolvimento para o banco local**
+- [x] **Passo 5: Apontar o desenvolvimento para o banco local**
 
 As chaves locais são as de desenvolvimento do Supabase, iguais em qualquer máquina. O comando grava o arquivo sem mostrar os valores.
 
@@ -507,25 +509,25 @@ rm "$ARQ"
 
 Esperado: `.env.local criado apontando para http://127.0.0.1:54321`. Se sair `faltou <NOME>`, esta versão da CLI usa outro nome para a variável: veja os nomes com `npx supabase status -o env | cut -d= -f1` (sem imprimir os valores) e ajuste os três nomes no comando.
 
-- [ ] **Passo 6: Servir a função de recepção**
+- [x] **Passo 6: Servir a função de recepção**
 
 Num terminal que fique aberto (em segundo plano): `npx supabase functions serve receber-envio`
 
 Confira: `curl --max-time 5 -o /dev/null -s -w '%{http_code}\n' http://127.0.0.1:54321/functions/v1/receber-envio`
 Esperado: `405`. Se vier `503`, espere a função terminar de carregar e repita.
 
-- [ ] **Passo 7: Rodar a suíte inteira**
+- [x] **Passo 7: Rodar a suíte inteira**
 
 Rode: `npm run test`
 Esperado: todos os arquivos passam, nenhum teste pulado. É a primeira vez que os testes de banco rodam nesta máquina, sobre um banco montado do zero. Se algum falhar, pare, use `superpowers:systematic-debugging` e relate antes de consertar.
 
-- [ ] **Passo 8: Gerar os tipos de verdade (prova da Tarefa 2)**
+- [x] **Passo 8: Gerar os tipos de verdade (prova da Tarefa 2)**
 
 Rode: `npm run types -- --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres`
 Esperado: `Tipos válidos; destino já corresponde ao banco.`
 Se disser `destino substituído`, rode `git diff --stat types/database.types.ts`. Se a diferença for o arquivo inteiro (versão diferente da CLI), **não commite**: desfaça com `git checkout -- types/database.types.ts` e relate ao Lucas Ferreira.
 
-- [ ] **Passo 9: Documentar o ambiente local**
+- [x] **Passo 9: Documentar o ambiente local**
 
 Em `.env.example`, troque a primeira linha por:
 
@@ -563,7 +565,7 @@ npm run dev
 O `.env.local` aponta **sempre** para o banco local. As chaves da nuvem ficam em `.env.nuvem.local`, que o git ignora e o Next.js não lê.
 ````
 
-- [ ] **Passo 10: Verificar e commitar**
+- [x] **Passo 10: Verificar e commitar**
 
 ```bash
 npm run check
@@ -589,7 +591,7 @@ Esperado em `git status --short`: só `.env.example` e `README.md`. Os arquivos 
 
 **Interfaces:** Consome: nada. Produz: `enderecoLocal(url: string): boolean` exportada do gerador; opção `--confirmo-nuvem`.
 
-- [ ] **Passo 1: Escrever o teste que falha**
+- [x] **Passo 1: Escrever o teste que falha**
 
 Crie `tests/gerador/trava-nuvem.test.ts`:
 
@@ -661,12 +663,12 @@ describe("travas contra a nuvem", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/gerador/trava-nuvem.test.ts`
 Esperado: FALHA (`enderecoLocal is not a function`, o gerador não recusa endereço de fora, e o `package.json` tem `db push`).
 
-- [ ] **Passo 3: Tirar o atalho do `package.json`**
+- [x] **Passo 3: Tirar o atalho do `package.json`**
 
 Em `package.json`, apague a linha:
 
@@ -676,7 +678,7 @@ Em `package.json`, apague a linha:
 
 Aplicar mudança de banco na nuvem passa a ser só o comando digitado por inteiro, no roteiro de publicação da etapa 4, com autorização.
 
-- [ ] **Passo 4: Pôr a trava no gerador**
+- [x] **Passo 4: Pôr a trava no gerador**
 
 Em `scripts/gerador-dados-ficticios.ts`, no comentário do topo, acrescente depois da linha de `--fuso`:
 
@@ -718,7 +720,7 @@ E, no objeto devolvido, troque a propriedade `url` inteira (as três linhas com 
     url,
 ```
 
-- [ ] **Passo 5: Documentar a opção**
+- [x] **Passo 5: Documentar a opção**
 
 Em `README.md`, na tabela de opções do gerador, acrescente a linha depois de `--dry-run`:
 
@@ -726,7 +728,7 @@ Em `README.md`, na tabela de opções do gerador, acrescente a linha depois de `
 | `--confirmo-nuvem` | Obrigatória quando `SCC_URL` não é desta máquina. Só com a autorização do Lucas Ferreira |
 ```
 
-- [ ] **Passo 6: Rodar e ver passar**
+- [x] **Passo 6: Rodar e ver passar**
 
 ```bash
 npx biome check --write scripts/gerador-dados-ficticios.ts tests/gerador/trava-nuvem.test.ts package.json
@@ -736,7 +738,7 @@ npx tsc --noEmit
 
 Esperado: `trava-nuvem.test.ts` e `algoritmo.test.ts` passam inteiros; `tsc` sem erros.
 
-- [ ] **Passo 7: Commit**
+- [x] **Passo 7: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -758,7 +760,7 @@ git commit -m "Trava o gerador e tira o atalho que muda o banco da nuvem" -m "Co
 
 **Interfaces:** Consome: Tarefa 3 (banco local). Produz: a regra "função nova nasce fechada" e a **lista fechada** de funções abertas: `tem_acesso(uuid)` e `eh_admin_repply()` para `anon` e `authenticated`; `atualizar_turnos(uuid, jsonb)` só para `authenticated`. Quem criar função que o painel chama precisa dar o `grant` na própria migration e acrescentá-la a essa lista.
 
-- [ ] **Passo 1: Escrever o teste que falha**
+- [x] **Passo 1: Escrever o teste que falha**
 
 Crie `tests/isolamento/funcoes-fechadas.test.ts`:
 
@@ -835,12 +837,12 @@ describe("funções do banco fechadas por padrão", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/isolamento/funcoes-fechadas.test.ts`
 Esperado: FALHA nos dois. O primeiro lista também `btrim_null(text)`, `dia_operacao_de(...)`, `esta_aberto_agora(jsonb, text)` e `normaliza_numeric(text)`; o segundo vem com `anon: true`.
 
-- [ ] **Passo 3: Escrever a migration**
+- [x] **Passo 3: Escrever a migration**
 
 Crie `supabase/migrations/20261013120000_funcoes_nascem_fechadas.sql`:
 
@@ -882,7 +884,7 @@ grant execute on function public.eh_admin_repply() to anon, authenticated, servi
 commit;
 ```
 
-- [ ] **Passo 4: Aplicar no banco local e ver passar**
+- [x] **Passo 4: Aplicar no banco local e ver passar**
 
 ```bash
 npx supabase migration up --local
@@ -891,7 +893,7 @@ npx vitest run tests/isolamento
 
 Esperado: a migration aparece como aplicada; `funcoes-fechadas`, `rls` e `rpc-privilegada` passam. Se o segundo teste vier com `service: false`, pare e relate (o padrão do Supabase para `service_role` não é o esperado nesta versão).
 
-- [ ] **Passo 5: Documentar a regra**
+- [x] **Passo 5: Documentar a regra**
 
 Em `docs/arquitetura/seguranca-e-isolamento.md`, §2, acrescente depois do item 11:
 
@@ -908,7 +910,7 @@ E no §4 (checklist de tabela nova), acrescente a linha no fim:
 - [ ] Função nova: `grant` explícito só para quem precisa, e entrada na lista de `funcoes-fechadas.test.ts`.
 ```
 
-- [ ] **Passo 6: Commit**
+- [x] **Passo 6: Commit**
 
 ```bash
 npx biome check --write tests/isolamento/funcoes-fechadas.test.ts
@@ -931,7 +933,7 @@ git commit -m "Faz função nova do banco nascer fechada para qualquer login" -m
 
 **Atenção:** estes testes descrevem a proteção que **já deveria existir**. O esperado é passarem de primeira. Se algum falhar, é vazamento de verdade: pare, não ajuste o teste, e avise o Lucas Ferreira.
 
-- [ ] **Passo 1: Escrever os testes**
+- [x] **Passo 1: Escrever os testes**
 
 Crie `tests/isolamento/todas-as-tabelas.test.ts`:
 
@@ -1149,7 +1151,7 @@ describe("isolamento nas 8 tabelas", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar**
+- [x] **Passo 2: Rodar**
 
 ```bash
 npx biome check --write tests/isolamento/todas-as-tabelas.test.ts
@@ -1158,7 +1160,7 @@ npx vitest run tests/isolamento/todas-as-tabelas.test.ts
 
 Esperado: os 44 testes passam (8 de leitura, 26 de escrita do cliente, 1 de conferência, 9 do admin). **Se qualquer um falhar, pare e avise o Lucas Ferreira com o nome do teste e a saída:** é uma falha de isolamento real, e o conserto é uma política de RLS em migration nova, decidida com ele.
 
-- [ ] **Passo 3: Provar que o teste pega vazamento**
+- [x] **Passo 3: Provar que o teste pega vazamento**
 
 Um teste que nunca falhou não prova nada. Abra uma brecha de propósito **no banco local**, veja o teste acusar e feche a brecha. Os quatro comandos vão juntos, para a brecha ser fechada mesmo se o teste falhar (que é o esperado):
 
@@ -1186,7 +1188,7 @@ sql "do \$\$ begin if exists (select 1 from pg_policies where policyname = 'brec
 
 Esperado: nenhuma saída.
 
-- [ ] **Passo 4: Commit**
+- [x] **Passo 4: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -1210,7 +1212,7 @@ git commit -m "Testa o isolamento entre restaurantes nas 8 tabelas" -m "Co-Autho
 
 **Interfaces:** Consome: Tarefa 3. Produz: `RegistroErroDb.atualizarSinal(restauranteId: string, agora: string, contaComoEnvio: boolean)`. A Tarefa 8 mexe nos mesmos dois arquivos de função.
 
-- [ ] **Passo 1: Escrever os testes que falham**
+- [x] **Passo 1: Escrever os testes que falham**
 
 Em `tests/recepcao/registro-erro.test.ts`, dentro de `registrarErroAnterior`, troque a chamada por `db.atualizarSinal(registro.restauranteId, momento, true)`. E acrescente antes do fechamento do `describe`:
 
@@ -1259,12 +1261,12 @@ Em `tests/recepcao/envio.test.ts`, acrescente depois do teste "limita o ritmo a 
   });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/recepcao`
 Esperado: o teste de unidade FALHA (`contouComoEnvio` vem `[undefined, undefined]`) e o de integração FALHA em `contagem_preservada: false`.
 
-- [ ] **Passo 3: Ensinar o registro de erro a não contar o 429**
+- [x] **Passo 3: Ensinar o registro de erro a não contar o 429**
 
 Substitua o conteúdo de `supabase/functions/_shared/registro-erro.ts` por:
 
@@ -1334,7 +1336,7 @@ Em `supabase/functions/receber-envio/index.ts`, dentro de `registrarErro`, subst
       },
 ```
 
-- [ ] **Passo 4: Rodar e ver passar**
+- [x] **Passo 4: Rodar e ver passar**
 
 A função servida recarrega sozinha ao salvar. Confira o `405` (Tarefa 3, Passo 6) e rode:
 
@@ -1346,7 +1348,7 @@ npx tsc --noEmit
 
 Esperado: todos os testes de `tests/recepcao` passam; `tsc` sem erros.
 
-- [ ] **Passo 5: Avisar o Pedro no contrato (versão 0.2)**
+- [x] **Passo 5: Avisar o Pedro no contrato (versão 0.2)**
 
 Em `docs/integracao-scc/contrato-de-dados.md`:
 
@@ -1378,7 +1380,7 @@ Em `docs/arquitetura/recepcao-de-dados.md`, §3, troque o passo 4 por:
 
 E, no passo 10, troque "e atualiza `sinal_de_vida.ultimo_envio_em` e `ultimo_erro_em`" por "e atualiza `sinal_de_vida.ultimo_envio_em` e `ultimo_erro_em` (no `429`, só o `ultimo_erro_em`)".
 
-- [ ] **Passo 6: Commit**
+- [x] **Passo 6: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -1411,7 +1413,7 @@ git commit -m "Impede que o 429 reinicie a contagem e avisa o intervalo no contr
   - `processar_envio(p_restaurante_id uuid, p_envelope jsonb, p_campos_desconhecidos text[] default '{}') returns jsonb`;
   - `so_valor_simples(p_valor jsonb) returns jsonb`.
 
-- [ ] **Passo 1: Escrever o teste de unidade que falha**
+- [x] **Passo 1: Escrever o teste de unidade que falha**
 
 Crie `tests/recepcao/campos-permitidos.test.ts`:
 
@@ -1564,12 +1566,12 @@ describe("lista do que a nuvem aceita guardar", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/recepcao/campos-permitidos.test.ts`
 Esperado: FALHA (`Cannot find module ... campos-permitidos`).
 
-- [ ] **Passo 3: Escrever a lista**
+- [x] **Passo 3: Escrever a lista**
 
 Crie `supabase/functions/_shared/campos-permitidos.ts`:
 
@@ -1741,7 +1743,7 @@ export function filtrarEnvelope(bruto: unknown): EnvelopeFiltrado {
 }
 ```
 
-- [ ] **Passo 4: Rodar e ver passar**
+- [x] **Passo 4: Rodar e ver passar**
 
 ```bash
 npx biome check --write supabase/functions/_shared/campos-permitidos.ts tests/recepcao/campos-permitidos.test.ts
@@ -1750,7 +1752,7 @@ npx vitest run tests/recepcao/campos-permitidos.test.ts
 
 Esperado: os 8 testes passam.
 
-- [ ] **Passo 5: Escrever os testes de integração que falham**
+- [x] **Passo 5: Escrever os testes de integração que falham**
 
 Em `tests/recepcao/envio.test.ts`, acrescente depois do teste "descarta todos os dados pessoais das entradas e do payload":
 
@@ -1863,12 +1865,12 @@ const registro = {
 
 Em `tests/isolamento/rpc-privilegada.test.ts`, troque `"public.processar_envio(uuid,jsonb)"` por `"public.processar_envio(uuid,jsonb,text[])"`.
 
-- [ ] **Passo 6: Rodar e ver falhar**
+- [x] **Passo 6: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/recepcao/envio.test.ts tests/isolamento/rpc-privilegada.test.ts`
 Esperado: os três testes novos FALHAM (`column v.campos_desconhecidos does not exist`) e o de RPC FALHA (`function public.processar_envio(uuid,jsonb,text[]) does not exist`).
 
-- [ ] **Passo 7: Escrever a migration**
+- [x] **Passo 7: Escrever a migration**
 
 Crie `supabase/migrations/20261013130000_recepcao_so_grava_campos_conhecidos.sql`:
 
@@ -2240,7 +2242,7 @@ grant execute on function public.processar_envio(uuid, jsonb, text[]) to service
 commit;
 ```
 
-- [ ] **Passo 8: Aplicar no banco local e gerar os tipos**
+- [x] **Passo 8: Aplicar no banco local e gerar os tipos**
 
 ```bash
 npx supabase migration up --local
@@ -2250,7 +2252,7 @@ git diff --stat types/database.types.ts
 
 Esperado: migration aplicada; `Tipos válidos; destino substituído atomicamente.`; o diff de tipos mostra só a coluna `campos_desconhecidos`, o argumento `p_campos_desconhecidos` e a função `so_valor_simples`.
 
-- [ ] **Passo 9: Levar os nomes dos campos para o registro de erro**
+- [x] **Passo 9: Levar os nomes dos campos para o registro de erro**
 
 Em `supabase/functions/_shared/registro-erro.ts`, troque o tipo `RegistroEnvio` por:
 
@@ -2265,7 +2267,7 @@ export type RegistroEnvio = {
 };
 ```
 
-- [ ] **Passo 10: Usar a lista na recepção**
+- [x] **Passo 10: Usar a lista na recepção**
 
 Substitua o conteúdo de `supabase/functions/receber-envio/index.ts` por:
 
@@ -2512,7 +2514,7 @@ Deno.serve(async (req) => {
 });
 ```
 
-- [ ] **Passo 11: Rodar e ver passar**
+- [x] **Passo 11: Rodar e ver passar**
 
 Confira o `405` da função (Tarefa 3, Passo 6) e rode:
 
@@ -2524,7 +2526,7 @@ npx vitest run tests/recepcao tests/isolamento tests/metricas
 
 Esperado: tudo passa, inclusive o teste antigo "descarta todos os dados pessoais" e `funcoes-fechadas` (as funções novas nasceram fechadas, então a lista de abertas não mudou).
 
-- [ ] **Passo 12: Registrar a decisão e atualizar os documentos**
+- [x] **Passo 12: Registrar a decisão e atualizar os documentos**
 
 Em `docs/decisoes.md`, acrescente no fim da tabela:
 
@@ -2570,7 +2572,7 @@ Em `docs/arquitetura/seguranca-e-isolamento.md`, §6, troque o último item por:
 - **Só entra o que está na lista** do contrato §5 (D-29, D-51). Nome, RG, telefone e sexo são descartados; campo desconhecido também, e dele fica só o nome. Vale para as contas e para o JSON original.
 ```
 
-- [ ] **Passo 13: Commit**
+- [x] **Passo 13: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -2605,7 +2607,7 @@ O alarme de verdade é a etapa 9. Aqui o esboço **sai** do vigia, para ele para
   - `atualizar_estados()` sem tocar em `alarme_enviado_em`;
   - `esta_aberto_agora` deixa de existir.
 
-- [ ] **Passo 1: Escrever os testes de horário que falham**
+- [x] **Passo 1: Escrever os testes de horário que falham**
 
 Crie `tests/rotinas/aberto-desde.test.ts`:
 
@@ -2692,7 +2694,7 @@ describe("desde quando a casa está aberta", () => {
 });
 ```
 
-- [ ] **Passo 2: Escrever os testes do vigia que falham**
+- [x] **Passo 2: Escrever os testes do vigia que falham**
 
 Em `tests/rotinas/estados-retencao.test.ts`, acrescente antes do teste "mantém jobs ativos com comando e horários contratados":
 
@@ -2818,12 +2820,12 @@ Em `tests/rotinas/estados-retencao.test.ts`, acrescente antes do teste "mantém 
   });
 ```
 
-- [ ] **Passo 3: Rodar e ver falhar**
+- [x] **Passo 3: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/rotinas`
 Esperado: `aberto-desde` FALHA inteiro (`function public.aberto_desde(jsonb, unknown, timestamp with time zone) does not exist`). Em `estados-retencao`, os três testes novos FALHAM: o primeiro com erro de conversão (`invalid input syntax for type integer`), o segundo com `parado` no lugar de `em_dia`, o terceiro com `alarme_enviado_em` preenchido.
 
-- [ ] **Passo 4: Escrever a migration**
+- [x] **Passo 4: Escrever a migration**
 
 Crie `supabase/migrations/20261013140000_vigia_resiliente.sql`:
 
@@ -2992,7 +2994,7 @@ drop function public.esta_aberto_agora(jsonb, text);
 commit;
 ```
 
-- [ ] **Passo 5: Aplicar no banco local, gerar os tipos e ver passar**
+- [x] **Passo 5: Aplicar no banco local, gerar os tipos e ver passar**
 
 ```bash
 npx supabase migration up --local
@@ -3005,7 +3007,7 @@ npx vitest run tests/rotinas tests/isolamento
 
 Esperado: migration aplicada; o diff de tipos tira `esta_aberto_agora` e acrescenta `aberto_desde` e `abertura_do_intervalo`; todos os testes de `tests/rotinas` e `tests/isolamento` passam (as duas funções novas nasceram fechadas, então `funcoes-fechadas` não muda).
 
-- [ ] **Passo 6: Atualizar os documentos**
+- [x] **Passo 6: Atualizar os documentos**
 
 Em `docs/arquitetura/recepcao-de-dados.md`, §7, substitua do parágrafo "`atualizar_estados()` roda a cada 5 minutos" até o fim da lista "**Alarme:**" por:
 
@@ -3035,7 +3037,7 @@ Em `docs/arquitetura/modelo-de-dados.md`, na tabela de funções, troque a linha
 | `abertura_do_intervalo(horario, fuso, momento)` | Abertura do intervalo de funcionamento que contém o momento |
 ```
 
-- [ ] **Passo 7: Commit**
+- [x] **Passo 7: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -3060,7 +3062,7 @@ git commit -m "Torna o vigia resiliente e para de contar atraso com a casa fecha
 
 **Cuidado:** no `config.toml`, `[auth.email] enable_signup` **não** é "permitir cadastro por e-mail": é o interruptor do login por e-mail inteiro. Ele precisa continuar `true`. Quem fecha o cadastro público é o `enable_signup` da seção `[auth]`. Conta criada pelo admin (chave de serviço) continua funcionando com o cadastro fechado.
 
-- [ ] **Passo 1: Escrever o teste que falha**
+- [x] **Passo 1: Escrever o teste que falha**
 
 Crie `tests/auth/regra-de-senha.test.ts`:
 
@@ -3108,12 +3110,12 @@ describe("regra de senha e de cadastro", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar**
+- [x] **Passo 2: Rodar e ver falhar**
 
 Rode: `npx vitest run tests/auth/regra-de-senha.test.ts`
 Esperado: FALHA (`Cannot find module ... lib/auth/senha`).
 
-- [ ] **Passo 3: Criar a regra e ajustar a configuração**
+- [x] **Passo 3: Criar a regra e ajustar a configuração**
 
 Crie `lib/auth/senha.ts`:
 
@@ -3150,7 +3152,7 @@ Na seção `[auth.email]`, acima da linha `enable_signup = true` (que **fica com
 # cadastro. Precisa ficar true. Quem fecha o cadastro público é o [auth] enable_signup.
 ```
 
-- [ ] **Passo 4: Rodar e ver passar**
+- [x] **Passo 4: Rodar e ver passar**
 
 ```bash
 npx biome check --write lib/auth/senha.ts tests/auth/regra-de-senha.test.ts
@@ -3160,7 +3162,7 @@ npx tsc --noEmit
 
 Esperado: os 4 testes passam.
 
-- [ ] **Passo 5: Conferir o comportamento de verdade no banco local**
+- [x] **Passo 5: Conferir o comportamento de verdade no banco local**
 
 A configuração de login só é lida na subida. Reinicie (os dados ficam guardados) e sirva a função de novo:
 
@@ -3182,7 +3184,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST "http://127.0.0.1:54321/auth/v1
 
 Esperado: `422` ou `403`, conforme a versão do serviço de login (os dois querem dizer "cadastro não permitido"). Se vier `200`, o cadastro continua aberto: pare e relate.
 
-- [ ] **Passo 6: Documentar para a publicação**
+- [x] **Passo 6: Documentar para a publicação**
 
 Em `docs/operacao/publicar.md`, §1, troque o item "**Auth:**" e sua lista por:
 
@@ -3196,7 +3198,7 @@ Em `docs/operacao/publicar.md`, §1, troque o item "**Auth:**" e sua lista por:
   - **SMTP próprio (Resend)** antes do primeiro cliente, porque o SMTP padrão do Supabase tem limite baixo de envios.
 ```
 
-- [ ] **Passo 7: Commit**
+- [x] **Passo 7: Commit**
 
 ```bash
 git fetch && git status -sb
@@ -3214,7 +3216,7 @@ git commit -m "Fecha o cadastro público e fixa a senha mínima em 8" -m "Co-Aut
 
 **Interfaces:** Consome: todas as tarefas. Produz: a evidência de que a etapa fechou e o pedido de autorização para enviar ao GitHub.
 
-- [ ] **Passo 1: Verificação completa, com a saída à vista**
+- [x] **Passo 1: Verificação completa, com a saída à vista**
 
 Confira o `405` da função (Tarefa 3, Passo 6) e rode os quatro, um por vez:
 
@@ -3227,7 +3229,7 @@ npm run build
 
 Esperado: `tsc` sem saída; Biome sem erros; Vitest com todos os arquivos passando e **nenhum teste pulado**; build completa. Anote o total de testes e de arquivos para o Passo 2. Qualquer falha: `superpowers:systematic-debugging` antes de consertar.
 
-- [ ] **Passo 2: Atualizar a dívida técnica**
+- [x] **Passo 2: Atualizar a dívida técnica**
 
 Em `docs/divida-tecnica.md`, acrescente à tabela "Abertos":
 
@@ -3258,7 +3260,7 @@ E substitua a seção "Resolvidos" por (troque `<commit>` pelo código curto de 
 | Cadastro público aberto e senha mínima 6 no `config.toml` | 13/10/2026 | `<commit>` |
 ```
 
-- [ ] **Passo 3: Atualizar o estado no README**
+- [x] **Passo 3: Atualizar o estado no README**
 
 Em `README.md`, substitua os dois blocos de citação do topo ("**Estado em 13/10/2026:**" e "**Pendências externas:**") por (preencha os dois números com a saída do Passo 1):
 
@@ -3268,7 +3270,7 @@ Em `README.md`, substitua os dois blocos de citação do topo ("**Estado em 13/1
 > **O que falta:** ver [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/).
 ```
 
-- [ ] **Passo 4: Marcar o plano e commitar**
+- [x] **Passo 4: Marcar o plano e commitar**
 
 Marque os checkboxes deste arquivo como feitos e commite:
 
@@ -3316,14 +3318,28 @@ npm run supabase:migrate não existe mais.
 
 ## Critérios de aceite da etapa 1
 
-- [ ] `npx tsc --noEmit`, `npm run check`, `npm run test` e `npm run build` passam nesta máquina (Windows), sem teste pulado.
-- [ ] O banco local desta máquina foi montado do zero pelas migrations, e a suíte inteira passa sobre ele.
-- [ ] `.env.local` desta máquina aponta para `127.0.0.1`; as chaves da nuvem estão em `.env.nuvem.local`, fora do git.
-- [ ] Não existe atalho no `package.json` que mexa na nuvem; o gerador recusa endereço de fora sem `--confirmo-nuvem`.
-- [ ] Função criada em `public` nasce sem permissão para `anon` e `authenticated`; a lista de funções abertas tem exatamente três.
-- [ ] As 8 tabelas têm teste de leitura e de escrita por cliente, login sem acesso, sem login e admin.
-- [ ] Campo desconhecido do SCC não é gravado em lugar nenhum; o nome dele fica em `envios.campos_desconhecidos` (D-51).
-- [ ] Um `429` não mexe em `ultimo_envio_em`; o contrato está na versão 0.2 com a regra dos 20 segundos.
-- [ ] O vigia calcula os outros restaurantes quando um tem cadastro malformado, não conta atraso com a casa fechada e não toca em `alarme_enviado_em`.
-- [ ] Cadastro público recusado no banco local (`422`); senha mínima 8 no código e na configuração.
-- [ ] Nada foi enviado à nuvem. Nenhum `git push` sem o ok do Lucas Ferreira.
+- [x] `npx tsc --noEmit`, `npm run check`, `npm run test` e `npm run build` passam nesta máquina (Windows), sem teste pulado.
+- [x] O banco local desta máquina foi montado do zero pelas migrations, e a suíte inteira passa sobre ele.
+- [x] `.env.local` desta máquina aponta para `127.0.0.1`; as chaves da nuvem estão em `.env.nuvem.local`, fora do git.
+- [x] Não existe atalho no `package.json` que mexa na nuvem; o gerador recusa endereço de fora sem `--confirmo-nuvem`.
+- [x] Função criada em `public` nasce sem permissão para `anon` e `authenticated`; a lista de funções abertas tem exatamente três.
+- [x] As 8 tabelas têm teste de leitura e de escrita por cliente, login sem acesso, sem login e admin.
+- [x] Campo desconhecido do SCC não é gravado em lugar nenhum; o nome dele fica em `envios.campos_desconhecidos` (D-51).
+- [x] Um `429` não mexe em `ultimo_envio_em`; o contrato está na versão 0.2 com a regra dos 20 segundos.
+- [x] O vigia calcula os outros restaurantes quando um tem cadastro malformado, não conta atraso com a casa fechada e não toca em `alarme_enviado_em`.
+- [x] Cadastro público recusado no banco local (`422`); senha mínima 8 no código e na configuração.
+- [x] Nada foi enviado à nuvem. Nenhum `git push` sem o ok do Lucas Ferreira.
+
+---
+
+## Registro da execução (13 e 14/10/2026)
+
+- **Banco local no HD.** Nesta máquina o disco C: encheu, então os discos do Rancher Desktop foram movidos para o D:, que é um HD comum e lento. O banco local sobe, mas devagar; os cuidados (subir só os serviços que os testes usam e dar mais tempo ao Postgres) estão no README.
+- **A Tarefa 8 ganhou uma migration de conserto** (`20261014120000`). A segunda barreira do plano, a que fica dentro do banco, não exigia valor simples nas colunas: numa chamada direta, um objeto ou lista chegava ao banco em campos como `TipoOcupacao` e `Pago`. Como a migration da Tarefa 8 já estava commitada, o conserto veio em arquivo novo (migrations só se acrescentam).
+- **A revisão final pediu três consertos**, feitos em `1ba4ec2`, `2856f54` e `40dffd5`:
+  - nome de campo que é número é barrado em qualquer nível do envio, inclusive depois dos prefixos `envelope.`, `janela.` e `lote.`;
+  - a versão da CLI do Supabase ficou fixa em 2.120.0, porque uma versão nova saiu sem o programa para Windows e quebrou os scripts por algumas horas;
+  - os testes de isolamento passaram a tentar escrever como login sem acesso e como visitante sem login, e não só como cliente do outro restaurante.
+- **Contagem final (Tarefa 11, Passo 1):** `tsc` sem erro, Biome sem erro, **351 testes em 20 arquivos**, nenhum pulado, e a build completa. O ramo Linux do teste de tipos não foi executado (falta rodar numa máquina Linux).
+- **Dívida registrada** em `docs/divida-tecnica.md` (itens 8 a 22). Os que pedem decisão antes de seguir são o 14 (privilégios padrão do Supabase, antes da primeira publicação) e o 15 (selo "há X min", antes da tela Hoje).
+- **Envio ao GitHub:** nada foi enviado. O `git push` depende do ok do Lucas Ferreira, pedido a cada envio.

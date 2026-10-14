@@ -2,9 +2,9 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 13/10/2026:** fundação/recepção **aprovada LOCALMENTE**, com revisão final concluída e verificação independente de tipos, lint, build e **198 testes em 13 arquivos**. Base visual verificada em **390 e 1280 px**, nos temas claro/escuro, ilhas paper/ink e estado vazio. Telas, login completo, PDF e alarme por e-mail não estão implementados. Não é aprovação do MVP, de produção ou de publicação.
+> **Estado em 14/10/2026:** fundação **fechada localmente** (etapa 1 do plano do MVP). A verificação (tipos, lint, testes e build) passa no Windows, com **351 testes em 20 arquivos**, sobre um banco local montado do zero pelas migrations. Ainda falta rodá-la numa máquina Linux: o ramo do teste de tipos que só vale no Linux não foi executado nesta etapa. Telas, login, admin, PDF e alarme por e-mail não estão implementados. Nada foi publicado na nuvem.
 
-> **Pendências externas:** auditoria de dependências de desenvolvimento e histórico de migrations locais aplicadas via `psql`, sem reparo silencioso. Push e publicação permanecem pendentes de autorização.
+> **O que falta:** ver [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/).
 
 ## Ordem de leitura
 
