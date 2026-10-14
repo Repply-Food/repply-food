@@ -249,6 +249,7 @@ describe("receber-envio no Supabase local", () => {
           CPF: "111.222.333-44",
           Flyer: { indicado_por: "Fulano de Tal" },
           COO: 7,
+          TipoOcupacao: { cpf_do_cliente: "999.888.777-66" },
         }),
       ]),
       versao_scc: { nome: "Beltrano de Tal" },
@@ -258,7 +259,7 @@ describe("receber-envio no Supabase local", () => {
       corpo,
     ]);
     const dados = await banco.query(
-      `select e.extras, v.payload, v.campos_desconhecidos, v.versao_scc, v.modo
+      `select e.extras, e.tipo_ocupacao, v.payload, v.campos_desconhecidos, v.versao_scc, v.modo
          from public.entradas e
          join public.envios v on v.restaurante_id = e.restaurante_id
         where e.restaurante_id = $1 and e.cod_entrada = 513
@@ -274,9 +275,39 @@ describe("receber-envio no Supabase local", () => {
       "111.222.333-44",
       "Fulano de Tal",
       "Beltrano de Tal",
+      "999.888.777-66",
     ]) {
       expect(gravado).not.toContain(valor);
     }
+  });
+
+  it("a função do banco aceita os 10 extras do contrato com valor simples", async () => {
+    const extras = {
+      Reabilitado: null,
+      Flyer: null,
+      ConferenciaDeMesa: null,
+      HabilitacaoAutomatica: null,
+      DesabilitacaoAutomatica: null,
+      LimiteMinimo: 0,
+      LimiteMaximo: 10000,
+      ECF: 1,
+      CER: 2,
+      COO: 3,
+    };
+    await banco.query("select public.processar_envio($1, $2::jsonb)", [
+      fixture.restauranteA,
+      JSON.stringify(envelope([entrada(514, extras)])),
+    ]);
+    const dados = await banco.query(
+      `select e.extras, v.campos_desconhecidos
+         from public.entradas e
+         join public.envios v on v.restaurante_id = e.restaurante_id
+        where e.restaurante_id = $1 and e.cod_entrada = 514
+        order by v.id desc limit 1`,
+      [fixture.restauranteA]
+    );
+    expect(dados.rows[0]?.extras).toEqual(extras);
+    expect(dados.rows[0]?.campos_desconhecidos).toEqual([]);
   });
 
   it("rejeita token errado, revogado e expirado", async () => {

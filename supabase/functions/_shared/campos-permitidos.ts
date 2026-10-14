@@ -62,8 +62,11 @@ const CAMPOS_SIMPLES_DO_ENVELOPE: readonly string[] = [
 const CAMPOS_DA_JANELA: readonly string[] = ["desde", "ate"];
 const CAMPOS_DO_LOTE: readonly string[] = ["numero", "total"];
 
-/** Um nome de campo só é guardado se tiver cara de nome de campo. */
-const NOME_SEGURO = /^[A-Za-z0-9_.]{1,40}$/;
+/**
+ * Um nome de campo só é guardado se tiver cara de nome de campo: começa com
+ * letra, então um CPF ou telefone usado como nome (só dígitos) não passa.
+ */
+const NOME_SEGURO = /^[A-Za-z][A-Za-z0-9_.]{0,39}$/;
 const LIMITE_DE_NOMES = 20;
 
 export type EnvelopeFiltrado = {

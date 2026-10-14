@@ -139,11 +139,16 @@ describe("lista do que a nuvem aceita guardar", () => {
     );
     const resultado = filtrarEnvelope(
       envelopeCompleto([
-        entradaCompleta({ "Maria da Silva 85 99999-9999": 1, ...muitos }),
+        entradaCompleta({
+          "Maria da Silva 85 99999-9999": 1,
+          "11122233344": 1,
+          ...muitos,
+        }),
       ])
     );
     expect(resultado.camposDesconhecidos).toHaveLength(20);
     expect(resultado.camposDesconhecidos[0]).toBe("(nome fora do padrão)");
     expect(JSON.stringify(resultado)).not.toContain("Maria da Silva");
+    expect(JSON.stringify(resultado)).not.toContain("11122233344");
   });
 });
