@@ -334,6 +334,126 @@ describe("rotinas locais", () => {
     ).toBe(0);
   });
 
+  it("um restaurante com horário ou fuso malformado não impede o cálculo dos outros", async () => {
+    const dados = fixture as Fixture;
+    await comSinaisEstaveis(banco as Client, async (cliente) => {
+      await cliente.query("savepoint efeitos_vigia");
+      const estados = async () =>
+        (
+          await cliente.query<{ restaurante_id: string; estado: string }>(
+            "select restaurante_id::text, estado from public.sinal_de_vida where restaurante_id = any($1::uuid[])",
+            [dados.idsRestaurantes]
+          )
+        ).rows;
+      await cliente.query(
+        `insert into public.sinal_de_vida (restaurante_id, primeiro_envio_em, ultimo_envio_ok_em)
+         values ($1, now() - interval '10 minutes', now() - interval '10 minutes'),
+                ($2, now() - interval '10 minutes', now() - interval '10 minutes')`,
+        [dados.restauranteA, dados.restauranteB]
+      );
+      await cliente.query(
+        "update public.restaurantes set horario_funcionamento = $2::jsonb where id = $1",
+        [
+          dados.restauranteA,
+          JSON.stringify([{ dia: "sexta", abre: "25:99", fecha: "oi" }]),
+        ]
+      );
+      await cliente.query("select public.atualizar_estados()");
+      expect(await estados()).toEqual(
+        expect.arrayContaining([
+          { restaurante_id: dados.restauranteA, estado: "aguardando" },
+          { restaurante_id: dados.restauranteB, estado: "em_dia" },
+        ])
+      );
+      // Horário válido, fuso que não existe. (Com a lista de horários vazia o
+      // fuso nem é consultado, então o horário precisa estar preenchido.)
+      await cliente.query(
+        "update public.restaurantes set horario_funcionamento = $2::jsonb, fuso = 'Marte/Olimpo' where id = $1",
+        [
+          dados.restauranteA,
+          JSON.stringify(
+            Array.from({ length: 7 }, (_, dia) => ({
+              dia,
+              abre: "00:00",
+              fecha: "00:00",
+            }))
+          ),
+        ]
+      );
+      await cliente.query(
+        "update public.sinal_de_vida set estado = 'aguardando' where restaurante_id = $1",
+        [dados.restauranteB]
+      );
+      await cliente.query("select public.atualizar_estados()");
+      expect(await estados()).toEqual(
+        expect.arrayContaining([
+          { restaurante_id: dados.restauranteA, estado: "aguardando" },
+          { restaurante_id: dados.restauranteB, estado: "em_dia" },
+        ])
+      );
+      await cliente.query("rollback to savepoint efeitos_vigia");
+    });
+  });
+
+  it("não conta como atraso o tempo em que a casa estava fechada", async () => {
+    const dados = fixture as Fixture;
+    await comSinaisEstaveis(banco as Client, async (cliente) => {
+      await cliente.query("savepoint efeitos_vigia");
+      await cliente.query(
+        `insert into public.sinal_de_vida (restaurante_id, primeiro_envio_em, ultimo_envio_ok_em)
+         values ($1, now() - interval '3 days', now() - interval '9 hours')`,
+        [dados.restauranteA]
+      );
+      // A casa abriu há N minutos e fecha daqui a uma hora, no fuso dela.
+      const estadoComCasaAbertaHa = async (minutos: number) => {
+        await cliente.query(
+          `update public.restaurantes r
+              set horario_funcionamento = jsonb_build_array(jsonb_build_object(
+                    'dia', extract(dow from (now() - make_interval(mins => $2::int)) at time zone r.fuso)::int,
+                    'abre', to_char((now() - make_interval(mins => $2::int)) at time zone r.fuso, 'HH24:MI'),
+                    'fecha', to_char((now() + interval '60 minutes') at time zone r.fuso, 'HH24:MI')))
+            where r.id = $1`,
+          [dados.restauranteA, minutos]
+        );
+        await cliente.query("select public.atualizar_estados()");
+        const linha = await cliente.query<{ estado: string }>(
+          "select estado from public.sinal_de_vida where restaurante_id = $1",
+          [dados.restauranteA]
+        );
+        return linha.rows[0]?.estado;
+      };
+      expect(await estadoComCasaAbertaHa(5)).toBe("em_dia");
+      expect(await estadoComCasaAbertaHa(25)).toBe("atrasado");
+      expect(await estadoComCasaAbertaHa(50)).toBe("parado");
+      await cliente.query("rollback to savepoint efeitos_vigia");
+    });
+  });
+
+  it("o vigia só calcula o estado: não marca alarme como enviado", async () => {
+    const dados = fixture as Fixture;
+    await comSinaisEstaveis(banco as Client, async (cliente) => {
+      await cliente.query("savepoint efeitos_vigia");
+      await cliente.query(
+        `insert into public.sinal_de_vida (restaurante_id, primeiro_envio_em, ultimo_envio_ok_em)
+         values ($1, now() - interval '3 days', now() - interval '2 hours')`,
+        [dados.restauranteA]
+      );
+      await cliente.query("select public.atualizar_estados()");
+      const linha = await cliente.query<{
+        estado: string;
+        alarme_enviado_em: string | null;
+      }>(
+        "select estado, alarme_enviado_em from public.sinal_de_vida where restaurante_id = $1",
+        [dados.restauranteA]
+      );
+      expect(linha.rows[0]).toEqual({
+        estado: "parado",
+        alarme_enviado_em: null,
+      });
+      await cliente.query("rollback to savepoint efeitos_vigia");
+    });
+  });
+
   it("mantém jobs ativos com comando e horários contratados", async () => {
     const cliente = banco as Client;
     const jobs = await cliente.query<{

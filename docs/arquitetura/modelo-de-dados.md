@@ -193,7 +193,9 @@ create table public.metas (
 | `eh_admin_repply()` | O login atual é admin da Repply? |
 | `processar_envio(restaurante_id, envelope, campos_desconhecidos)` | Toda a gravação de um envio numa transação só; grava apenas os campos da lista do contrato (ver [`recepcao-de-dados.md`](recepcao-de-dados.md)) |
 | `so_valor_simples(valor)` | Devolve o valor só se for texto, número, booleano ou null |
-| `atualizar_estados()` | O vigia: calcula o estado de cada restaurante (pg_cron a cada 5 min) |
+| `atualizar_estados()` | O vigia: calcula o estado de cada restaurante (pg_cron a cada 5 min). Não envia alarme |
+| `aberto_desde(horario, fuso, agora)` | Desde quando a casa está aberta sem interrupção; `null` se fechada |
+| `abertura_do_intervalo(horario, fuso, momento)` | Abertura do intervalo de funcionamento que contém o momento |
 | `recalcular_dia_operacao(restaurante_id)` | Quando a virada ou o fuso mudarem |
 | `atualizar_turnos(restaurante_id, turnos)` | A única escrita do cliente em `restaurantes`: confere o acesso e muda só os turnos (D-35) |
 | `metrica_*` | Uma função por métrica de [`../metricas.md`](../metricas.md), sempre recebendo `restaurante_id` e o período |

@@ -177,7 +177,13 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "atualizar_estados":
+            "aberto_desde":
+{ Args: { "p_agora"?: string,"p_fuso": string,"p_horario": Json }; Returns: string
+                           },
+"abertura_do_intervalo":
+{ Args: { "p_fuso": string,"p_horario": Json,"p_momento": string }; Returns: string
+                           },
+"atualizar_estados":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "atualizar_turnos":
@@ -191,9 +197,6 @@ isOneToOne: false
                            },
 "eh_admin_repply":
 { Args: Record<PropertyKey, never>; Returns: boolean
-                           },
-"esta_aberto_agora":
-{ Args: { "p_fuso": string,"p_horario": Json }; Returns: boolean
                            },
 "normaliza_numeric":
 { Args: { "p_valor": string }; Returns: number

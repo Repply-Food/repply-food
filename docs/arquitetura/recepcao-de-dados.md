@@ -135,15 +135,15 @@ Rotina diária no pg_cron:
 |---|---|
 | `aguardando` | Nunca enviou |
 | `fechado` | Agora está fora do horário de funcionamento. Nunca alarma |
-| `em_dia` | Último envio sem erro há ≤ 15 min |
-| `atrasado` | Entre 15 e 45 min |
-| `parado` | Mais de 45 min |
+| `em_dia` | Atraso ≤ 15 min |
+| `atrasado` | Atraso entre 15 e 45 min |
+| `parado` | Atraso acima de 45 min |
 
-- **Horário de funcionamento:** pode atravessar a meia-noite (ex.: 11h–2h), e o dia que vale é o da abertura.
-- **Alarme:**
-  - ao virar `parado` sem `alarme_enviado_em` neste incidente, chama `enviar-alerta` (pg_net + chave guardada no Vault, como no CRM) e grava `alarme_enviado_em`;
-  - ao voltar a `em_dia`, manda o e-mail "voltou" e limpa o alarme;
-  - o e-mail vai para o endereço configurado em `ALERTA_EMAIL_PARA`.
+- **Atraso:** conta do que for mais recente, o último envio sem erro **ou a abertura da casa**. O tempo em que a casa estava fechada não conta: o restaurante que desliga o computador à noite não aparece "parado" no minuto em que abre.
+- **Horário de funcionamento:** pode atravessar a meia-noite (ex.: 11h–2h), e o dia que vale é o da abertura. Dois intervalos colados, ou uma casa 24 horas, contam como uma abertura só. A regra está na função `aberto_desde`.
+- **Sem horário cadastrado**, o restaurante conta como sempre aberto: desconhecido não vira "fechado". Por isso o admin precisa exigir o horário no cadastro (etapa 3).
+- **Cadastro malformado** (horário ou fuso inválido) em um restaurante não para a rotina: ele é pulado, com um aviso no log do banco, e os outros são calculados.
+- **Alarme por e-mail:** ainda **não existe**. O vigia só calcula o estado e não mexe em `alarme_enviado_em`. O envio do e-mail de "parado" e de "voltou" é uma rotina própria, da etapa do alarme (ver `docs/divida-tecnica.md`), com duas regras: só marca como avisado depois de confirmar que o e-mail saiu, e só avisa "voltou" quando os dados voltam, nunca porque a casa fechou.
 - **O admin mostra o estado e o painel do dono usa as mesmas faixas** no selo "há X min" (M05).
 
 > Lição do CRM: `succeeded` em `cron.job_run_details` só diz que o pedido foi para a fila. Para saber se a chamada HTTP deu certo, conferir `net._http_response`.
