@@ -20,6 +20,10 @@ import Decimal from "decimal.js";
  *   --dry-run             monta e valida os envelopes, sem enviar nada
  *   --fuso <IANA>         fuso do restaurante (ou SCC_FUSO); obrigatório no
  *                         envio real, fictício America/Fortaleza no dry-run
+ *   --confirmo-nuvem      obrigatória quando SCC_URL não é desta máquina
+ *                         (127.0.0.1, localhost ou ::1). Enviar dados
+ *                         fictícios para a nuvem exige a autorização do
+ *                         Lucas Ferreira
  */
 import { type Envelope, validarEnvelope } from "../lib/validators/recepcao.ts";
 
@@ -820,6 +824,15 @@ export class Gerador {
 // Configuração e orquestração
 // ---------------------------------------------------------------------------
 
+/** O endereço é desta máquina? Só 127.0.0.1, localhost e ::1 contam. */
+export function enderecoLocal(url: string): boolean {
+  try {
+    return ["127.0.0.1", "localhost", "[::1]"].includes(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function lerConfig(argv: string[]): Config {
   const flag = (nome: string): string | undefined => {
     const posicao = argv.indexOf(`--${nome}`);
@@ -835,10 +848,15 @@ export function lerConfig(argv: string[]): Config {
   } catch {
     throw new Error("Fuso IANA inválido para o restaurante");
   }
+  const url =
+    process.env.SCC_URL ?? "http://127.0.0.1:54321/functions/v1/receber-envio";
+  if (!dryRun && !enderecoLocal(url) && !argv.includes("--confirmo-nuvem")) {
+    throw new Error(
+      "SCC_URL aponta para fora desta máquina. Enviar dados fictícios para a nuvem exige a autorização do Lucas Ferreira e a opção --confirmo-nuvem"
+    );
+  }
   return {
-    url:
-      process.env.SCC_URL ??
-      "http://127.0.0.1:54321/functions/v1/receber-envio",
+    url,
     token: process.env.SCC_TOKEN ?? "",
     historicoDias: Number(flag("historico-dias")) || 75,
     intervaloSegundos: Number(flag("intervalo")) || 300,

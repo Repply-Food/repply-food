@@ -127,5 +127,6 @@ npm run gerador -- --dry-run --historico-dias 75
 | `--intervalo <s>` | Segundos entre ciclos (padrão 300); toda tentativa HTTP respeita no mínimo 20 s, inclusive 413/retry/reenvio |
 | `--parar-apos <n>` | Para de enviar depois de n ciclos com 200 — demonstra o alarme de "parado" |
 | `--dry-run` | Monta e valida os envelopes com o mesmo schema da função, sem enviar nada |
+| `--confirmo-nuvem` | Obrigatória quando `SCC_URL` não é desta máquina. Só com a autorização do Lucas Ferreira |
 
 A carga inicial vai da data mais antiga até hoje em **janelas de 7 dias** (contrato §8); depois entram os ciclos de ~5 min. Se a resposta pedir `reenviar_desde`, o gerador refaz a carga a partir da data pedida.

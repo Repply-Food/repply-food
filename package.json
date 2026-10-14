@@ -18,7 +18,6 @@
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",
-    "supabase:migrate": "npx supabase db push",
     "functions:serve": "npx supabase functions serve",
     "gerador": "tsx scripts/gerador-dados-ficticios.ts"
   },
