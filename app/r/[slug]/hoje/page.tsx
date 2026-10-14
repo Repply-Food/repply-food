@@ -1,8 +1,14 @@
 import { EstadoVazio } from "@/components/painel/estado-vazio";
+import { exigirCasa } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Hoje · repply food." };
 
-export default function PaginaHoje() {
+export default async function PaginaHoje({
+  params,
+}: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  await exigirCasa(slug);
+
   return (
     <EstadoVazio
       titulo="Hoje"

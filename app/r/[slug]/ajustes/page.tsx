@@ -18,9 +18,11 @@ export default async function PaginaAjustes({
     <section className="flex max-w-xl flex-col gap-6">
       <h1 className="text-2xl font-semibold">Ajustes</h1>
       <div className="brand-surface flex flex-col divide-y rounded-lg">
-        <div className="flex min-h-14 items-center justify-between gap-4 px-4">
-          <span>E-mail</span>
-          <span className="truncate text-quiet">{sessao.email}</span>
+        <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-2">
+          <span className="shrink-0">E-mail</span>
+          <span className="min-w-0 break-all text-right text-quiet">
+            {sessao.email}
+          </span>
         </div>
         <Link
           href={`/trocar-senha?voltar=${encodeURIComponent(`/r/${slug}/ajustes`)}`}
@@ -40,7 +42,10 @@ export default async function PaginaAjustes({
           className="flex min-h-14 items-center justify-between px-4"
         >
           <span>Falar com a Repply</span>
-          <span className="text-quiet">WhatsApp ›</span>
+          <span className="text-quiet">
+            WhatsApp <span aria-hidden="true">›</span>
+            <span className="sr-only">, abre em nova aba</span>
+          </span>
         </a>
       </div>
       <form action={sairAction}>

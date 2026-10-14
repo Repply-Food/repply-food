@@ -111,3 +111,24 @@ export function seloDoSinal(e: {
       return { tom: "neutro", texto: "aguardando o 1º envio" };
   }
 }
+
+/**
+ * Selo a partir do resultado da leitura do `sinal_de_vida`. Se a leitura falhou
+ * (rede, tempo esgotado), não dá para saber se a casa já enviou: dizer
+ * "aguardando o 1º envio" seria falso para quem envia há meses. Nesse caso o
+ * selo é neutro e honesto, e o layout registra a falha.
+ */
+export function seloDaLeitura(e: {
+  dados: { estado: string | null; ultimo_envio_ok_em: string | null } | null;
+  erro: unknown;
+  agora: Date;
+  fuso: string;
+}): Selo {
+  if (e.erro) return { tom: "neutro", texto: "sem leitura agora" };
+  return seloDoSinal({
+    estado: estadoDoSinal(e.dados?.estado),
+    ultimoEnvioOkEm: e.dados?.ultimo_envio_ok_em ?? null,
+    agora: e.agora,
+    fuso: e.fuso,
+  });
+}

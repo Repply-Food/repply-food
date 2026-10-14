@@ -2,6 +2,7 @@ const codigosErro = [
   "erro_interno",
   "falha_autenticacao",
   "falha_inesperada",
+  "falha_leitura_sinal",
 ] as const;
 const codigosInfo = ["envio_processado", "envio_rejeitado"] as const;
 const contextos = ["receber-envio"] as const;
