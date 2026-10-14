@@ -185,6 +185,24 @@ describe.each(contextos)("contraste CSS real: %s", (_, classes) => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("texto de erro (--danger-text) passa 4.5 em página e superfície", () => {
+    const tokens = estilos(classes);
+    for (const fundo of [tokens["--bg"], tokens["--surface"]]) {
+      expect(
+        contraste(tokens["--danger-text"] ?? "", fundo ?? "")
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("borda de campo (--control-border) passa 3 em página e superfície (WCAG 1.4.11)", () => {
+    const tokens = estilos(classes);
+    for (const fundo of [tokens["--bg"], tokens["--surface"]]) {
+      expect(
+        contraste(tokens["--control-border"] ?? "", fundo ?? "")
+      ).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it("ação laranja usa quase-preto, inclusive hover; etiquetas têm texto acessível", () => {
     for (const classe of [
       "brand-action",

@@ -6,10 +6,13 @@
   --palette-leaf: #2f9e44;
   --palette-success: #1e9e5a;
   --palette-danger: #d64545;
+  --palette-danger-deep: #b42318;
+  --palette-danger-soft: #f87171;
   --palette-warning: #e8a33d;
   --palette-black: #0a0a0a;
   --palette-char: #1a1a1a;
   --palette-slate-700: #404040;
+  --palette-slate-500: #737373;
   --palette-slate-400: #a3a3a3;
   --palette-slate-200: #e5e5e5;
   --palette-slate-100: #f5f5f5;
@@ -56,6 +59,8 @@
   --color-quiet: var(--palette-slate-700);
   --color-border: var(--palette-slate-200);
   --color-focus: var(--palette-black);
+  --color-danger-text: var(--palette-danger-deep);
+  --color-control: var(--palette-slate-500);
 }
 
 .dark,
@@ -67,6 +72,8 @@
   --color-quiet: var(--palette-slate-400);
   --color-border: var(--palette-slate-700);
   --color-focus: var(--palette-white);
+  --color-danger-text: var(--palette-danger-soft);
+  --color-control: var(--palette-slate-400);
 }
 
 /* Ilhas vêm depois dos temas: prevalecem também no MESMO elemento. */
@@ -78,6 +85,8 @@
   --color-quiet: var(--palette-slate-700);
   --color-border: var(--palette-slate-200);
   --color-focus: var(--palette-black);
+  --color-danger-text: var(--palette-danger-deep);
+  --color-control: var(--palette-slate-500);
 }
 
 .scheme-ink {
@@ -88,6 +97,8 @@
   --color-quiet: var(--palette-slate-400);
   --color-border: var(--palette-slate-700);
   --color-focus: var(--palette-white);
+  --color-danger-text: var(--palette-danger-soft);
+  --color-control: var(--palette-slate-400);
 }
 
 /* 3. Aliases de consumidores. Recalculados em cada escopo: custom properties
@@ -109,6 +120,8 @@
   --brand-leaf: var(--palette-leaf);
   --success: var(--palette-success);
   --danger: var(--palette-danger);
+  --danger-text: var(--color-danger-text);
+  --control-border: var(--color-control);
   --warning: var(--palette-warning);
   --action-bg: var(--palette-orange);
   --action-hover: var(--palette-orange-deep);
