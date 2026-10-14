@@ -119,8 +119,11 @@ export async function pedirNovaSenhaAction(
     await segurarLatencia(inicio);
     return { ok: false, error: primeiroErro(dados.error.issues) };
   }
-  // A volta do e-mail usa o MESMO endereço em que a pessoa está (127.0.0.1,
-  // localhost ou o domínio): o cookie do PKCE só existe nele.
+  // O `redirectTo` leva o endereço em que a pessoa está (127.0.0.1, localhost
+  // ou o domínio). Mas o modelo do e-mail monta o link com `{{ .SiteURL }}` e
+  // `token_hash` (supabase/templates/recuperar-senha.html) e ignora este valor.
+  // Ele só vale se o Supabase usar o modelo padrão, e o Supabase o confere pela
+  // lista de endereços permitidos (`additional_redirect_urls`).
   const origem =
     (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
   const supabase = await createClient();

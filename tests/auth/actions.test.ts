@@ -167,7 +167,7 @@ describe("esqueci a senha não revela quem é cliente", () => {
     resetPasswordForEmail.mockResolvedValue({ error: null });
   });
 
-  it("o pedido normal volta pelo endereço em que a pessoa está", async () => {
+  it("o pedido normal manda o e-mail e passa ao Supabase o redirectTo com o endereço da requisição", async () => {
     const resultado = await semEspera(
       pedirNovaSenhaAction({ email: "dono@casa.com" })
     );
