@@ -161,7 +161,9 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# repply food.: o link do e-mail "esqueci a senha" volta para /auth/confirmar.
+# O painel pode ser aberto por 127.0.0.1 ou por localhost no desenvolvimento.
+additional_redirect_urls = ["https://127.0.0.1:3000", "http://127.0.0.1:3000/**", "http://localhost:3000/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -252,6 +254,12 @@ otp_expiry = 3600
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+
+# repply food.: o link usa token_hash para funcionar mesmo abrindo o e-mail em
+# outro aparelho. O mesmo modelo vai para a nuvem na publicação (etapa 4).
+[auth.email.template.recovery]
+subject = "Crie sua senha nova · repply food."
+content_path = "./supabase/templates/recuperar-senha.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
