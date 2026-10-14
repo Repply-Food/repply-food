@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   // os recursos de desenvolvimento (`/_next/hmr`) fora de `localhost`, a página
   // nunca hidrata e o formulário cai no envio nativo do navegador.
   allowedDevOrigins: ["127.0.0.1"],
+  // O `next dev` registra no terminal os argumentos de cada função do servidor,
+  // e o login passa e-mail e senha como argumento. Nenhuma senha vai para log.
+  logging: { serverFunctions: false },
   async headers() {
     return [
       {
