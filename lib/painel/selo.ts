@@ -34,13 +34,43 @@ export function tempoDesde(desde: Date, agora: Date): string {
   return dias === 1 ? "há 1 dia" : `há ${dias} dias`;
 }
 
-function horaNoFuso(momento: Date, fuso: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: fuso,
-  }).format(momento);
+const UM_DIA_EM_MS = 24 * 60 * 60 * 1000;
+
+/** Data do último envio, ou `null` se não existe ou não vira uma data válida. */
+function lerUltimoEnvio(valor: string | null): Date | null {
+  if (!valor) return null;
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
+/**
+ * "HH:MM" no fuso da casa, ou `null` se o fuso não existe. O `Intl` LANÇA
+ * `RangeError` num fuso inválido, e o selo mora no layout: um erro aqui
+ * derrubaria todas as telas da casa por causa de um cadastro errado.
+ */
+function horaNoFuso(momento: Date, fuso: string): string | null {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: fuso,
+    }).format(momento);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Último dado de uma casa fechada. Até 24 h, "às 02:14" basta; passou disso,
+ * a hora sem o dia engana (a casa pode estar fechada há dias), então diz
+ * "há N dias". Fuso inválido também cai no texto relativo.
+ */
+function textoFechado(ultimo: Date, agora: Date, fuso: string): string {
+  const relativo = `fechado agora · últimos dados ${tempoDesde(ultimo, agora)}`;
+  if (agora.getTime() - ultimo.getTime() > UM_DIA_EM_MS) return relativo;
+  const hora = horaNoFuso(ultimo, fuso);
+  return hora ? `fechado agora · últimos dados às ${hora}` : relativo;
 }
 
 export function seloDoSinal(e: {
@@ -49,7 +79,7 @@ export function seloDoSinal(e: {
   agora: Date;
   fuso: string;
 }): Selo {
-  const ultimo = e.ultimoEnvioOkEm ? new Date(e.ultimoEnvioOkEm) : null;
+  const ultimo = lerUltimoEnvio(e.ultimoEnvioOkEm);
   switch (e.estado) {
     case "em_dia":
       return {
@@ -75,9 +105,7 @@ export function seloDoSinal(e: {
     case "fechado":
       return {
         tom: "neutro",
-        texto: ultimo
-          ? `fechado agora · últimos dados às ${horaNoFuso(ultimo, e.fuso)}`
-          : "fechado agora",
+        texto: ultimo ? textoFechado(ultimo, e.agora, e.fuso) : "fechado agora",
       };
     default:
       return { tom: "neutro", texto: "aguardando o 1º envio" };

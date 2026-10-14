@@ -3,15 +3,17 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 /**
  * O `tailwind-merge` sabe desempatar duas classes que mexem na MESMA propriedade
- * — `bg-red-500 bg-blue-500` vira só a segunda. Mas ele só reconhece o que está
- * na tabela dele, e os raios da marca (`rounded-card`, `rounded-tag`) são tokens
- * nossos, definidos no `@theme inline` do `app/styles/tokens.css`.
+ * (duas cores de fundo, por exemplo: vale só a última). Mas ele só reconhece o
+ * que está na tabela dele, e os raios da marca são tokens nossos, definidos na
+ * ponte `@theme inline` de `app/globals.css` (no Food, o do card é o
+ * `--radius-card`). A lista abaixo é herdada do Imob e inclui um raio de tag
+ * que o Food ainda não declara.
  *
- * Sem registrar aqui, `cn("rounded-card", "rounded-lg")` devolve AS DUAS: quem
- * ganha passa a ser a ordem em que o Tailwind gerou as regras, não a ordem
- * escrita no componente. O bug fica dormindo até alguém tentar sobrescrever o
- * raio de um Card ou de um Badge — e aí falha de um jeito que não parece com a
- * causa.
+ * Sem registrar aqui, um raio da marca e um raio padrão do Tailwind no mesmo
+ * elemento saem AMBOS: quem ganha passa a ser a ordem em que o Tailwind gerou
+ * as regras, não a ordem escrita no componente. O bug fica dormindo até alguém
+ * tentar sobrescrever o raio de um Card — e aí falha de um jeito que não
+ * parece com a causa.
  */
 const twMerge = extendTailwindMerge({
   extend: {

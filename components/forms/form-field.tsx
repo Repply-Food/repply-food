@@ -82,9 +82,18 @@ export function TextField<T extends FieldValues, N extends FieldPath<T>>({
                 `aria-label` conta a AÇÃO. É um <button> de verdade, então entra
                 na ordem de tabulação sozinho — nada de `tabIndex={-1}`, que é o
                 atalho comum aqui e tira o recurso de quem usa teclado.
-                O ícone é decorativo: quem nomeia o botão é o rótulo. */}
+                O ícone é decorativo: quem nomeia o botão é o rótulo.
+
+                ALVO DE TOQUE: o botão desenhado tem 24 px (`icon-xs`), mas o Food
+                exige 44 px no celular. O `after:` é um pseudo-elemento invisível
+                que estica só a área tocável. O `inset` conta a partir da borda de
+                dentro do botão (24 − 2 × 1 px de borda = 22 px), por isso 11 px de
+                cada lado: 22 + 2 × 11 = 44 px, que cabe na altura do campo no
+                celular. O visual não muda. Nenhum ancestral (grupo, encaixe) tem
+                `overflow-hidden`, então a área não é cortada. */}
             <InputGroupButton
               size="icon-xs"
+              className="relative after:absolute after:-inset-[11px]"
               aria-pressed={senhaVisivel}
               aria-label={senhaVisivel ? "Ocultar senha" : "Mostrar senha"}
               onClick={() => setSenhaVisivel((visivel) => !visivel)}

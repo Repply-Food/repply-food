@@ -56,8 +56,10 @@ const buttonVariants = cva(
            mudar a cor — feedback sem regredir nenhum número. */
         link: "text-foreground underline decoration-primary-hover underline-offset-4 hover:decoration-2",
       },
-      /* Respiro horizontal ≈ metade da altura (herdado do Imob, onde a borda
-         curva da pílula "come" a extremidade do texto).
+      /* Respiro horizontal ≈ metade da altura. A proporção vem do Imob, onde a
+         curva da pílula "comia" a ponta do texto; no Food o canto é de 10 px e
+         não come nada, então ela ficou só como um respiro confortável para o
+         texto em negrito. Se uma tela aprovada pedir outra medida, ajuste aqui.
              xs  24px de altura → 12px  ·  sm  28px → 14px
              default 32px       → 16px  ·  lg  36px → 20px
          O `lg` passa um pouco da metade porque é o CTA de destaque.

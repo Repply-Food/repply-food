@@ -79,15 +79,15 @@ function InputGroupAddon({
 /**
  * Botão que mora DENTRO de um campo.
  *
- * A regra da marca diz que clicável é pílula — mas ela fala de ação solta. Este
- * botão é soldado dentro de um contêiner retangular, e pílula aqui deixaria um
- * comprimido flutuando dentro de um campo, ao lado de irmãos retangulares.
- * Então ele acompanha a forma do contêiner que o abriga.
+ * No Food o botão é um retângulo de 10px (ver o `Button`), e este fica soldado
+ * dentro de um contêiner retangular. Ele acompanha a forma do contêiner que o
+ * abriga, com um raio um pouco menor que o do campo para o canto não encostar
+ * na borda.
  *
- * ⚠️ O raio precisa estar nos QUATRO tamanhos. Antes só `xs` e `icon-xs` o
- * declaravam; `sm` e `icon-sm` ficavam com string vazia e herdavam o raio do
- * Button — o que só não aparecia porque o Button também era retangular. Ao
- * virar pílula, esses dois viraram comprimido.
+ * ⚠️ O raio precisa valer para os QUATRO tamanhos. No Imob só `xs` e `icon-xs`
+ * o declaravam; `sm` e `icon-sm` ficavam com string vazia e herdavam o raio do
+ * Button, então mudar a forma do Button mudava esses dois sem aviso. Aqui o
+ * raio mora na base do `cva` abaixo, e não nos tamanhos.
  */
 const inputGroupButtonVariants = cva(
   "flex items-center gap-2 rounded-[calc(var(--radius)-3px)] text-sm shadow-none",

@@ -3,11 +3,13 @@
  *
  * DUAS DECISÕES DE MARCA MORAM AQUI:
  *
- * 1. RAIO. A marca separa forma por função: pílula = clicável, retângulo de
- *    10–16px = contêiner. O card é contêiner, então usa `--radius-card` (14px)
- *    pela classe `rounded-card`. Não trocar por `rounded-full` nem por um raio
- *    solto: o dia em que card e botão tiverem a mesma forma, a hierarquia
- *    "o que eu clico × o que eu leio" desaparece da tela inteira.
+ * 1. RAIO. No repply food. o botão é um retângulo de 10px com texto em negrito
+ *    (telas aprovadas, `docs/telas/estilo.css`); a pílula é marca do Imob e não
+ *    existe aqui. O card é contêiner, então usa `--radius-card` (14px) pela
+ *    classe `rounded-card`, que vem da ponte `@theme inline` de
+ *    `app/globals.css`. Não trocar por `rounded-full` nem por um raio solto: a
+ *    forma do contêiner é decisão de marca, e um card em pílula leria como
+ *    botão.
  *
  * 2. CONTORNO É `border`, NÃO `ring`. O template desenhava `ring-1
  *    ring-foreground/10`. O problema: `ring` do Tailwind é implementado como
