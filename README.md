@@ -2,7 +2,7 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 14/10/2026:** fundação **fechada localmente** (etapa 1 do plano do MVP). A verificação (tipos, lint, testes e build) passa no Windows, com **351 testes em 20 arquivos**, sobre um banco local montado do zero pelas migrations. Ainda falta rodá-la numa máquina Linux: o ramo do teste de tipos que só vale no Linux não foi executado nesta etapa. Telas, login, admin, PDF e alarme por e-mail não estão implementados. Nada foi publicado na nuvem.
+> **Estado em 14/10/2026:** depois da fundação (etapa 1), a **etapa 2 do plano do MVP (entrar e moldura do painel) está fechada localmente**. Já abrem as telas de entrar, esqueci a senha, senha nova, troca de senha, escolha da casa e acesso pendente, o admin provisório e o painel da casa com a moldura (celular e computador), o selo do vigia e a conta em Ajustes. Os números chegam nas etapas 5 e 7. A verificação (tipos, lint, testes e build) passa no Windows, sobre um banco local montado do zero pelas migrations. Ainda falta rodá-la numa máquina Linux: o ramo do teste de tipos que só vale no Linux nunca foi executado. Admin completo, PDF e alarme por e-mail não estão implementados. Nada foi publicado na nuvem.
 
 > **O que falta:** ver [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/).
 
@@ -14,7 +14,7 @@
 4. [`docs/telas/index.html`](docs/telas/index.html): as telas aprovadas (abra no navegador).
 5. [`CLAUDE.md`](CLAUDE.md) e [`AGENTS.md`](AGENTS.md): as regras para quem programa, pessoa ou IA.
 
-## Rodar localmente (fundação)
+## Rodar localmente
 
 **Pré-requisitos:**
 - **Node.js 22 ou mais novo.**
@@ -34,7 +34,7 @@ npx supabase start
 #    e preencha com os valores de `npx supabase status -o env` (tabela abaixo)
 cp -n .env.example .env.local
 
-# 4) Rodar em desenvolvimento
+# 4) Rodar em desenvolvimento (para entrar no painel, veja "Entrar no painel local" abaixo)
 npm run dev
 ```
 
@@ -51,11 +51,28 @@ O `.env.local` aponta **sempre** para o banco local. As chaves da nuvem ficam em
 **Windows, com ou sem HD.** Se a subida falhar nos contêineres `vector` ou `logflare`, rode `npx supabase stop` e depois `npx supabase start -x vector,logflare`.
 
 **Windows com o Rancher num HD (disco mecânico).** O banco funciona, mas o disco lento pede três cuidados. Os comandos abaixo são do Git Bash:
-- suba só o que os testes usam e dê mais tempo para o Postgres ficar pronto:
-  `SUPABASE_DB_HEALTH_TIMEOUT=10m npx supabase start -x studio,logflare,vector,storage-api,imgproxy,realtime,mailpit,postgres-meta`;
+- suba só o que os testes e o login usam (o Mailpit, a caixa de e-mail local, **fica de fora da lista `-x`**: o "esqueci a senha" precisa dele) e dê mais tempo para o Postgres ficar pronto:
+  `SUPABASE_DB_HEALTH_TIMEOUT=10m npx supabase start -x studio,logflare,vector,storage-api,imgproxy,realtime,postgres-meta`;
 - se o Docker não responder depois de abrir o Rancher (no registro `docker.log`, na pasta `%LOCALAPPDATA%\rancher-desktop\logs\`, aparece `timeout waiting for containerd to start`), religue só o serviço dele:
   `MSYS_NO_PATHCONV=1 wsl.exe -d rancher-desktop --exec /usr/local/bin/wsl-service docker restart`;
 - download interrompido pode deixar imagem corrompida (erro `unable to find user` ou `exec format error`): apague a imagem com `docker image rm` e suba de novo.
+
+### Entrar no painel local
+
+Com o banco no ar (agora ele sobe junto com a caixa de e-mail, o Mailpit) e o `.env.local` preenchido:
+
+```bash
+# Cria as contas e as duas casas de teste no banco local (só aceita o banco local)
+npm run local:acesso
+
+# Painel em desenvolvimento
+npm run dev
+```
+
+- Abra **`http://127.0.0.1:3000`**. É o `site_url` do login local, para onde o link do e-mail volta. `localhost` é **outra sessão**: o login de um endereço não vale no outro.
+- `npm run local:acesso` cria a "Casa de Teste Local", uma segunda casa (para testar a escolha da casa), um login de dono com senha provisória e troca obrigatória, e um admin. As credenciais são valores de teste fixos, em `scripts/acesso-local.ts` (`ACESSO_LOCAL`). Rodar de novo não duplica nada.
+- O e-mail de "esqueci a senha" não sai para a internet: cai na caixa de e-mail local, o Mailpit, em **`http://127.0.0.1:54324`**.
+- **Cuidado ao commitar:** o `next dev` do Next 16.4 reescreve `AGENTS.md` e `next-env.d.ts`. Não commite essas mudanças: rode `git checkout -- AGENTS.md next-env.d.ts` antes do `git add`.
 
 ### Testes reais locais
 
@@ -123,7 +140,7 @@ O sistema SCC envia as contas para a função `receber-envio` a cada ~5 minutos,
 
 Simula o SCC: gera meses de entradas realistas (almoço e jantar, pico de sexta e sábado, mesas abertas agora, contas esquecidas, descontos e garçons) e envia pelo **mesmo** `receber-envio` que o sistema real usa. Detalhes em `docs/arquitetura/recepcao-de-dados.md` §5 e no topo de `scripts/gerador-dados-ficticios.ts`.
 
-**Envio real local:** exige token exclusivo de restaurante de teste, Supabase local ativo e o **fuso IANA do restaurante**, via `--fuso` ou `SCC_FUSO`. As telas de admin/login ainda não existem. Não use o token, o arquivo de configuração ou dados da Casa de Demonstração para testes/cargas.
+**Envio real local:** exige token exclusivo de restaurante de teste, Supabase local ativo e o **fuso IANA do restaurante**, via `--fuso` ou `SCC_FUSO`. A tela de admin ainda não existe (etapa 3). Não use o token, o arquivo de configuração ou dados da Casa de Demonstração para testes/cargas.
 
 ```bash
 # Só após autorização de carga, com arquivo próprio de configuração de teste

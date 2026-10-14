@@ -65,7 +65,7 @@ As fórmulas usam só contas válidas do restaurante, dentro do período e do di
 | M02 | **Mesas abertas agora** | Contas com `fechada_em` vazio: quantidade e soma do `valor_consumido` ("em aberto", com a taxa, porque é o que o cliente vai pagar) | — |
 | M03 | **Pessoas na casa** | Soma de `numero_ocupantes` das contas abertas | H9 (o campo é preenchido de verdade?) |
 | M04 | **Contas abertas há mais de 4h** | Abertas com `agora − aberta_em > 4h`, da mais antiga para a mais nova. A tela mostra **no máximo 3** e o botão "ver todas (N)" (D-33). O limite de 4h é ajustável | — |
-| M05 | **Última atualização** | `agora − sinal_de_vida.ultimo_envio_ok_em`. Selo verde até 15 min, amarelo de 15 a 45 min, vermelho acima de 45 min (só dentro do horário de funcionamento) | — |
+| M05 | **Última atualização** | O selo **segue o estado do vigia** (`sinal_de_vida.estado`, D-53), com os limites dele: verde até 15 min, amarelo de 15 a 45 min, vermelho acima de 45 min, só dentro do horário de funcionamento. O tempo mostrado ("há X min") sai de `ultimo_envio_ok_em`. Casa fechada: cinza, "fechado agora · últimos dados às HH:MM". Sem envio ainda: "aguardando o 1º envio". Textos completos na D-53 | — |
 | M09 | **Por pessoa (hoje)** | Faturamento da casa ÷ pessoas das contas pagas do dia, comparado com o mesmo dia da semana | H9 |
 | M11 | **Meta do mês** | Faturamento da casa do mês ÷ meta do mês, mais a **projeção** (§4) | — |
 

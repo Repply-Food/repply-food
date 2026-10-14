@@ -149,6 +149,13 @@ Rotina diária no pg_cron:
 - **Sem horário cadastrado**, o restaurante conta como sempre aberto: desconhecido não vira "fechado". Por isso o admin precisa exigir o horário no cadastro (etapa 3).
 - **Cadastro malformado** (horário ou fuso inválido) em um restaurante não para a rotina: ele é pulado, com um aviso no log do banco, e os outros são calculados.
 - **Alarme por e-mail:** ainda **não existe**. O vigia só calcula o estado e não mexe em `alarme_enviado_em`. O envio do e-mail de "parado" e de "voltou" é uma rotina própria, da etapa do alarme (ver `docs/divida-tecnica.md`), com duas regras: só marca como avisado depois de confirmar que o e-mail saiu, e só avisa "voltou" quando os dados voltam, nunca porque a casa fechou.
-- **O admin mostra o estado e o painel do dono usa as mesmas faixas** no selo "há X min" (M05).
+- **O admin e o painel do dono mostram o mesmo estado.** O selo "há X min" do painel (M05) **segue o estado do vigia** (D-53). Ele não recalcula `agora − último envio`: os limites são os da tabela acima, e o tempo mostrado sai de `ultimo_envio_ok_em`. Textos (completos na D-53):
+  - `em_dia`: "atualizado há X min";
+  - `atrasado`: "atrasado · últimos dados há X min";
+  - `parado`: "sem dados há X";
+  - `fechado`: "fechado agora · últimos dados às HH:MM" (no fuso da casa; com mais de 24 h, "há N dias");
+  - `aguardando` ou sem linha: "aguardando o 1º envio";
+  - leitura do sinal falhou: "sem leitura agora".
+- O selo é calculado quando a tela carrega. A atualização periódica entra na etapa 5 (`docs/divida-tecnica.md`).
 
 > Lição do CRM: `succeeded` em `cron.job_run_details` só diz que o pedido foi para a fila. Para saber se a chamada HTTP deu certo, conferir `net._http_response`.

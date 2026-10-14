@@ -86,7 +86,7 @@ Há duas pessoas pedindo, e o jeito de responder muda:
 | taxa de serviço, "os 10%" | `taxa_servico` | `TaxaServico` | Costuma ir para os garçons |
 | dia (de operação) | `dia_operacao` | — | Começa na hora de virada (padrão 5h). Mesa da madrugada conta no dia da abertura |
 | contas esquecidas | abertas há mais de `limite_conta_esquecida` | `DataSaida` vazia | Padrão: 4 h (M04) |
-| atualizado há X min | `sinal_de_vida` | — | Verde ≤ 15 min, amarelo ≤ 45, vermelho acima |
+| atualizado há X min | `sinal_de_vida` | — | O selo segue o estado do vigia (D-53): verde em dia (≤ 15 min), amarelo atrasado (≤ 45), vermelho parado, cinza fechado ou aguardando |
 | envio | `envios` | o POST | O que o SCC manda a cada ciclo |
 | janela | `janela.desde/ate` | `UltimaDataConfirmada` | Período coberto por um envio (contrato §6) |
 | token de envio | `tokens_envio` | `Token` no .ini | Identifica o restaurante. Mostrado uma vez |
@@ -236,20 +236,28 @@ Veja o `AGENTS.md` §4. **Escalar não é falha, é disciplina.** Trabalho ruim 
   - o `github.com/Repply-Food/scc-dashboard` é o **simulador em C++** do Lucas Duarte, um repositório separado. Não misture os dois.
 - **Trailer de coautoria** nos commits feitos com IA: o que a ferramenta indicar.
 
-## 13. Estrutura (planejada)
+## 13. Estrutura
 
 ```
 repositorio/
 ├── AGENTS.md · CLAUDE.md · SPEC.md · README.md · PROMPTS.md
-├── app/                      # Next.js: (auth)/entrar, trocar-senha · r/[slug]/{hoje,resultados,ajustes} · admin/
-├── components/               # ui/ (shadcn personalizado) · painel/ · admin/
-├── lib/                      # supabase/ · auth/ · metricas/ (chamadas às funções SQL) · formato/ (dinheiro, data)
+├── proxy.ts                  # o porteiro (antigo middleware do Next): renova a sessão e decide o destino de cada endereço
+├── app/                      # Next.js
+│   ├── (entrada)/            # entrar · esqueci-a-senha · nova-senha · trocar-senha · escolher-casa · acesso-pendente
+│   ├── r/[slug]/             # painel da casa: hoje · resultados · ajustes
+│   ├── admin/                # provisório até a etapa 3
+│   ├── auth/confirmar/       # rota do link do e-mail (recuperação de senha)
+│   └── styles/               # tokens.css e brand.css
+├── components/               # ui/ (shadcn personalizado) · forms/ · painel/ (moldura, menu, selo) · marca/ · entrada/ · providers/
+├── lib/                      # auth/ · painel/ (selo) · entrada/ · supabase/ · format/ (dinheiro, data) · validators/ · contato.ts · logger.ts
+│                             # metricas/ (chamadas às funções SQL) chega com a etapa 5
 ├── supabase/
 │   ├── migrations/
-│   ├── functions/receber-envio/ · enviar-alerta/
+│   ├── functions/receber-envio/ · enviar-alerta/ (etapa 9)
+│   ├── templates/            # modelo do e-mail de recuperação de senha
 │   └── config.toml
-├── tests/                    # recepção, isolamento, métricas (exemplo de conta), design-tokens
-├── scripts/                  # gerador de dados fictícios, sincronizar-skills.mjs
+├── tests/                    # recepção, isolamento, login (auth), painel, métricas (exemplo de conta), design-tokens
+├── scripts/                  # gerador de dados fictícios, acesso-local.ts (contas de teste), sincronizar-skills.mjs
 ├── public/                   # ícones do app (copiados de identidade-visual/logos/app/)
 ├── identidade-visual/        # marca: brandbook, logos, fontes, gerador (fonte da verdade)
 ├── .claude/skills/ · .agents/skills/

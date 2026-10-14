@@ -78,12 +78,27 @@ Copiado do CRM:
 ## 5. Login e senha
 
 - A conta é **criada pelo admin**, com senha provisória e `app_metadata.precisa_trocar_senha = true`. Esse campo só o servidor escreve.
-- O middleware manda para `/trocar-senha` enquanto o aviso estiver ativo. A ação de trocar a senha limpa o aviso usando a chave de serviço.
+- **Primeiro acesso:**
+  - o porteiro (`proxy.ts`) manda para `/trocar-senha` enquanto o aviso estiver ativo. Só `/trocar-senha`, `/nova-senha` e `/auth/*` ficam livres;
+  - a função do servidor que troca a senha lê o aviso do usuário que o Supabase validou (`getUser`), nunca do formulário, e não pede a senha atual;
+  - ao terminar, ela limpa o aviso **só com a chave de serviço** e **confere que limpou**. Se o aviso continuar ligado, devolve erro: zero efeito não é sucesso (`lib/auth/nucleo.ts`).
+- **Troca voluntária** (vinda de Ajustes): pede a senha atual e a confere com um cliente descartável, que não mexe na sessão do navegador.
+- **Porteiro e guardas:**
+  - o porteiro (`proxy.ts`) renova a sessão a cada requisição e decide por uma função pura (`decidirRota`, em `lib/auth/rotas.ts`). Sem login, vai para `/entrar?next=…`. Arquivo estático nem consulta o login (lista fechada de extensões, olhando só o último trecho do caminho);
+  - **o porteiro não é a defesa.** Toda função do servidor pode ser chamada por POST direto, então a conferência da sessão e do aviso mora **dentro** de cada função;
+  - as guardas por casa (`lib/auth/sessao.ts`: `exigirCasa`, `exigirAdmin`) rodam no layout e nas páginas de `/r/[slug]` (Hoje, Resultados e Ajustes). A casa do endereço precisa estar entre as que a RLS devolve para aquele login (todas, para o admin). Casa de outro volta ao destino padrão da conta; casa suspensa vai para `/acesso-pendente` (o admin ainda entra, para o suporte). Com a troca de senha pendente, as duas mandam para `/trocar-senha`.
 - **Senha:** no mínimo **8 caracteres**. A regra fica num lugar só (`lib/auth/senha.ts`) e é configurada igual no Supabase Auth. *O Imob tinha 8 num lugar e 10 em outro; não repetir.*
-- "Esqueci a senha" usa o e-mail do Supabase Auth, com modelo de e-mail na marca.
-- **Limite de tentativas:**
-  - o do próprio Supabase Auth;
-  - mais um limitador nas rotas de login que **não dependa de memória do servidor**, porque na Vercel cada requisição pode cair numa instância diferente. O limitador em memória do Imob não serve aqui.
+- **Sair** desconecta **só o aparelho em uso** (`signOut({ scope: "local" })`). O login é compartilhado entre dono, sócio e gerente (D-10), e sair "de todos" derrubaria os outros celulares. **Trocar a senha** desconecta os outros aparelhos (`scope: "others"`), porque a senha velha deixou de valer para todos.
+- **"Esqueci a senha":**
+  - o e-mail sai pelo Supabase Auth, com o modelo da marca (`supabase/templates/recuperar-senha.html`);
+  - o link leva `token_hash` (`/auth/confirmar?token_hash=…&type=recovery&next=/nova-senha`), então **vale em outro aparelho**. O link padrão do Supabase só vale no navegador que pediu;
+  - `/auth/confirmar` **não troca uma sessão aberta** pela do link. Se o aparelho já tem outra conta, vai para `/entrar` com a explicação (fixação de sessão);
+  - o retorno grava um **cookie assinado** (HMAC com a chave de serviço, 10 min, amarrado ao usuário, `HttpOnly`, restrito a `/nova-senha`). A função do servidor que define a senha nova o **exige por dentro**, não só a página;
+  - recuperar a senha também cumpre o primeiro acesso;
+  - a resposta é **a mesma exista ou não o e-mail** (e demora no mínimo 800 ms). Isso vale também quando o Supabase recusa pelo limite de envio **por usuário** (`over_email_send_rate_limit`, que só aparece para e-mail cadastrado): vira o mesmo aviso de sempre ("Se esse e-mail tiver acesso…"). O limite por endereço de internet (`over_request_rate_limit`) vale antes de procurar o usuário, não revela nada e continua visível.
+- **Mensagens:** frases do produto, escolhidas pelo `code` do erro do Supabase (`lib/auth/erros.ts`), nunca o texto cru. "E-mail ou senha incorretos." só aparece quando o login recusou a credencial; limite de tentativas e queda do serviço têm frase própria.
+- **Limite de tentativas (D-52):** **não há bloqueio próprio** por senha errada. Vale o limite do próprio Supabase Auth, por endereço de internet, e a tela de entrada sempre mostra o caminho "Esqueci a senha". O limitador em memória do Imob não serve aqui: na Vercel cada requisição pode cair numa instância diferente.
+  - **Risco conhecido:** o Supabase vê o endereço do servidor da Vercel, não o de quem tenta. Uma pessoa errando a senha pode bloquear o login de todos por alguns minutos. Está na dívida técnica (item 23), para decidir antes da etapa 4.
 
 ## 6. Recepção de dados
 

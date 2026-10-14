@@ -66,7 +66,7 @@ As tarefas entre colchetes rodam **ao mesmo tempo**, na mesma pasta, porque mexe
 
 **Arquivos:** `supabase/config.toml`, `supabase/templates/recuperar-senha.html`, este plano e o desenho.
 
-- [ ] **Passo 1: Conferir o repositório**
+- [x] **Passo 1: Conferir o repositório**
 
 ```bash
 git fetch --all --prune && git status -sb && git log --oneline -3 origin/main
@@ -74,7 +74,7 @@ git fetch --all --prune && git status -sb && git log --oneline -3 origin/main
 
 Esperado: sem `[behind]`. Commits novos de outra pessoa: ler antes de seguir.
 
-- [ ] **Passo 2: Liberar os endereços de retorno do e-mail no login local**
+- [x] **Passo 2: Liberar os endereços de retorno do e-mail no login local**
 
 Em `supabase/config.toml`, seção `[auth]`, troque a linha `additional_redirect_urls = ["https://127.0.0.1:3000"]` por:
 
@@ -84,7 +84,7 @@ Em `supabase/config.toml`, seção `[auth]`, troque a linha `additional_redirect
 additional_redirect_urls = ["https://127.0.0.1:3000", "http://127.0.0.1:3000/**", "http://localhost:3000/**"]
 ```
 
-- [ ] **Passo 2b: E-mail de senha nova que funciona em qualquer aparelho**
+- [x] **Passo 2b: E-mail de senha nova que funciona em qualquer aparelho**
 
 O link padrão do Supabase usa um código que só vale no MESMO navegador que pediu (PKCE): quem pede no computador e abre o e-mail no celular cairia em "link inválido". O modelo abaixo manda o `token_hash`, que `/auth/confirmar` já aceita em qualquer aparelho (padrão do Imob consertado).
 
@@ -111,7 +111,7 @@ content_path = "./supabase/templates/recuperar-senha.html"
 
 (O cabeçalho de tabela precisa ficar onde a linha seguinte já é comentário ou outra tabela: no meio das chaves de `[auth.email]` ele as roubaria.)
 
-- [ ] **Passo 3: Reiniciar o banco local com a caixa de e-mail (Mailpit)**
+- [x] **Passo 3: Reiniciar o banco local com a caixa de e-mail (Mailpit)**
 
 A configuração de login só é lida na subida, e o Mailpit (caixa de e-mail de mentira) precisa subir junto agora.
 
@@ -122,11 +122,11 @@ SUPABASE_DB_HEALTH_TIMEOUT=10m npx supabase start -x studio,logflare,vector,stor
 
 Se o Docker não responder: `MSYS_NO_PATHCONV=1 wsl.exe -d rancher-desktop --exec /usr/local/bin/wsl-service docker restart` (README, caixa do HD). Depois, em segundo plano: `npx supabase functions serve receber-envio`. Confira: `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:54321/functions/v1/receber-envio` dá `405` e `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:54324` dá `200` (Mailpit).
 
-- [ ] **Passo 4: Rodar a suíte para garantir o ponto de partida**
+- [x] **Passo 4: Rodar a suíte para garantir o ponto de partida**
 
 `npx vitest run` → esperado: 20 arquivos, 351 testes passando.
 
-- [ ] **Passo 5: Commits**
+- [x] **Passo 5: Commits**
 
 O desenho e este plano já foram commitados antes da aprovação. Aqui entra só a configuração:
 
@@ -147,7 +147,7 @@ git commit -m "Libera o retorno do e-mail de senha no login local e usa link que
 
 **Interfaces:** Produz as bibliotecas que as Tarefas 2 a 5 usam. Nenhuma outra tarefa mexe no `package.json` (a 3 só acrescenta uma linha de script, combinado).
 
-- [ ] **Passo 1: Instalar as versões do Imob**
+- [x] **Passo 1: Instalar as versões do Imob**
 
 ```bash
 npm i @supabase/ssr@^0.10.3 @supabase/supabase-js@^2.106.1 zod@^4.4.3 react-hook-form@^7.76.1 @hookform/resolvers@^5.4.0 @base-ui/react@^1.5.0 recharts@^3.8.0 lucide-react@^1.16.0 next-themes@^0.4.6 sonner@^2.0.7 class-variance-authority@^0.7.1 tailwind-merge@^3.6.0 clsx@^2.1.1 tw-animate-css@^1.4.0 shadcn@^4.8.0
@@ -155,7 +155,7 @@ npm i @supabase/ssr@^0.10.3 @supabase/supabase-js@^2.106.1 zod@^4.4.3 react-hook
 
 Confira com `git diff package.json` que só mudaram essas linhas (e que `supabase` continua fixo em `2.120.0` nas devDependencies).
 
-- [ ] **Passo 2: Mesma versão de zod e do supabase-js na função de recepção**
+- [x] **Passo 2: Mesma versão de zod e do supabase-js na função de recepção**
 
 O schema do envelope (`supabase/functions/_shared/recepcao.ts`) é o mesmo arquivo no Node e no Deno; as duas pontas precisam da mesma versão. Em `supabase/functions/receber-envio/deno.json`:
 
@@ -170,7 +170,7 @@ O schema do envelope (`supabase/functions/_shared/recepcao.ts`) é o mesmo arqui
 
 Se `npm ls zod @supabase/supabase-js` mostrar versões instaladas diferentes de `4.4.3` e `2.106.1`, use as instaladas nos dois lugares.
 
-- [ ] **Passo 3: Cliente do servidor com os tipos da nova `@supabase/ssr`**
+- [x] **Passo 3: Cliente do servidor com os tipos da nova `@supabase/ssr`**
 
 Substitua `lib/supabase/server.ts` por:
 
@@ -205,7 +205,7 @@ export async function createClient() {
 }
 ```
 
-- [ ] **Passo 4: Carregar os pesos das fontes**
+- [x] **Passo 4: Carregar os pesos das fontes**
 
 Em `app/layout.tsx`, troque as três chamadas `localFont` por:
 
@@ -242,7 +242,7 @@ const jetBrainsMono = localFont({
 });
 ```
 
-- [ ] **Passo 5: Verificar e, se o zod 4 reclamar, ajustar o schema do envelope**
+- [x] **Passo 5: Verificar e, se o zod 4 reclamar, ajustar o schema do envelope**
 
 ```bash
 npx tsc --noEmit
@@ -251,7 +251,7 @@ npx vitest run tests/fundacao tests/recepcao tests/gerador
 
 Esperado: tipos limpos; os testes do contrato, da recepção (contra a função local) e do gerador passam. Se algum quebrar por mudança do zod 4 (por exemplo, formato de `issues`), ajuste `supabase/functions/_shared/recepcao.ts` mantendo o comportamento e as mensagens; a função servida recarrega sozinha (confira `405`). Não enfraqueça nenhum teste.
 
-- [ ] **Passo 6: Verificação completa e commit**
+- [x] **Passo 6: Verificação completa e commit**
 
 ```bash
 npx biome check --write lib/supabase/server.ts app/layout.tsx supabase/functions/receber-envio/deno.json
@@ -282,7 +282,7 @@ Esperado: 20 arquivos, 351 testes; build completa. (Se `recepcao.ts` mudou, incl
 - Em `@/lib/painel/selo`: `type EstadoSinal`, `type Selo = { tom: "ok" | "atencao" | "alerta" | "neutro"; texto: string }`, `estadoDoSinal(valor: string | null | undefined): EstadoSinal | null`, `tempoDesde(desde: Date, agora: Date): string`, `seloDoSinal(e: { estado: EstadoSinal | null; ultimoEnvioOkEm: string | null; agora: Date; fuso: string }): Selo`.
 - `MolduraPainel({ casa: { nome: string; slug: string }; selo: Selo; children })` (componente de servidor), `MenuPainel({ slug: string; variante: "lateral" | "inferior" })` (cliente), `SeloDados({ selo: Selo; compacto?: boolean })`, `SeletorTema()` (cliente), `EstadoVazio({ titulo: string; texto: string })`.
 
-- [ ] **Passo 1: Testes de contraste do texto de erro e da borda dos campos (falham)**
+- [x] **Passo 1: Testes de contraste do texto de erro e da borda dos campos (falham)**
 
 Em `tests/design-tokens.test.ts`, dentro do `describe.each(contextos)(...)` (o callback recebe `(_, classes)`), depois do primeiro `it`, acrescente:
 
@@ -308,7 +308,7 @@ Em `tests/design-tokens.test.ts`, dentro do `describe.each(contextos)(...)` (o c
 
 Rode `npx vitest run tests/design-tokens.test.ts` → esperado: FALHA nos 12 contextos (os dois tokens não existem).
 
-- [ ] **Passo 2: Tokens `--danger-text` e `--control-border`**
+- [x] **Passo 2: Tokens `--danger-text` e `--control-border`**
 
 **Por quê:** o vermelho de dado `#D64545` mede 4,38:1 sobre branco e reprova como texto pequeno; e a borda comum (`--border`, `#E5E5E5`) mede 1,26:1, então o campo de formulário quase some (lição do Imob: o contorno de campo precisa de 3:1).
 
@@ -320,7 +320,7 @@ Em `app/styles/tokens.css`:
 
 Rode o teste do Passo 1 → esperado: PASSA.
 
-- [ ] **Passo 3: Copiar os componentes do Imob**
+- [x] **Passo 3: Copiar os componentes do Imob**
 
 Copie, **sem alterar**, de `IMOB_WT` para o mesmo caminho no Food: `lib/utils.ts`, `components/ui/button.tsx`, `components/ui/input.tsx`, `components/ui/input-group.tsx`, `components/ui/label.tsx`, `components/ui/form.tsx`, `components/ui/card.tsx`, `components/ui/sonner.tsx`, `components/ui/separator.tsx`, `components/ui/skeleton.tsx`, `components/ui/textarea.tsx`, `components/forms/form-field.tsx`, `components/providers/theme-provider.tsx`.
 
@@ -362,7 +362,7 @@ Depois, só estas adaptações do Food (celular primeiro e telas aprovadas em `d
 
 Se algum componente copiado importar algo que não está na lista (por exemplo, outro arquivo de `components/ui/`), copie também esse arquivo e registre no relatório.
 
-- [ ] **Passo 4: Ponte de tokens e base do CSS**
+- [x] **Passo 4: Ponte de tokens e base do CSS**
 
 Substitua `app/globals.css` por:
 
@@ -435,7 +435,7 @@ Substitua `app/globals.css` por:
 }
 ```
 
-- [ ] **Passo 5: Tema e avisos no layout raiz**
+- [x] **Passo 5: Tema e avisos no layout raiz**
 
 Em `app/layout.tsx` (a Tarefa 1 já mexeu nas fontes; mexa só no que segue):
 - importe `import type { Viewport } from "next";`, `import { ThemeProvider } from "@/components/providers/theme-provider";` e `import { Toaster } from "@/components/ui/sonner";`;
@@ -466,7 +466,7 @@ export const viewport: Viewport = {
   );
 ```
 
-- [ ] **Passo 6: Marca**
+- [x] **Passo 6: Marca**
 
 Copie, de `identidade-visual/logos/svg/`, para `public/marca/`: `repply-food-simbolo-principal.svg` → `simbolo.svg`; `repply-food-texto-fundo-claro.svg` → `texto-claro.svg`; `repply-food-texto-fundo-escuro.svg` → `texto-escuro.svg`.
 
@@ -508,7 +508,7 @@ export function Logo({ variante, tamanho = "normal", empilhado = false, classNam
 }
 ```
 
-- [ ] **Passo 7: Contato da Repply**
+- [x] **Passo 7: Contato da Repply**
 
 Crie `lib/contato.ts` (mesmos dados do site `crm.repplyhub.com.br`):
 
@@ -520,7 +520,7 @@ export const WHATSAPP_REPPLY = {
 } as const;
 ```
 
-- [ ] **Passo 8: Teste do selo (falha)**
+- [x] **Passo 8: Teste do selo (falha)**
 
 Crie `tests/painel/selo.test.ts`:
 
@@ -583,7 +583,7 @@ describe("selo do painel (D-53: segue o estado do vigia)", () => {
 
 Rode `npx vitest run tests/painel/selo.test.ts` → esperado: FALHA (módulo não existe).
 
-- [ ] **Passo 9: O selo**
+- [x] **Passo 9: O selo**
 
 Crie `lib/painel/selo.ts`:
 
@@ -655,7 +655,7 @@ export function seloDoSinal(e: {
 
 Rode o teste do Passo 8 → esperado: PASSA.
 
-- [ ] **Passo 10: Teste do menu (falha)**
+- [x] **Passo 10: Teste do menu (falha)**
 
 Crie `tests/painel/menu-painel.test.tsx`:
 
@@ -702,7 +702,7 @@ describe("moldura do painel", () => {
 
 Rode `npx vitest run tests/painel/menu-painel.test.tsx` → esperado: FALHA (componentes não existem). Se o erro for `React is not defined`, acrescente em `vitest.config.ts`, no nível de cima do `defineConfig`, `esbuild: { jsx: "automatic" },` e registre no relatório.
 
-- [ ] **Passo 11: Componentes da moldura**
+- [x] **Passo 11: Componentes da moldura**
 
 Crie `components/painel/selo-dados.tsx`:
 
@@ -907,7 +907,7 @@ export function SeletorTema() {
 
 Rode `npx vitest run tests/painel` → esperado: PASSA.
 
-- [ ] **Passo 12: Verificar e commitar**
+- [x] **Passo 12: Verificar e commitar**
 
 ```bash
 npx biome check --write app/globals.css app/styles/tokens.css app/layout.tsx tests/design-tokens.test.ts lib/utils.ts lib/contato.ts lib/painel components/ui components/forms components/providers components/marca components/painel tests/painel
@@ -942,7 +942,7 @@ git commit -m "Traz os componentes do Imob, a moldura do painel e o selo do vigi
 - `@/lib/auth/safe-next`: `safeNext`, `safeNextOr` (iguais ao Imob).
 - `ACESSO_LOCAL` em `scripts/acesso-local.ts` (credenciais de teste do banco local).
 
-- [ ] **Passo 1: Testes das funções puras (falham)**
+- [x] **Passo 1: Testes das funções puras (falham)**
 
 Crie `tests/auth/rotas.test.ts`:
 
@@ -1159,7 +1159,7 @@ describe("mensagens de erro do login", () => {
 
 Rode `npx vitest run tests/auth` → esperado: FALHA (módulos não existem).
 
-- [ ] **Passo 2: Funções puras e pequenas**
+- [x] **Passo 2: Funções puras e pequenas**
 
 Crie `lib/auth/rotas.ts`:
 
@@ -1360,7 +1360,7 @@ Copie `lib/auth/safe-next.ts` do `IMOB_WT` sem alterar.
 
 Rode `npx vitest run tests/auth/rotas.test.ts tests/auth/destino.test.ts tests/auth/safe-next.test.ts tests/auth/cookie-recuperacao.test.ts tests/auth/schemas.test.ts tests/auth/erros.test.ts` → esperado: PASSA.
 
-- [ ] **Passo 3: Teste do núcleo contra o login local (falha)**
+- [x] **Passo 3: Teste do núcleo contra o login local (falha)**
 
 Crie `tests/helpers/chaves-locais.ts`:
 
@@ -1455,7 +1455,7 @@ describe("núcleo do login, contra o Supabase local", () => {
 
 Rode `npx vitest run tests/auth/nucleo.test.ts` → esperado: FALHA (módulo não existe). Se o teste do cadastro falhar com outro `code`, confira o texto do erro e registre; o que importa é a conta NÃO ser criada.
 
-- [ ] **Passo 4: O núcleo**
+- [x] **Passo 4: O núcleo**
 
 Crie `lib/auth/nucleo.ts`:
 
@@ -1507,7 +1507,7 @@ export async function liberarPrimeiroAcesso(
 
 Rode o teste do Passo 3 → esperado: PASSA (4 de 4).
 
-- [ ] **Passo 5: Sessão, guardas e porteiro**
+- [x] **Passo 5: Sessão, guardas e porteiro**
 
 Crie `lib/auth/sessao.ts`:
 
@@ -1681,7 +1681,7 @@ export const config = {
 };
 ```
 
-- [ ] **Passo 6: Teste das ações (falha)**
+- [x] **Passo 6: Teste das ações (falha)**
 
 Crie `tests/auth/actions.test.ts`:
 
@@ -1775,7 +1775,7 @@ describe("as ações conferem o acesso por dentro, não só a página", () => {
 
 Rode `npx vitest run tests/auth/actions.test.ts` → esperado: FALHA (`actions` não existe).
 
-- [ ] **Passo 7: As ações**
+- [x] **Passo 7: As ações**
 
 Crie `lib/auth/actions.ts`:
 
@@ -1954,7 +1954,7 @@ export async function trocarSenhaAction(input: TrocarSenhaInput): Promise<Result
 
 Rode `npx vitest run tests/auth` → esperado: PASSA (todos os arquivos de `tests/auth`).
 
-- [ ] **Passo 8: Volta do link do e-mail**
+- [x] **Passo 8: Volta do link do e-mail**
 
 Crie `app/auth/confirmar/route.ts`:
 
@@ -2022,7 +2022,7 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-- [ ] **Passo 9: Conta de teste local**
+- [x] **Passo 9: Conta de teste local**
 
 Crie `scripts/acesso-local.ts`:
 
@@ -2100,7 +2100,7 @@ No `package.json`, em `scripts`, acrescente depois de `"gerador"`: `"local:acess
 
 Rode `npm run local:acesso` duas vezes → esperado: "Pronto." nas duas (é idempotente).
 
-- [ ] **Passo 10: Apagar o esboço antigo, verificar e commitar**
+- [x] **Passo 10: Apagar o esboço antigo, verificar e commitar**
 
 ```bash
 grep -rn "auth/guards" app lib components tests scripts || echo "sem uso"
@@ -2122,7 +2122,7 @@ git commit -m "Cria as regras do login: porteiro, troca obrigatória, recuperaç
 
 ## Verificação do par 2 ‖ 3 (controlador)
 
-- [ ] Com as Tarefas 2 e 3 commitadas: `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `npm run build`. Esperado: tudo limpo. Erro de integração (por exemplo, um tipo que uma tarefa supôs e a outra fez diferente) vai para um agente de conserto com a lista completa, antes do par seguinte.
+- [x] Com as Tarefas 2 e 3 commitadas: `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `npm run build`. Esperado: tudo limpo. Erro de integração (por exemplo, um tipo que uma tarefa supôs e a outra fez diferente) vai para um agente de conserto com a lista completa, antes do par seguinte.
 
 ---
 
@@ -2132,7 +2132,7 @@ git commit -m "Cria as regras do login: porteiro, troca obrigatória, recuperaç
 
 **Interfaces consumidas:** Tarefa 2 (`Logo`, `Button` tamanho `toque`, `TextField`, `toast` do `sonner`, `WHATSAPP_REPPLY`) e Tarefa 3 (ações, schemas, `obterSessao`, `exigirSessao`, `exigirAdmin`, `destinoDaSessao`, `conferirCookieRecuperacao`, `COOKIE_RECUPERACAO`, `safeNextOr`).
 
-- [ ] **Passo 1: Raiz e casca das telas de entrada**
+- [x] **Passo 1: Raiz e casca das telas de entrada**
 
 Crie `app/page.tsx`:
 
@@ -2201,7 +2201,7 @@ export function BotaoSair({ variante = "ghost" }: { variante?: "ghost" | "outlin
 
 (Se o `Button` copiado não tiver a variante `outline` ou `ghost`, use as que existirem e registre.)
 
-- [ ] **Passo 2: Entrar**
+- [x] **Passo 2: Entrar**
 
 Crie `app/(entrada)/entrar/page.tsx`:
 
@@ -2341,7 +2341,7 @@ export function FormularioEntrar({ next }: { next: string | null }) {
 }
 ```
 
-- [ ] **Passo 3: Esqueci a senha**
+- [x] **Passo 3: Esqueci a senha**
 
 Crie `app/(entrada)/esqueci-a-senha/page.tsx`:
 
@@ -2437,7 +2437,7 @@ export function FormularioEsqueci() {
 }
 ```
 
-- [ ] **Passo 4: Senha nova (depois do e-mail) e troca de senha**
+- [x] **Passo 4: Senha nova (depois do e-mail) e troca de senha**
 
 Crie `app/(entrada)/nova-senha/page.tsx`:
 
@@ -2644,7 +2644,7 @@ export function FormularioTrocarSenha({
 }
 ```
 
-- [ ] **Passo 5: Escolha da casa, acesso pendente e admin provisório**
+- [x] **Passo 5: Escolha da casa, acesso pendente e admin provisório**
 
 Crie `app/(entrada)/escolher-casa/page.tsx`:
 
@@ -2747,7 +2747,7 @@ export default async function PaginaAdmin() {
 }
 ```
 
-- [ ] **Passo 6: Verificar e commitar**
+- [x] **Passo 6: Verificar e commitar**
 
 ```bash
 npx biome check --write app/page.tsx "app/(entrada)" app/admin components/entrada
@@ -2770,7 +2770,7 @@ git commit -m "Cria as telas de entrar, senha, escolha da casa e acesso pendente
 
 **Interfaces consumidas:** Tarefa 2 (`MolduraPainel`, `EstadoVazio`, `SeletorTema`, `seloDoSinal`, `estadoDoSinal`, `WHATSAPP_REPPLY`, `Button`) e Tarefa 3 (`exigirCasa`, `sairAction`).
 
-- [ ] **Passo 1: Layout da casa (guarda + moldura + selo)**
+- [x] **Passo 1: Layout da casa (guarda + moldura + selo)**
 
 Crie `app/r/[slug]/layout.tsx`:
 
@@ -2825,7 +2825,7 @@ export default async function RaizDaCasa({ params }: { params: Promise<{ slug: s
 }
 ```
 
-- [ ] **Passo 2: Hoje e Resultados (estado vazio)**
+- [x] **Passo 2: Hoje e Resultados (estado vazio)**
 
 Crie `app/r/[slug]/hoje/page.tsx`:
 
@@ -2861,7 +2861,7 @@ export default function PaginaResultados() {
 }
 ```
 
-- [ ] **Passo 3: Ajustes (só a conta)**
+- [x] **Passo 3: Ajustes (só a conta)**
 
 Crie `app/r/[slug]/ajustes/page.tsx`:
 
@@ -2919,7 +2919,7 @@ export default async function PaginaAjustes({ params }: { params: Promise<{ slug
 }
 ```
 
-- [ ] **Passo 4: Verificar e commitar**
+- [x] **Passo 4: Verificar e commitar**
 
 ```bash
 npx biome check --write "app/r"
@@ -2940,11 +2940,11 @@ git commit -m "Cria o painel da casa com a moldura, o selo e a parte da conta em
 
 **Arquivos:** `docs/decisoes.md`, `docs/arquitetura/seguranca-e-isolamento.md`, `docs/arquitetura/recepcao-de-dados.md`, `docs/metricas.md`, `docs/divida-tecnica.md`, `README.md`, `CLAUDE.md`, este plano; fora do repositório, `.claude/launch.json` da pasta de trabalho.
 
-- [ ] **Passo 1: Verificação completa do par 4 ‖ 5**
+- [x] **Passo 1: Verificação completa do par 4 ‖ 5**
 
 `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `npm run build`. Erro de integração: um agente de conserto com a lista completa.
 
-- [ ] **Passo 2: Servidor de desenvolvimento no painel do navegador**
+- [x] **Passo 2: Servidor de desenvolvimento no painel do navegador**
 
 Em `.claude/launch.json` da pasta de trabalho (fora do repositório), acrescente:
 
@@ -2975,7 +2975,7 @@ Roteiro (conta de teste em `scripts/acesso-local.ts`):
 
 Tirar as capturas de tela para mostrar ao Lucas Ferreira. Qualquer problema: agente de conserto, e conferir de novo.
 
-- [ ] **Passo 4: Documentação**
+- [x] **Passo 4: Documentação**
 
 - `docs/decisoes.md`: D-52, D-53 e D-54 (texto do desenho §8).
 - `docs/arquitetura/seguranca-e-isolamento.md` §5: trocar "mais um limitador nas rotas de login…" pela D-52; acrescentar "sair só deste aparelho (login compartilhado); trocar a senha desconecta os outros"; o aviso de troca fica em `app_metadata.precisa_trocar_senha` (já está), limpo pela ação com a chave de serviço; recuperação com cookie assinado.
@@ -3002,3 +3002,39 @@ Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa; consertos n
 - [ ] Sair desconecta só aquele aparelho.
 - [ ] Tipos, lint, testes e build limpos; capturas de tela mostradas ao Lucas Ferreira.
 - [ ] Nada publicado na nuvem; nenhum `git push` sem o ok dele.
+
+---
+
+## Registro da execução
+
+*Executado em 14/10/2026 por tarefas, com revisão depois de cada uma. A base é o commit do plano (`7f85d2f`). Nada foi enviado ao GitHub nem publicado na nuvem.*
+
+**Commits**
+
+| Tarefa | Entrega | Consertos da revisão |
+|---|---|---|
+| 0 | `a92abe5` | — |
+| 1 | `09a24ae` | `8c467e4` |
+| 2 | `0a9554a` | `d743ac3` |
+| 3 | `7319e40` | `3c4c377` e `5166c96` |
+| 4 | `9ebbf60` | `0e717ef` |
+| 5 | `44fc2b8` | `3122535` |
+| 6 | commit de documentação, depois de `0e717ef` | — |
+
+**Consertos da revisão (o que mudou de verdade)**
+- **Tarefa 1:** o `react-is` 17 da raiz quebrava o Recharts com o React 19, então entrou o `react-is` 19. Teste novo trava Node e Deno na mesma versão do zod e do supabase-js.
+- **Tarefa 2:** o olho da senha tinha alvo de 24 px; o selo ganhou tratamento para data e fuso inválidos, e "fechado" há mais de 24 h passou a dizer "há N dias".
+- **Tarefa 3** (revisão de segurança): "esqueci a senha" não revela quem é cliente; "E-mail ou senha incorretos." só quando o login recusou a credencial; `senhaConfere` ganhou três respostas (confere, não confere, falhou); `exigirAdmin` respeita a troca pendente; a regra do aviso de troca ficou num lugar só.
+- **Tarefa 4:** o WhatsApp virou link comum (sem `role="button"`); `?erro=__proto__` e parâmetro repetido na URL (`?next=a&next=b`) davam erro 500; o link "criar senha" só aparece para senha errada; o aviso recebe o foco; "Escolha a casa" respeita a troca pendente; o admin provisório usa `scheme-paper`.
+- **Tarefa 5:** falha na leitura do sinal de vida virava "aguardando o 1º envio", o que é falso para quem envia há meses. Agora o selo diz "sem leitura agora" e o erro vai para o log. `exigirCasa` também em Hoje e Resultados.
+
+**Desvios aceitos**
+- `/auth/confirmar` redireciona com **endereço relativo**: o Next 16.4 troca `127.0.0.1` por `localhost` em `request.url`, e os cookies do login local são de `127.0.0.1`.
+- O `proxy.ts` mantém o **endereço absoluto**, ao contrário do que a revisão pediu: o `Location` relativo vindo do proxy dá erro 500 no Next 16.4 (medido num `next dev` real). O próprio Next entrega o endereço ao navegador como relativo.
+- O alvo de toque do olho da senha é um **pseudo-elemento de 44 px** (`after:-inset-[11px]`), e não um botão maior: vale a restrição global de 44 px.
+- `react-is` 19 como dependência direta e `shadcn` em `devDependencies`, que o plano não previa. Com isso o `npm audit --omit=dev` fica sem achados.
+- O **item 6 da revisão da Tarefa 3 foi desfeito** (`5166c96`): aceitar `same_password` no primeiro acesso deixava a pessoa ficar com a senha provisória.
+
+**Decisões do controlador**
+- Resposta de "esqueci a senha" igual para e-mail que existe ou não, inclusive no limite de envio por usuário. Isso contraria a §3 do desenho, que listava `over_email_send_rate_limit` entre as mensagens mostradas.
+- O que a revisão apontou e não coube nesta etapa foi para `docs/divida-tecnica.md` (itens 23 a 36).
