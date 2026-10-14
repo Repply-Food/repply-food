@@ -13,19 +13,13 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(
-          cookiesToSet: Array<{
-            name: string;
-            value: string;
-            options?: Record<string, unknown>;
-          }>
-        ) {
+        setAll(cookiesToSet) {
           try {
             for (const { name, value, options } of cookiesToSet) {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // Ignorado quando chamado fora de contexto de resposta
+            // Chamado num Server Component (que não grava cookie): o proxy renova a sessão.
           }
         },
       },
