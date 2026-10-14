@@ -211,6 +211,8 @@ npm run build        # build completa
 - `setInterval` ou estado em memória para rotina ou limite (Vercel).
 - Guardar dado pessoal de cliente do restaurante "só por enquanto".
 - Tela feita só para celular ou só para computador.
+- Formulário com senha ou outro dado sensível sem `method="post"` e sem o botão de enviar desligado até a página carregar (`components/forms/use-hidratado.ts`). Enviado antes de carregar, o navegador faz o envio nativo e põe os campos na URL: histórico, registro do servidor e Referer. A etapa 3 cria formulários com senha (D-32): siga os quatro de `app/(entrada)/`.
+- Tirar `logging.serverFunctions: false` do `next.config.ts`. Sem ele, o `next dev` imprime no terminal os argumentos das funções do servidor, e a senha vai junto.
 - Rodar `npx shadcn add` num componente que já foi personalizado: sobrescreve as decisões de marca (Imob).
 - O micro-rótulo `/ nome-da-seção` acima do título. O Imob baniu por parecer "gerado por IA".
 - `git add -A`, `--force`, `--no-verify`.

@@ -2962,7 +2962,7 @@ Em `.claude/launch.json` da pasta de trabalho (fora do repositório), acrescente
 
 Rode `npm run local:acesso` e abra o `food-dev`.
 
-- [ ] **Passo 3: Conferir no navegador, em 390 px e 1280 px, claro e escuro**
+- [x] **Passo 3: Conferir no navegador, em 390 px e 1280 px, claro e escuro**
 
 Roteiro (conta de teste em `scripts/acesso-local.ts`):
 1. `/` sem login → `/entrar`. Senha errada → "E-mail ou senha incorretos." com o link "Criar uma senha nova".
@@ -2985,7 +2985,7 @@ Tirar as capturas de tela para mostrar ao Lucas Ferreira. Qualquer problema: age
 - `CLAUDE.md` §13: estrutura real (`app/(entrada)`, `app/r/[slug]`, `app/admin`, `components/{ui,forms,painel,marca,entrada}`, `lib/{auth,painel}`, `proxy.ts`).
 - Este plano: checkboxes e "Registro da execução".
 
-- [ ] **Passo 5: Revisão final, commit e pedido de envio**
+- [x] **Passo 5: Revisão final, commit e pedido de envio**
 
 Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa; consertos num agente só; verificação completa de novo; commit da documentação; mostrar a lista de commits ao Lucas Ferreira e pedir o ok para enviar ao GitHub.
 
@@ -2993,15 +2993,15 @@ Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa; consertos n
 
 ## Critérios de aceite da etapa 2
 
-- [ ] Sem login, qualquer tela da casa vai para `/entrar`; senha errada mostra o caminho para criar uma senha nova (D-52).
-- [ ] Conta com senha provisória não consegue abrir nada além de `/trocar-senha` até trocar; a troca não pede a senha atual; depois disso, a conta segue para o destino certo.
-- [ ] "Esqueci a senha" manda o e-mail (Mailpit local), o link abre `/nova-senha`, e a ação recusa a troca sem o cookie assinado.
-- [ ] Login com duas casas vê "Escolha a casa" (D-54); com uma, cai no Hoje; sem casa ativa, vê o acesso pendente com o WhatsApp.
-- [ ] Ninguém abre a casa de outro: o layout manda para o destino da própria conta.
-- [ ] Moldura nas duas larguras: barra lateral escura no computador, menu de baixo no celular (alvos ≥ 44 px); selo com texto (D-53); claro e escuro.
-- [ ] Sair desconecta só aquele aparelho.
-- [ ] Tipos, lint, testes e build limpos; capturas de tela mostradas ao Lucas Ferreira.
-- [ ] Nada publicado na nuvem; nenhum `git push` sem o ok dele.
+- [x] Sem login, qualquer tela da casa vai para `/entrar`; senha errada mostra o caminho para criar uma senha nova (D-52).
+- [x] Conta com senha provisória não consegue abrir nada além de `/trocar-senha` até trocar; a troca não pede a senha atual; depois disso, a conta segue para o destino certo.
+- [x] "Esqueci a senha" manda o e-mail (Mailpit local), o link abre `/nova-senha`, e a ação recusa a troca sem o cookie assinado.
+- [x] Login com duas casas vê "Escolha a casa" (D-54); com uma, cai no Hoje; sem casa ativa, vê o acesso pendente com o WhatsApp.
+- [x] Ninguém abre a casa de outro: o layout manda para o destino da própria conta.
+- [x] Moldura nas duas larguras: barra lateral escura no computador, menu de baixo no celular (alvos ≥ 44 px); selo com texto (D-53); claro e escuro.
+- [x] Sair desconecta só aquele aparelho.
+- [x] Tipos, lint, testes e build limpos; capturas de tela mostradas ao Lucas Ferreira.
+- [x] Nada publicado na nuvem; nenhum `git push` sem o ok dele.
 
 ---
 
@@ -3019,7 +3019,7 @@ Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa; consertos n
 | 3 | `7319e40` | `3c4c377` e `5166c96` |
 | 4 | `9ebbf60` | `0e717ef` |
 | 5 | `44fc2b8` | `3122535` |
-| 6 | commit de documentação, depois de `0e717ef` | — |
+| 6 | `10946c1` (documentação) | `da8a572`, `76fc6ff` e `c39795b` (achados da conferência no navegador); consertos da revisão final: `e64aedb` (código e teste) e o commit de documentação que o segue |
 
 **Consertos da revisão (o que mudou de verdade)**
 - **Tarefa 1:** o `react-is` 17 da raiz quebrava o Recharts com o React 19, então entrou o `react-is` 19. Teste novo trava Node e Deno na mesma versão do zod e do supabase-js.
@@ -3037,4 +3037,31 @@ Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa; consertos n
 
 **Decisões do controlador**
 - Resposta de "esqueci a senha" igual para e-mail que existe ou não, inclusive no limite de envio por usuário. Isso contraria a §3 do desenho, que listava `over_email_send_rate_limit` entre as mensagens mostradas.
-- O que a revisão apontou e não coube nesta etapa foi para `docs/divida-tecnica.md` (itens 23 a 36).
+- O que a revisão apontou e não coube nesta etapa foi para `docs/divida-tecnica.md` (itens 23 a 36, e 37 a 45 depois da revisão final).
+
+**Conferência no navegador (Tarefa 6, Passo 3)**
+
+Feita no `food-dev` (`next dev`), sempre em `127.0.0.1`, com o banco local e o Mailpit. Larguras de 390 px (celular), 320 px (a tela mais apertada, o WhatsApp do acesso pendente) e 1280 px (computador), nos temas claro e escuro. O que passou:
+- porteiro: sem login vai para `/entrar` com o `next`; senha errada mostra o link "Criar uma senha nova";
+- primeiro acesso: força `/trocar-senha`, o endereço direto da casa volta para lá, e repetir a senha provisória é recusado;
+- depois da troca: `/escolher-casa` (duas casas) e o Hoje, com moldura e selo;
+- Ajustes: claro e escuro, celular e computador; a troca voluntária pede a senha atual e "Cancelar" volta; Sair volta para `/entrar`;
+- "esqueci a senha": aviso com o foco no resultado, e-mail no Mailpit com `token_hash`, `/nova-senha`, `/escolher-casa`;
+- admin: entra em `/admin` e abre a casa de outro (leitura);
+- conta sem casa: `/acesso-pendente`, com o WhatsApp como link de 66 px de altura em 320 px, sem rolagem lateral, e sem conseguir abrir uma casa pelo endereço.
+
+O item 7 do roteiro (opcional: rodar o gerador por um ciclo para o selo virar "atualizado há …") não tem registro de execução. A conta `sem-casa@teste.repply.local` ficou no banco local, sem efeito fora dele.
+
+**Consertos que saíram da conferência**
+- `da8a572`: formulário enviado antes de a página carregar fazia o envio nativo por GET e punha a senha na URL (histórico, registro do servidor e Referer). No desenvolvimento, a página nem carregava em `127.0.0.1`, porque o Next 16 bloqueava o `/_next/hmr` para essa origem. Conserto: `method="post"` nos quatro formulários de entrada, botão de enviar desligado até hidratar (`useHidratado`, em `components/forms/use-hidratado.ts`) e `allowedDevOrigins: ["127.0.0.1"]` no `next.config.ts`.
+- `76fc6ff`: no cabeçalho do celular o selo quebrava em duas linhas e cortava o nome da casa. Agora usa o texto curto (`textoCurto`, em `lib/painel/selo.ts`), de uma linha, como na tela aprovada. O leitor de tela continua ouvindo a frase completa, e a barra lateral do computador mostra o texto completo.
+- `c39795b`: o `next dev` imprimia no terminal os argumentos das funções do servidor, ou seja, o e-mail e a senha do login. `logging.serverFunctions: false` no `next.config.ts` desliga isso; o terminal passou a mostrar só `POST /entrar`.
+
+**Revisão final (8222523..c39795b)**
+
+Resultado: "com consertos", sem brecha de segurança. Saíram desta revisão:
+- documentação: esta conferência e a regra do formulário com senha (`CLAUDE.md` §10 e `docs/arquitetura/seguranca-e-isolamento.md` §5);
+- teste das guardas por casa em `tests/auth/sessao.test.ts` (`exigirCasa`: casa fora do login, casa suspensa para dono e para admin, troca pendente);
+- comentário do `redirectTo` em `pedirNovaSenhaAction`, que falava do cookie do PKCE: o modelo do e-mail ignora o `redirectTo`;
+- texto do selo curto na D-53 e em `recepcao-de-dados.md` §7;
+- `docs/divida-tecnica.md`: itens 23 e 35 ampliados, itens novos (37 a 45) e o que bloqueia a etapa 4.

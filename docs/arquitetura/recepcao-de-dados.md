@@ -156,6 +156,7 @@ Rotina diária no pg_cron:
   - `fechado`: "fechado agora · últimos dados às HH:MM" (no fuso da casa; com mais de 24 h, "há N dias");
   - `aguardando` ou sem linha: "aguardando o 1º envio";
   - leitura do sinal falhou: "sem leitura agora".
+- **Texto curto no cabeçalho do celular** (D-53), de uma linha, para não quebrar nem cortar o nome da casa: "há X min", "atrasado · há X min", "sem dados há X", "fechado", "aguardando" e "sem leitura". O leitor de tela ouve o texto completo, e a barra lateral do computador mostra o texto completo. Os dois saem de `lib/painel/selo.ts` (`texto` e `textoCurto`).
 - O selo é calculado quando a tela carrega. A atualização periódica entra na etapa 5 (`docs/divida-tecnica.md`).
 
 > Lição do CRM: `succeeded` em `cron.job_run_details` só diz que o pedido foi para a fila. Para saber se a chamada HTTP deu certo, conferir `net._http_response`.
