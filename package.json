@@ -19,7 +19,8 @@
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",
     "functions:serve": "npx supabase functions serve",
-    "gerador": "tsx scripts/gerador-dados-ficticios.ts"
+    "gerador": "tsx scripts/gerador-dados-ficticios.ts",
+    "local:acesso": "node --env-file=.env.local --import tsx scripts/acesso-local.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
