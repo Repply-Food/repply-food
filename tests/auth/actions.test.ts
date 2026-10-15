@@ -11,6 +11,8 @@ const {
   signInWithPassword,
   resetPasswordForEmail,
   signOut,
+  casasDoDestino,
+  logError,
 } = vi.hoisted(() => ({
   getUser: vi.fn(),
   updateUser: vi.fn(),
@@ -20,6 +22,8 @@ const {
   signInWithPassword: vi.fn(),
   resetPasswordForEmail: vi.fn(),
   signOut: vi.fn(),
+  casasDoDestino: vi.fn(),
+  logError: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -38,11 +42,7 @@ vi.mock("@/lib/supabase/server", () => ({
       signOut,
     },
     rpc: async () => ({ data: false }),
-    from: () => ({
-      select: () => ({
-        order: async () => ({ data: [{ slug: "casa-x", situacao: "ativo" }] }),
-      }),
-    }),
+    from: () => ({ select: () => ({ order: async () => casasDoDestino() }) }),
   }),
 }));
 vi.mock("@/lib/supabase/service", () => ({
@@ -52,6 +52,7 @@ vi.mock("@/lib/auth/nucleo", async (original) => ({
   ...(await original<typeof import("@/lib/auth/nucleo")>()),
   senhaConfere,
 }));
+vi.mock("@/lib/logger", () => ({ logError }));
 
 import {
   definirNovaSenhaAction,
@@ -80,6 +81,10 @@ const donoSemTroca = { id: "u1", email: "d@x.com", app_metadata: {} };
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "segredo-de-teste");
+  casasDoDestino.mockReturnValue({
+    data: [{ slug: "casa-x", situacao: "ativo" }],
+    error: null,
+  });
   updateUser.mockResolvedValue({ error: null });
   updateUserById.mockResolvedValue({
     data: { user: { app_metadata: { precisa_trocar_senha: false } } },
@@ -386,5 +391,24 @@ describe("primeiro acesso: repetir a senha provisória não libera nada", () => 
       expect(resultado).toEqual({ ok: false, error: FRASE_SENHA_IGUAL });
       expect(updateUserById).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("falha ao ler as casas depois de entrar (pendência 27)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("vai para a raiz, que refaz a conta, e nunca para o acesso pendente", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { user: donoSemTroca },
+      error: null,
+    });
+    casasDoDestino.mockReturnValue({ data: null, error: { code: "08006" } });
+    const resultado = await semEspera(
+      entrarAction({ email: "dono@casa.com", senha: "qualquer-123" })
+    );
+    expect(resultado).toEqual({ ok: true, data: { destino: "/" } });
+    expect(logError).toHaveBeenCalledWith("falha_leitura_sessao");
   });
 });

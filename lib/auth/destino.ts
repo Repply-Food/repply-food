@@ -17,3 +17,16 @@ export function destinoDepoisDeEntrar(e: {
   if (ativos.length > 1) return "/escolher-casa";
   return "/acesso-pendente";
 }
+
+/**
+ * "Trocar de casa" no painel (D-58): para quem tem duas ou mais casas ativas.
+ * O admin troca de casa pelo admin.
+ */
+export function podeTrocarDeCasa(e: {
+  ehAdmin: boolean;
+  casas: readonly RestauranteDoLogin[];
+}): boolean {
+  return (
+    !e.ehAdmin && e.casas.filter((c) => c.situacao === "ativo").length >= 2
+  );
+}

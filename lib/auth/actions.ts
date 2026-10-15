@@ -1,5 +1,6 @@
 "use server";
 
+import { logError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { cookies, headers } from "next/headers";
@@ -56,6 +57,13 @@ async function destinoDe(
     supabase.rpc("eh_admin_repply"),
     supabase.from("restaurantes").select("slug, situacao").order("nome"),
   ]);
+  // Falha passageira ao ler as casas não pode virar "acesso pendente"
+  // (pendência 27): a raiz refaz a conta com a sessão já aberta e, se falhar de
+  // novo, mostra a tela de erro com "Tentar de novo".
+  if (admin.error || casas.error) {
+    logError("falha_leitura_sessao");
+    return "/";
+  }
   return destinoDepoisDeEntrar({
     precisaTrocarSenha: trocaPendente,
     ehAdmin: admin.data === true,

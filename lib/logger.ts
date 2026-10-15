@@ -3,6 +3,10 @@ const codigosErro = [
   "falha_autenticacao",
   "falha_inesperada",
   "falha_leitura_sinal",
+  "falha_leitura_sessao",
+  "falha_admin",
+  "falha_registro_admin",
+  "falha_recalculo_dia",
 ] as const;
 const codigosInfo = ["envio_processado", "envio_rejeitado"] as const;
 const contextos = ["receber-envio"] as const;

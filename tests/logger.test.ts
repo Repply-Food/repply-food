@@ -22,4 +22,17 @@ describe("logger", () => {
     expect(saida).toContain("erro_interno");
     expect(saida).toContain("envio_processado");
   });
+
+  it("aceita os códigos da etapa 3", () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const codigos = [
+      "falha_leitura_sessao",
+      "falha_admin",
+      "falha_registro_admin",
+      "falha_recalculo_dia",
+    ];
+    for (const codigo of codigos) logError(codigo);
+    expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual(codigos);
+    erro.mockRestore();
+  });
 });

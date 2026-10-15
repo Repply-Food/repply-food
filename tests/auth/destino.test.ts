@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { destinoDepoisDeEntrar } from "../../lib/auth/destino";
+import {
+  destinoDepoisDeEntrar,
+  podeTrocarDeCasa,
+} from "../../lib/auth/destino";
 
 const casa = (slug: string, situacao: "ativo" | "suspenso" = "ativo") => ({
   slug,
@@ -55,4 +58,27 @@ describe("para onde vai depois de entrar", () => {
       ).toBe("/acesso-pendente");
     }
   );
+});
+
+describe("trocar de casa (D-58)", () => {
+  it("aparece para quem tem duas ou mais casas ativas", () => {
+    expect(
+      podeTrocarDeCasa({ ehAdmin: false, casas: [casa("a"), casa("b")] })
+    ).toBe(true);
+  });
+
+  it("não aparece com uma ativa e outra suspensa", () => {
+    expect(
+      podeTrocarDeCasa({
+        ehAdmin: false,
+        casas: [casa("a"), casa("b", "suspenso")],
+      })
+    ).toBe(false);
+  });
+
+  it("não aparece para o admin (ele troca pelo admin)", () => {
+    expect(
+      podeTrocarDeCasa({ ehAdmin: true, casas: [casa("a"), casa("b")] })
+    ).toBe(false);
+  });
 });
