@@ -3,6 +3,7 @@ import type { Database, Json } from "../../../types/database.types.ts";
 import { filtrarEnvelope } from "../_shared/campos-permitidos.ts";
 import { validarEnvelope } from "../_shared/recepcao.ts";
 import { registrarErroNoBanco } from "../_shared/registro-erro.ts";
+import { sha256Hex } from "../_shared/token.ts";
 
 // Limites e ritmo (contrato-de-dados.md §3 e §7, recepcao-de-dados.md §3).
 const LIMITE_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -26,16 +27,6 @@ function extrairToken(req: Request): string {
   const autorizacao = req.headers.get("authorization") ?? "";
   const partes = /^Bearer\s+(.+)$/i.exec(autorizacao);
   return partes?.[1]?.trim() ?? "";
-}
-
-async function sha256Hex(texto: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(texto)
-  );
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0")
-  ).join("");
 }
 
 /**
