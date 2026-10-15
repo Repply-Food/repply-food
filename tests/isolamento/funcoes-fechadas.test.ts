@@ -11,8 +11,23 @@ import { conectarBanco } from "../helpers/supabase-local";
  */
 const abertas = [
   { funcao: "atualizar_turnos(uuid, jsonb)", anon: false, authenticated: true },
+  // Rodam dentro das restrições de `restaurantes`: o Postgres confere o
+  // EXECUTE de quem grava (o admin, pelo login). São puras, sem ler tabela.
+  { funcao: "cnpj_valido(text)", anon: false, authenticated: true },
   { funcao: "eh_admin_repply()", anon: true, authenticated: true },
+  {
+    funcao: "horario_funcionamento_valido(jsonb)",
+    anon: false,
+    authenticated: true,
+  },
+  // Conferem eh_admin_repply() por dentro (D-38).
+  { funcao: "revogar_tokens_envio(uuid)", anon: false, authenticated: true },
   { funcao: "tem_acesso(uuid)", anon: true, authenticated: true },
+  {
+    funcao: "trocar_token_envio(uuid, text, text, text)",
+    anon: false,
+    authenticated: true,
+  },
 ];
 
 describe("funções do banco fechadas por padrão", () => {

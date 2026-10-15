@@ -6,6 +6,15 @@ import {
   criarFixture,
 } from "../helpers/supabase-local";
 
+/**
+ * Casa aberta 24 horas no formato que o banco aceita desde a etapa 3 (abre ≠
+ * fecha, até dois horários por dia): 00:00–12:00 e 12:00–00:00 em cada dia.
+ */
+const SEMPRE_ABERTO = Array.from({ length: 7 }, (_, dia) => [
+  { dia, abre: "00:00", fecha: "12:00" },
+  { dia, abre: "12:00", fecha: "00:00" },
+]).flat();
+
 type SinalSnapshot = {
   restaurante_id: string;
   primeiro_envio_em: string | null;
@@ -157,16 +166,7 @@ describe("rotinas locais", () => {
       await cliente.query("savepoint efeitos_vigia");
       await cliente.query(
         "update public.restaurantes set fuso = 'America/Fortaleza', horario_funcionamento = $2::jsonb where id = $1",
-        [
-          dados.restauranteA,
-          JSON.stringify(
-            Array.from({ length: 7 }, (_, dia) => ({
-              dia,
-              abre: "00:00",
-              fecha: "00:00",
-            }))
-          ),
-        ]
+        [dados.restauranteA, JSON.stringify(SEMPRE_ABERTO)]
       );
       await cliente.query(
         `insert into public.sinal_de_vida (restaurante_id, primeiro_envio_em, ultimo_envio_ok_em, alarme_enviado_em)
@@ -336,6 +336,14 @@ describe("rotinas locais", () => {
 
   it("um restaurante com horário ou fuso malformado não impede o cálculo dos outros", async () => {
     const dados = fixture as Fixture;
+    // Desde a etapa 3 o banco recusa horário e fuso malformados na gravação.
+    // A defesa do vigia continua valendo para linhas gravadas antes disso: as
+    // duas restrições saem só dentro da transação deste teste, desfeita no fim
+    // (afterEach). Fora da trava curta do vigia, para não esbarrar no limite
+    // de 250 ms de espera.
+    await (banco as Client).query(
+      "alter table public.restaurantes drop constraint restaurantes_horario_funcionamento_valido, drop constraint restaurantes_fuso_do_brasil"
+    );
     await comSinaisEstaveis(banco as Client, async (cliente) => {
       await cliente.query("savepoint efeitos_vigia");
       const estados = async () =>
@@ -369,16 +377,7 @@ describe("rotinas locais", () => {
       // fuso nem é consultado, então o horário precisa estar preenchido.)
       await cliente.query(
         "update public.restaurantes set horario_funcionamento = $2::jsonb, fuso = 'Marte/Olimpo' where id = $1",
-        [
-          dados.restauranteA,
-          JSON.stringify(
-            Array.from({ length: 7 }, (_, dia) => ({
-              dia,
-              abre: "00:00",
-              fecha: "00:00",
-            }))
-          ),
-        ]
+        [dados.restauranteA, JSON.stringify(SEMPRE_ABERTO)]
       );
       await cliente.query(
         "update public.sinal_de_vida set estado = 'aguardando' where restaurante_id = $1",

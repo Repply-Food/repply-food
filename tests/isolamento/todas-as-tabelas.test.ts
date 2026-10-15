@@ -311,6 +311,90 @@ const escritasDoAdmin: Tentativa[] = [
   },
 ];
 
+const CRUD = ["DELETE", "INSERT", "SELECT", "UPDATE"];
+const SO_RLS = { anon: CRUD, authenticated: CRUD };
+
+/**
+ * Privilégios de `anon` e `authenticated` em cada tabela e visão de `public`
+ * (pendência 14). Nas 8 tabelas antigas a RLS decide quem lê e escreve;
+ * esvaziar a tabela inteira (TRUNCATE), criar gatilho, referência e manutenção
+ * saíram. As peças da etapa 3 nascem só com o que o produto usa. Tabela nova
+ * entra aqui DE PROPÓSITO.
+ */
+const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
+  {
+    acessos: SO_RLS,
+    admins_repply: SO_RLS,
+    entradas: SO_RLS,
+    envios: SO_RLS,
+    metas: SO_RLS,
+    registro_admin: { anon: [], authenticated: ["INSERT", "SELECT"] },
+    restaurantes: SO_RLS,
+    restaurantes_no_admin: { anon: [], authenticated: ["SELECT"] },
+    sinal_de_vida: SO_RLS,
+    tokens_envio: SO_RLS,
+  };
+
+const CONSULTA_PRIVILEGIOS = `
+  select c.relname as tabela, r.papel,
+         array(select p from unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE',
+                                          'TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN']) as p
+                where has_table_privilege(r.papel, c.oid, p) order by p) as privilegios
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    cross join (values ('anon'), ('authenticated')) as r(papel)
+   where n.nspname = 'public' and c.relkind in ('r', 'v', 'm', 'p', 'f')`;
+
+describe("privilégios explícitos (pendência 14)", () => {
+  let banco: Client;
+
+  beforeAll(async () => {
+    banco = await conectarBanco();
+  });
+
+  afterAll(async () => {
+    await banco?.end();
+  });
+
+  it("anon e authenticated têm exatamente os privilégios da lista", async () => {
+    const { rows } = await banco.query<{
+      tabela: string;
+      papel: "anon" | "authenticated";
+      privilegios: string[];
+    }>(CONSULTA_PRIVILEGIOS);
+    const lido: Record<string, { anon: string[]; authenticated: string[] }> =
+      {};
+    for (const { tabela, papel, privilegios } of rows) {
+      const linha = lido[tabela] ?? { anon: [], authenticated: [] };
+      linha[papel] = privilegios;
+      lido[tabela] = linha;
+    }
+    expect(lido).toEqual(PRIVILEGIOS);
+  });
+
+  it("tabela criada daqui em diante nasce sem TRUNCATE, REFERENCES, TRIGGER e MAINTAIN", async () => {
+    await banco.query("begin");
+    try {
+      await banco.query("create table public.rf_teste_privilegios (id int)");
+      const { rows } = await banco.query<{
+        papel: string;
+        privilegios: string[];
+      }>(
+        `select r.papel,
+                array(select p from unnest(array['TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN']) as p
+                       where has_table_privilege(r.papel, 'public.rf_teste_privilegios', p)) as privilegios
+           from (values ('anon'), ('authenticated')) as r(papel)`
+      );
+      expect(rows).toEqual([
+        { papel: "anon", privilegios: [] },
+        { papel: "authenticated", privilegios: [] },
+      ]);
+    } finally {
+      await banco.query("rollback");
+    }
+  });
+});
+
 describe("isolamento nas 8 tabelas", () => {
   let banco: Client;
   let fixture: Fixture;

@@ -19,6 +19,17 @@ const sempreAberto = Array.from({ length: 7 }, (_, dia) => ({
   abre: "00:00",
   fecha: "00:00",
 }));
+// Terça 13/10/2026 (dia 2): almoço e jantar, o jantar passando da meia-noite
+// (D-56). Conferido em 15/10: o vigia já trata, sem mudar a função.
+const almocoEJantar = [
+  { dia: 2, abre: "11:00", fecha: "15:00" },
+  { dia: 2, abre: "18:00", fecha: "02:00" },
+];
+// "24 horas" no formato que o banco aceita desde a etapa 3 (abre ≠ fecha).
+const sempreAbertoValido = Array.from({ length: 7 }, (_, dia) => [
+  { dia, abre: "00:00", fecha: "12:00" },
+  { dia, abre: "12:00", fecha: "00:00" },
+]).flat();
 
 describe("desde quando a casa está aberta", () => {
   let banco: Client;
@@ -88,6 +99,36 @@ describe("desde quando a casa está aberta", () => {
       "2026-10-09T19:00:00Z",
       null,
     ],
+    [
+      "almoço e jantar: terça 12h, aberta desde as 11h",
+      almocoEJantar,
+      "2026-10-13T15:00:00Z",
+      "2026-10-13T14:00Z",
+    ],
+    [
+      "almoço e jantar: terça 16h30, fechada entre os dois",
+      almocoEJantar,
+      "2026-10-13T19:30:00Z",
+      null,
+    ],
+    [
+      "almoço e jantar: terça 20h, aberta desde as 18h",
+      almocoEJantar,
+      "2026-10-13T23:00:00Z",
+      "2026-10-13T21:00Z",
+    ],
+    [
+      "almoço e jantar: quarta 1h59, ainda o jantar de terça",
+      almocoEJantar,
+      "2026-10-14T04:59:00Z",
+      "2026-10-13T21:00Z",
+    ],
+    [
+      "almoço e jantar: quarta 2h em ponto, fechou",
+      almocoEJantar,
+      "2026-10-14T05:00:00Z",
+      null,
+    ],
   ])("%s", async (_, horario, agora, esperado) => {
     expect(await abertoDesde(horario, agora)).toBe(esperado);
   });
@@ -97,6 +138,15 @@ describe("desde quando a casa está aberta", () => {
       `select public.aberto_desde($1::jsonb, $2, $3::timestamptz)
                 <= $3::timestamptz - interval '7 days' as antiga`,
       [JSON.stringify(sempreAberto), fuso, "2026-10-10T03:05:00Z"]
+    );
+    expect(resultado.rows[0]?.antiga).toBe(true);
+  });
+
+  it("o '24 horas' que o banco aceita (dois colados por dia) também conta como uma abertura só", async () => {
+    const resultado = await banco.query<{ antiga: boolean }>(
+      `select public.aberto_desde($1::jsonb, $2, $3::timestamptz)
+                <= $3::timestamptz - interval '3 days' as antiga`,
+      [JSON.stringify(sempreAbertoValido), fuso, "2026-10-10T03:05:00Z"]
     );
     expect(resultado.rows[0]?.antiga).toBe(true);
   });

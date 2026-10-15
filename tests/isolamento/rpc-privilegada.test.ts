@@ -12,6 +12,8 @@ const funcoesReservadas = [
   "public.processar_envio(uuid,jsonb,text[])",
   "public.recalcular_dia_operacao(uuid)",
   "public.atualizar_estados()",
+  "public.id_do_login_por_email(text)",
+  "public.encerrar_sessoes_do_login(uuid)",
 ] as const;
 
 describe("RPCs reservadas", () => {
@@ -75,6 +77,8 @@ describe("RPCs reservadas", () => {
       "select public.processar_envio(null::uuid, null::jsonb)",
       "select public.recalcular_dia_operacao(null::uuid)",
       "select public.atualizar_estados()",
+      "select public.id_do_login_por_email(null::text)",
+      "select public.encerrar_sessoes_do_login(null::uuid)",
     ];
     const identidades = [
       { papel: "anon", usuario: null },

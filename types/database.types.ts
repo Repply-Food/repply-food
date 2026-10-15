@@ -41,6 +41,12 @@ export type Database = {
 isOneToOne: false
       referencedRelation: "restaurantes"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "acessos_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
     }
                   ]
                 },"admins_repply": {
@@ -75,6 +81,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "restaurantes"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "entradas_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
     }
                   ]
                 },"envios": {
@@ -95,6 +107,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "restaurantes"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "envios_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
     }
                   ]
                 },"metas": {
@@ -114,6 +132,38 @@ isOneToOne: false
       columns: ["restaurante_id"]
 isOneToOne: false
       referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "metas_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"registro_admin": {
+                  Row: {
+                    "acao": string,"autor": string | null,"criado_em": string,"detalhe": string | null,"id": number,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "acao": string,"autor"?: string | null,"criado_em"?: string,"detalhe"?: string | null,"id"?: never,"restaurante_id": string
+                  }
+                  Update: {
+                    "acao"?: string,"autor"?: string | null,"criado_em"?: string,"detalhe"?: string | null,"id"?: never,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "registro_admin_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "registro_admin_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
       referencedColumns: ["id"]
     }
                   ]
@@ -149,6 +199,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "restaurantes"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sinal_de_vida_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
     }
                   ]
                 },"tokens_envio": {
@@ -169,12 +225,26 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "restaurantes"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tokens_envio_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
     }
                   ]
                 }
           }
           Views: {
-            [_ in never]: never
+            "restaurantes_no_admin": {
+                  Row: {
+                    "estado": string | null,"fuso": string | null,"id": string | null,"nome": string | null,"situacao": string | null,"slug": string | null,"ultimo_envio_ok_em": string | null,"versao_scc": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
             "aberto_desde":
@@ -192,11 +262,23 @@ isOneToOne: false
 "btrim_null":
 { Args: { "p_texto": string }; Returns: string
                            },
+"cnpj_valido":
+{ Args: { "p_cnpj": string }; Returns: boolean
+                           },
 "dia_operacao_de":
 { Args: { "p_fuso": string,"p_momento": string,"p_virada": string }; Returns: string
                            },
 "eh_admin_repply":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"encerrar_sessoes_do_login":
+{ Args: { "p_user_id": string }; Returns: number
+                           },
+"horario_funcionamento_valido":
+{ Args: { "p_horario": Json }; Returns: boolean
+                           },
+"id_do_login_por_email":
+{ Args: { "p_email": string }; Returns: string
                            },
 "normaliza_numeric":
 { Args: { "p_valor": string }; Returns: number
@@ -207,11 +289,17 @@ isOneToOne: false
 "recalcular_dia_operacao":
 { Args: { "p_restaurante_id": string }; Returns: undefined
                            },
+"revogar_tokens_envio":
+{ Args: { "p_restaurante": string }; Returns: number
+                           },
 "so_valor_simples":
 { Args: { "p_valor": Json }; Returns: Json
                            },
 "tem_acesso":
 { Args: { "p_restaurante_id": string }; Returns: boolean
+                           },
+"trocar_token_envio":
+{ Args: { "p_antigo": string,"p_hash": string,"p_prefixo": string,"p_restaurante": string }; Returns: Json
                            }
           }
           Enums: {
