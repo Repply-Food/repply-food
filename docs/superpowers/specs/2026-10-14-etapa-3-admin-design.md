@@ -28,12 +28,12 @@
 
 **Cadastro e edição (mesmo formulário):**
 - **Nome** (obrigatório). O `slug` sai do nome na criação (minúsculas, sem acento, hífens; número no fim se já existir) e **não muda depois** (links e favoritos do dono continuam valendo).
-- **CNPJ** opcional (D-60). Quando preenchido: 14 dígitos, dígitos verificadores conferidos, e o banco não aceita o mesmo CNPJ duas vezes. Aceita com ou sem pontuação; grava só os dígitos.
+- **CNPJ** opcional (D-60). Quando preenchido: 14 caracteres, no formato numérico antigo ou no alfanumérico que a Receita emite desde julho/2026 (12 caracteres de 0–9 ou A–Z e 2 dígitos verificadores, conferidos), e o banco não aceita o mesmo CNPJ duas vezes. Aceita com ou sem pontuação; grava sem pontuação, em maiúsculas.
 - **Fuso:** lista dos fusos do Brasil, padrão `America/Fortaleza`.
 - **O dia vira às:** hora cheia, padrão 5h.
 - **Horário de funcionamento** (D-56), um bloco por dia da semana (domingo a sábado): "Fechado", "Um horário" ou "Dois horários" (ex.: almoço e jantar). Cada horário tem "abre" e "fecha"; "fecha" menor que "abre" quer dizer que passa da meia-noite. Botão "Copiar para os outros dias". No cadastro, exige pelo menos um dia aberto.
 - Turnos, limite da conta esquecida e intervalo de envio ficam com o padrão do banco e não aparecem aqui (fora da etapa).
-- Ao salvar uma edição que muda o fuso ou a virada, o sistema recalcula o dia de operação das contas da casa, e a tela diz isso.
+- Ao salvar uma edição que muda o fuso ou a virada, o sistema recalcula o dia de operação das contas da casa, e a tela diz isso. Se o fuso mudou, a tela também avisa que as horas das contas já recebidas só se corrigem com um reenvio ("Pedir reenvio"), porque elas foram gravadas com o fuso antigo.
 
 **Detalhe do restaurante, em cartões (computador: coluna da direita; celular: um embaixo do outro):**
 1. **Dados:** nome, CNPJ, fuso, virada, resumo do horário (ex.: "ter–dom · 11h–15h e 18h–2h"), situação. Ações: "Editar dados", "Ver o painel do cliente".
@@ -104,7 +104,7 @@ Toda função do servidor do admin:
 
   Lista vazia continua aceita no banco (fixtures antigas; quer dizer "sempre aberta"), mas o formulário exige pelo menos um dia aberto.
 - **Fuso:** restrição com a lista fechada dos fusos IANA do Brasil.
-- **CNPJ:** `cnpj is null or cnpj_valido(cnpj)` (14 dígitos e dígitos verificadores); a unicidade já existe.
+- **CNPJ:** `cnpj is null or cnpj_valido(cnpj)` (14 caracteres, numérico ou alfanumérico, com os dígitos verificadores da Receita); a unicidade já existe.
 
 ### 2.5 Lista e detalhe
 
@@ -195,4 +195,4 @@ Na mesma migration:
 - **D-57:** o admin suspende e reativa restaurantes. Suspenso, o dono vê "acesso suspenso" com o WhatsApp da Repply; os dados ficam guardados e o SCC continua enviando. Excluir fica fora do MVP.
 - **D-58:** quem tem duas ou mais casas ativas troca de casa pelo painel; o admin que abre o painel de um cliente vê a faixa "só leitura" com "Voltar ao admin", e Ajustes mostra o login do cliente no lugar das ações da conta.
 - **D-59:** as ações do admin ficam num histórico por restaurante (quem, quando, o quê), sem senha nem token; "abriu o painel do cliente" entra no máximo uma vez por hora.
-- **D-60:** CNPJ opcional no cadastro; quando preenchido, é conferido e não pode repetir.
+- **D-60:** CNPJ opcional no cadastro; quando preenchido, é conferido (formato numérico ou alfanumérico da Receita) e não pode repetir.
