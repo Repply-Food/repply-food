@@ -97,11 +97,11 @@ describe("funções da chave de serviço para os logins (D-55)", () => {
       const achar = await chamador.rpc("id_do_login_por_email", {
         p_email: conta.email,
       });
-      expect(achar.error).not.toBeNull();
+      expect(achar.error?.code).toBe("42501");
       const encerrar = await chamador.rpc("encerrar_sessoes_do_login", {
         p_user_id: conta.id,
       });
-      expect(encerrar.error).not.toBeNull();
+      expect(encerrar.error?.code).toBe("42501");
     }
   });
 });

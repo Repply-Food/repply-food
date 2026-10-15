@@ -29,13 +29,20 @@ describe("troca e revogação do token de envio (D-38)", () => {
     }
   });
 
-  /** Roda como `quem` (id do login, ou null para sem login) e desfaz tudo no fim. */
+  /**
+   * `preparar` roda como dono do banco (postgres); depois troca para `quem`
+   * (id do login, ou null para sem login) e roda `executar`. Desfaz tudo no
+   * fim. O admin não escreve direto em `tokens_envio`: o que o teste precisa
+   * ter no banco antes é semeado em `preparar`.
+   */
   async function desfazendoComo<T>(
     quem: string | null,
-    executar: () => Promise<T>
+    executar: () => Promise<T>,
+    preparar?: () => Promise<unknown>
   ): Promise<T> {
     await banco.query("begin");
     try {
+      if (preparar) await preparar();
       await banco.query(`set local role ${quem ? "authenticated" : "anon"}`);
       if (quem) {
         await banco.query(
@@ -125,34 +132,42 @@ describe("troca e revogação do token de envio (D-38)", () => {
   });
 
   it("trocar de novo com '24h' nunca estica o prazo de quem já está saindo", async () => {
-    await desfazendoComo(fixture.admin, async () => {
-      await banco.query(
-        "update public.tokens_envio set expira_em = now() + interval '1 hour' where restaurante_id = $1",
-        [fixture.restauranteA]
-      );
-      await trocar(fixture.restauranteA, "24h");
-      const { rows } = await banco.query<{ certo: boolean }>(
-        `select bool_and(expira_em = now() + interval '1 hour') as certo
-           from public.tokens_envio
-          where restaurante_id = $1 and expira_em is not null`,
-        [fixture.restauranteA]
-      );
-      expect(rows[0]?.certo).toBe(true);
-    });
+    await desfazendoComo(
+      fixture.admin,
+      async () => {
+        await trocar(fixture.restauranteA, "24h");
+        const { rows } = await banco.query<{ certo: boolean }>(
+          `select bool_and(expira_em = now() + interval '1 hour') as certo
+             from public.tokens_envio
+            where restaurante_id = $1 and expira_em is not null`,
+          [fixture.restauranteA]
+        );
+        expect(rows[0]?.certo).toBe(true);
+      },
+      () =>
+        banco.query(
+          "update public.tokens_envio set expira_em = now() + interval '1 hour' where restaurante_id = $1",
+          [fixture.restauranteA]
+        )
+    );
   });
 
   it("casa sem token: o primeiro token entra e o histórico diz 'primeiro token'", async () => {
-    await desfazendoComo(fixture.admin, async () => {
-      await banco.query(
-        "update public.tokens_envio set revogado_em = now() where restaurante_id = $1",
-        [fixture.restauranteA]
-      );
-      const { rows } = await trocar(fixture.restauranteA, "agora");
-      expect(rows[0]?.resultado.antigos).toBe(0);
-      expect((await registros(fixture.restauranteA)).rows[0]?.detalhe).toBe(
-        "primeiro token"
-      );
-    });
+    await desfazendoComo(
+      fixture.admin,
+      async () => {
+        const { rows } = await trocar(fixture.restauranteA, "agora");
+        expect(rows[0]?.resultado.antigos).toBe(0);
+        expect((await registros(fixture.restauranteA)).rows[0]?.detalhe).toBe(
+          "primeiro token"
+        );
+      },
+      () =>
+        banco.query(
+          "update public.tokens_envio set revogado_em = now() where restaurante_id = $1",
+          [fixture.restauranteA]
+        )
+    );
   });
 
   it("revogar para todos os tokens válidos de uma vez e registra", async () => {
@@ -190,6 +205,33 @@ describe("troca e revogação do token de envio (D-38)", () => {
     await desfazendoComo(fixture.admin, async () => {
       await trocar(fixture.restauranteA, "agora");
       expect((await validos(fixture.restauranteB)).rows).toHaveLength(1);
+    });
+  });
+
+  it.each([
+    [
+      "inserir",
+      "insert into public.tokens_envio (restaurante_id, hash, prefixo) values ($1, 'x', 'rf_xxxx')",
+    ],
+    [
+      "alterar",
+      "update public.tokens_envio set revogado_em = now() where restaurante_id = $1",
+    ],
+    ["apagar", "delete from public.tokens_envio where restaurante_id = $1"],
+  ])(
+    "nem o admin escreve direto em tokens_envio (%s): só as funções trocam e revogam",
+    async (_, sql) => {
+      await expect(
+        desfazendoComo(fixture.admin, () =>
+          banco.query(sql, [fixture.restauranteA])
+        )
+      ).rejects.toMatchObject({ code: "42501" });
+    }
+  );
+
+  it("o admin continua lendo tokens_envio (a tela do detalhe lê, sem o hash)", async () => {
+    await desfazendoComo(fixture.admin, async () => {
+      expect((await validos(fixture.restauranteA)).rows).toHaveLength(1);
     });
   });
 

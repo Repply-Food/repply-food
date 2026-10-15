@@ -172,13 +172,13 @@ const escritasDoCliente: Tentativa[] = [
     descricao: "revogar o token do restaurante B",
     sql: "update public.tokens_envio set revogado_em = now() where restaurante_id = $1",
     parametros: b,
-    esperado: "zero linhas",
+    esperado: "recusa",
   },
   {
     descricao: "excluir o próprio token",
     sql: "delete from public.tokens_envio where restaurante_id = $1",
     parametros: a,
-    esperado: "zero linhas",
+    esperado: "recusa",
   },
   {
     descricao: "inserir envio",
@@ -297,11 +297,25 @@ const escritasDoAdmin: Tentativa[] = [
     parametros: a,
     esperado: "uma linha",
   },
+  // A troca e a revogação do token passam só por trocar_token_envio e
+  // revogar_tokens_envio (security definer); nem o admin escreve direto.
   {
-    descricao: "criar token de envio",
+    descricao: "criar token de envio direto na tabela",
     sql: "insert into public.tokens_envio (restaurante_id, hash, prefixo) values ($1, $2, 'adm')",
     parametros: (f) => [f.restauranteA, `hash-admin-${sufixo}`],
-    esperado: "uma linha",
+    esperado: "recusa",
+  },
+  {
+    descricao: "alterar token de envio direto na tabela",
+    sql: "update public.tokens_envio set revogado_em = now() where restaurante_id = $1",
+    parametros: a,
+    esperado: "recusa",
+  },
+  {
+    descricao: "apagar token de envio direto na tabela",
+    sql: "delete from public.tokens_envio where restaurante_id = $1",
+    parametros: a,
+    esperado: "recusa",
   },
   {
     descricao: "dar acesso a um login",
@@ -328,11 +342,15 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
     entradas: SO_RLS,
     envios: SO_RLS,
     metas: SO_RLS,
-    registro_admin: { anon: [], authenticated: ["INSERT", "SELECT"] },
+    // INSERT só em quatro colunas (privilégio de coluna, conferido abaixo):
+    // no nível da tabela, só SELECT.
+    registro_admin: { anon: [], authenticated: ["SELECT"] },
     restaurantes: SO_RLS,
     restaurantes_no_admin: { anon: [], authenticated: ["SELECT"] },
     sinal_de_vida: SO_RLS,
-    tokens_envio: SO_RLS,
+    // A escrita passa só por trocar_token_envio e revogar_tokens_envio
+    // (security definer); ninguém grava direto, nem o admin.
+    tokens_envio: { anon: ["SELECT"], authenticated: ["SELECT"] },
   };
 
 const CONSULTA_PRIVILEGIOS = `
@@ -370,6 +388,28 @@ describe("privilégios explícitos (pendência 14)", () => {
       lido[tabela] = linha;
     }
     expect(lido).toEqual(PRIVILEGIOS);
+  });
+
+  it("registro_admin: o admin só insere autor, casa, ação e detalhe; id e hora são do banco", async () => {
+    const { rows } = await banco.query<{
+      papel: string;
+      coluna: string;
+      insere: boolean;
+    }>(
+      `select r.papel, a.attname as coluna,
+              has_column_privilege(r.papel, 'public.registro_admin', a.attname, 'INSERT') as insere
+         from (values ('anon'), ('authenticated')) as r(papel)
+        cross join pg_attribute a
+        where a.attrelid = 'public.registro_admin'::regclass and a.attnum > 0 and not a.attisdropped
+        order by r.papel, a.attnum`
+    );
+    expect(rows.filter((linha) => linha.insere)).toEqual(
+      ["autor", "restaurante_id", "acao", "detalhe"].map((coluna) => ({
+        papel: "authenticated",
+        coluna,
+        insere: true,
+      }))
+    );
   });
 
   it("tabela criada daqui em diante nasce sem TRUNCATE, REFERENCES, TRIGGER e MAINTAIN", async () => {
