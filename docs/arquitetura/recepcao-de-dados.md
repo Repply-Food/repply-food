@@ -145,9 +145,9 @@ Rotina diária no pg_cron:
 | `parado` | Atraso acima de 45 min |
 
 - **Atraso:** conta do que for mais recente, o último envio sem erro **ou a abertura da casa**. O tempo em que a casa estava fechada não conta: o restaurante que desliga o computador à noite não aparece "parado" no minuto em que abre.
-- **Horário de funcionamento:** pode atravessar a meia-noite (ex.: 11h–2h), e o dia que vale é o da abertura. Dois intervalos colados, ou uma casa 24 horas, contam como uma abertura só. A regra está na função `aberto_desde`.
-- **Sem horário cadastrado**, o restaurante conta como sempre aberto: desconhecido não vira "fechado". Por isso o admin precisa exigir o horário no cadastro (etapa 3).
-- **Cadastro malformado** (horário ou fuso inválido) em um restaurante não para a rotina: ele é pulado, com um aviso no log do banco, e os outros são calculados.
+- **Horário de funcionamento:** até **dois intervalos por dia** (D-56), por exemplo almoço e jantar; fora deles o vigia não acusa atraso nem parada. O último do dia pode atravessar a meia-noite (ex.: 11h–2h), e o dia que vale é o da abertura. Dois intervalos colados, ou uma casa 24 horas, contam como uma abertura só. A regra de contagem está na função `aberto_desde`, e o formato é conferido no banco por `horario_funcionamento_valido` (restrição de `restaurantes`).
+- **Sem horário cadastrado**, o restaurante conta como sempre aberto: desconhecido não vira "fechado". O formulário do admin **exige pelo menos um dia aberto**, então cadastro novo nunca nasce assim. A lista vazia continua aceita no banco, só para cadastros antigos.
+- **Cadastro malformado** (horário ou fuso inválido) agora é **barrado na gravação**, pelas restrições de `restaurantes`. A defesa do vigia fica para linhas antigas: o restaurante malformado não para a rotina, é pulado com um aviso no log do banco, e os outros são calculados.
 - **Alarme por e-mail:** ainda **não existe**. O vigia só calcula o estado e não mexe em `alarme_enviado_em`. O envio do e-mail de "parado" e de "voltou" é uma rotina própria, da etapa do alarme (ver `docs/divida-tecnica.md`), com duas regras: só marca como avisado depois de confirmar que o e-mail saiu, e só avisa "voltou" quando os dados voltam, nunca porque a casa fechou.
 - **O admin e o painel do dono mostram o mesmo estado.** O selo "há X min" do painel (M05) **segue o estado do vigia** (D-53). Ele não recalcula `agora − último envio`: os limites são os da tabela acima, e o tempo mostrado sai de `ultimo_envio_ok_em`. Textos (completos na D-53):
   - `em_dia`: "atualizado há X min";

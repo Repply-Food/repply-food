@@ -2,7 +2,7 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 14/10/2026:** depois da fundação (etapa 1), a **etapa 2 do plano do MVP (entrar e moldura do painel) está fechada localmente**. Já abrem as telas de entrar, esqueci a senha, senha nova, troca de senha, escolha da casa e acesso pendente, o admin provisório e o painel da casa com a moldura (celular e computador), o selo do vigia e a conta em Ajustes. Os números chegam nas etapas 5 e 7. A verificação (tipos, lint, testes e build) passa no Windows, com 594 testes em 38 arquivos, sobre um banco local montado do zero pelas migrations. Ainda falta rodá-la numa máquina Linux: o ramo do teste de tipos que só vale no Linux nunca foi executado. Admin completo, PDF e alarme por e-mail não estão implementados. Nada foi publicado na nuvem.
+> **Estado em 15/10/2026:** depois da fundação (etapa 1) e de entrar e moldura do painel (etapa 2), a **etapa 3 do plano do MVP (o admin da Repply) está fechada localmente**. O admin lista os restaurantes com o estado do envio, cadastra e edita a casa (horário com até dois turnos por dia, fuso, CNPJ), gera e troca o token de envio, cria o login do cliente com senha provisória, redefine a senha, pede reenvio, suspende e reativa a casa, e mostra o histórico das ações. Também abre o painel do cliente em só leitura, e o dono com duas casas troca de casa pelo painel. Já abrem as telas de entrar, esqueci a senha, senha nova, troca de senha, escolha da casa e acesso pendente, e o painel da casa com a moldura (celular e computador), o selo do vigia e a conta em Ajustes. Os números chegam nas etapas 5 e 7. A verificação (tipos, lint, testes e build) passa no Windows, sobre um banco local montado do zero pelas migrations. Ainda falta rodá-la numa máquina Linux: o ramo do teste de tipos que só vale no Linux nunca foi executado. PDF e alarme por e-mail não estão implementados. Nada foi publicado na nuvem.
 
 > **O que falta:** ver [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/).
 
@@ -74,6 +74,26 @@ npm run dev
 - O e-mail de "esqueci a senha" não sai para a internet: cai na caixa de e-mail local, o Mailpit, em **`http://127.0.0.1:54324`**.
 - **Cuidado ao commitar:** o `next dev` do Next 16.4 reescreve `AGENTS.md` e `next-env.d.ts`. Não commite essas mudanças: rode `git checkout -- AGENTS.md next-env.d.ts` antes do `git add`.
 
+**O caminho pelo admin** (cadastrar uma casa nova e fazê-la receber dados, como a equipe Repply fará). O `npm run local:acesso` continua criando as contas de teste; este caminho cria uma casa a mais, só no banco local. Os comandos são do Git Bash.
+
+1. Entre em `http://127.0.0.1:3000/entrar` com `admin@repply.local` (a senha está em `ACESSO_LOCAL`, em `scripts/acesso-local.ts`). O admin abre em `/admin`.
+2. "+ Cadastrar restaurante": nome, fuso e um horário em que a casa esteja **aberta agora** (o vigia só acusa atraso dentro do horário). O CNPJ é opcional: deixe em branco, porque um CNPJ igual ao de algum teste faria a suíte falhar por duplicado.
+3. No detalhe da casa, "Gerar token" e copie o token (ele aparece uma vez).
+4. Com a função `receber-envio` no ar (`npx supabase functions serve receber-envio`, em outro terminal), mande dados fictícios com esse token:
+
+   ```bash
+   SCC_TOKEN=<token> npm run gerador -- --fuso America/Fortaleza --historico-dias 3 --parar-apos 1
+   ```
+
+5. O vigia roda a cada 5 minutos. Para não esperar, rode-o na hora e recarregue o admin:
+
+   ```bash
+   node --input-type=module -e "import pg from 'pg'; const c = new pg.Client('postgresql://postgres:postgres@127.0.0.1:54322/postgres'); await c.connect(); await c.query('select public.atualizar_estados()'); await c.end();"
+   ```
+
+   A casa sai de "aguardando 1º envio" para "em dia", e "Últimos envios" mostra as contagens.
+6. Para ver o que o dono vê, use "Ver o painel do cliente" (só leitura). Para entrar como dono, use "Criar login" no cartão "Acesso do cliente": a senha provisória aparece uma vez.
+
 ### Testes reais locais
 
 Os testes de recepção, isolamento, dia de operação e rotinas usam o PostgreSQL local em `127.0.0.1:54322` e a API em `127.0.0.1:54321`; não apontam para produção. Inicie o Supabase e mantenha a função em outro terminal (se já estiverem ativos, reutilize-os, sem reiniciar):
@@ -140,7 +160,7 @@ O sistema SCC envia as contas para a função `receber-envio` a cada ~5 minutos,
 
 Simula o SCC: gera meses de entradas realistas (almoço e jantar, pico de sexta e sábado, mesas abertas agora, contas esquecidas, descontos e garçons) e envia pelo **mesmo** `receber-envio` que o sistema real usa. Detalhes em `docs/arquitetura/recepcao-de-dados.md` §5 e no topo de `scripts/gerador-dados-ficticios.ts`.
 
-**Envio real local:** exige token exclusivo de restaurante de teste, Supabase local ativo e o **fuso IANA do restaurante**, via `--fuso` ou `SCC_FUSO`. A tela de admin ainda não existe (etapa 3). Não use o token, o arquivo de configuração ou dados da Casa de Demonstração para testes/cargas.
+**Envio real local:** exige token exclusivo de restaurante de teste, Supabase local ativo e o **fuso IANA do restaurante**, via `--fuso` ou `SCC_FUSO`. O token sai do admin (veja "O caminho pelo admin", em "Entrar no painel local"). Não use o token, o arquivo de configuração ou dados da Casa de Demonstração para testes/cargas.
 
 ```bash
 # Só após autorização de carga, com arquivo próprio de configuração de teste

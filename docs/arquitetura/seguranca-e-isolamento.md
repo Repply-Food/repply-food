@@ -33,23 +33,35 @@
 11. **Dado real nunca entra em teste, plano, desenho ou migration.** Use os dados fictícios do gerador.
 12. **Função nova nasce fechada.** Desde a migration `20261013120000`, função criada em `public` não pode ser executada por `anon` nem por `authenticated`. A regra vale para função criada pelas migrations, que rodam com o papel `postgres`. Função criada por outro papel (por exemplo, direto no painel do Supabase) não é coberta, então crie função só por migration. Se o painel precisa chamar:
     - dê o `grant execute ... to authenticated` na mesma migration;
-    - a função confere `tem_acesso(restaurante_id)` por dentro, ou é `security invoker` e deixa a RLS trabalhar;
+    - a função confere `tem_acesso(restaurante_id)` por dentro (ou `eh_admin_repply()`, nas do admin: `trocar_token_envio` e `revogar_tokens_envio`), ou é `security invoker` e deixa a RLS trabalhar;
     - acrescente-a à lista do teste `tests/isolamento/funcoes-fechadas.test.ts`.
+
+    Dois casos à parte:
+    - **função usada dentro de uma restrição `check`** precisa de `execute` para quem grava. O Postgres confere o privilégio de quem faz o `insert` ou o `update`, e quem grava é o admin pelo login. Sem o `grant`, o cadastro falha com "permission denied for function". Foi o caso de `horario_funcionamento_valido` e `cnpj_valido`, que são puras (não leem tabela) e entram na lista de `funcoes-fechadas.test.ts`;
+    - **função só da chave de serviço** (`id_do_login_por_email` e `encerrar_sessoes_do_login`, que leem e apagam dados do Auth) não leva `grant` para ninguém além do `service_role` e entra na lista de `tests/isolamento/rpc-privilegada.test.ts`.
 
 ## 3. Políticas por tabela
 
 | Tabela | Cliente (login com acesso) | Admin Repply | Recepção (service role) |
 |---|---|---|---|
-| `restaurantes` | lê o dele; atualiza **só `turnos`** (via função `atualizar_turnos`, que confere o acesso) | lê e escreve todos | lê |
+| `restaurantes` | lê o dele; atualiza **só `turnos`** (via função `atualizar_turnos`, que confere o acesso) | lê e escreve todos; o banco confere horário (D-56), fuso e CNPJ (D-60) | lê |
 | `acessos` | lê os dele | lê e escreve | — |
 | `admins_repply` | — | lê | — |
-| `tokens_envio` | — | lê e escreve | lê e atualiza `ultimo_uso_em` |
+| `tokens_envio` | — | lê; troca e revoga pelas funções `trocar_token_envio` e `revogar_tokens_envio` (uma transação, com histórico) | lê e atualiza `ultimo_uso_em` |
 | `envios` | — | lê | escreve |
 | `sinal_de_vida` | lê o dele (para o selo "há X min") | lê | escreve |
 | `entradas` | lê o dele | lê todos ("ver o painel do cliente") | escreve |
 | `metas` | lê e escreve o dele | lê | — |
+| `registro_admin` | — | lê; registra em nome próprio (só `autor`, `restaurante_id`, `acao` e `detalhe`: o id e a hora são do banco); ninguém altera nem apaga | — |
+| `restaurantes_no_admin` (visão com `security_invoker`) | lê a dele, sem a versão do SCC | lê todas | — |
 
 "Ver o painel do cliente" (D-38) **só lê**. O admin não tem política de escrita em `entradas` nem em `metas`.
+
+**Privilégios explícitos** (pendência 14, resolvida na etapa 3). A RLS decide quem lê e escreve cada linha, mas não cobre `TRUNCATE`, que esvazia a tabela inteira. Por isso o corte também é nos privilégios:
+- `anon` e `authenticated` não têm `TRUNCATE`, `REFERENCES`, `TRIGGER` nem `MAINTAIN` em nenhuma tabela de `public`, e a tabela criada daqui em diante já nasce assim (`alter default privileges`);
+- as peças da etapa 3 nascem só com o que o produto usa: para `authenticated`, `tokens_envio`, `registro_admin` e a visão têm só `SELECT` (e o `registro_admin` insere apenas as quatro colunas acima);
+- `tests/isolamento/todas-as-tabelas.test.ts` compara os privilégios de cada tabela e visão com uma lista fechada. Tabela nova entra nela de propósito;
+- as sete tabelas antigas ainda mantêm `INSERT`, `UPDATE` e `DELETE` para `anon` e `authenticated`, com a RLS decidindo: dívida técnica, itens 49 e 50.
 
 Padrão de política, no estilo do Imob, com uma política por operação:
 
@@ -73,11 +85,19 @@ Copiado do CRM:
 - [ ] Nenhuma credencial ou dado pessoal sem necessidade.
 - [ ] Teste: o login do restaurante A tenta ler e escrever no B e é recusado.
 - [ ] Tipos regenerados (`npm run types`).
-- [ ] Função nova: `grant` explícito só para quem precisa, e entrada na lista de `funcoes-fechadas.test.ts`.
+- [ ] Função nova: `grant` explícito só para quem precisa, e entrada na lista de `funcoes-fechadas.test.ts` (ou de `rpc-privilegada.test.ts`, se for só da chave de serviço).
+- [ ] Privilégios: só o que o produto usa, e a tabela entra na lista de `tests/isolamento/todas-as-tabelas.test.ts`.
 
 ## 5. Login e senha
 
 - A conta é **criada pelo admin**, com senha provisória e `app_metadata.precisa_trocar_senha = true`. Esse campo só o servidor escreve.
+- **Conta e senha pelo admin (D-55):**
+  - o admin cria a conta pelo `/admin`, em "Acesso do cliente". A senha provisória é **gerada pelo sistema** (12 caracteres, sem 0/O nem 1/l/I, com letra e número), **mostrada uma vez** e mandada pela Repply por WhatsApp. E-mail que já tem conta só liga a casa, sem mudar a senha (dono com duas casas, D-10);
+  - **"Redefinir senha"** grava outra provisória, liga a troca obrigatória e **desconecta os aparelhos** daquele login: `encerrar_sessoes_do_login` apaga as linhas de `auth.sessions`. O Auth local (v2.197) já derruba as sessões quando o admin troca a senha, mas isso não é contrato, e a função do banco garante;
+  - **Resíduo:** o token de acesso já emitido continua lendo pela API de dados até expirar (até 1 h, `jwt_expiry`). O painel não abre, porque o porteiro valida a sessão no Supabase a cada requisição (`getUser`). Dívida técnica, item 48;
+  - **"Trocar e-mail"** muda o e-mail do login na hora, sem e-mail de confirmação (o admin é a fonte), e recusa um e-mail que já é de outro login;
+  - toda função do servidor do admin (`lib/admin/actions.ts`) **começa por `exigirAdmin()`** e confere os ids que chegam do navegador. A chave de serviço só entra onde é preciso: o Auth, `id_do_login_por_email`, `encerrar_sessoes_do_login` e `recalcular_dia_operacao`. Senha e token **nunca** vão para o log nem para o histórico (`registro_admin`; e-mail só mascarado);
+  - a guarda por casa do admin (`exigirCasa`) busca **só a casa do endereço** (não carrega todas a cada requisição) e devolve `modoAdmin`, que liga a faixa "só leitura" e o Ajustes do admin (D-58). Abrir o painel de um cliente entra no histórico no máximo uma vez por hora (D-59).
 - **Primeiro acesso:**
   - o porteiro (`proxy.ts`) manda para `/trocar-senha` enquanto o aviso estiver ativo. Só `/trocar-senha`, `/nova-senha` e `/auth/*` ficam livres;
   - a função do servidor que troca a senha lê o aviso do usuário que o Supabase validou (`getUser`), nunca do formulário, e não pede a senha atual;
@@ -86,7 +106,7 @@ Copiado do CRM:
 - **Porteiro e guardas:**
   - o porteiro (`proxy.ts`) renova a sessão a cada requisição e decide por uma função pura (`decidirRota`, em `lib/auth/rotas.ts`). Sem login, vai para `/entrar?next=…`. Arquivo estático nem consulta o login (lista fechada de extensões, olhando só o último trecho do caminho);
   - **o porteiro não é a defesa.** Toda função do servidor pode ser chamada por POST direto, então a conferência da sessão e do aviso mora **dentro** de cada função;
-  - as guardas por casa (`lib/auth/sessao.ts`: `exigirCasa`, `exigirAdmin`) rodam no layout e nas páginas de `/r/[slug]` (Hoje, Resultados e Ajustes). A casa do endereço precisa estar entre as que a RLS devolve para aquele login (todas, para o admin). Casa de outro volta ao destino padrão da conta; casa suspensa vai para `/acesso-pendente` (o admin ainda entra, para o suporte). Com a troca de senha pendente, as duas mandam para `/trocar-senha`.
+  - as guardas por casa (`lib/auth/sessao.ts`: `exigirCasa`, `exigirAdmin`) rodam no layout e nas páginas de `/r/[slug]` (Hoje, Resultados e Ajustes). A casa do endereço precisa estar entre as casas **ligadas ao login** em `acessos` (a leitura da sessão pede só essas, mesmo para o admin, que abre qualquer casa pelo endereço). Falha ao ler a sessão vira a tela de erro "Tentar de novo", nunca "acesso pendente" (item 27 da dívida, resolvido). Casa de outro volta ao destino padrão da conta; casa suspensa vai para `/acesso-pendente` (o admin ainda entra, para o suporte). Com a troca de senha pendente, as duas mandam para `/trocar-senha`.
 - **Senha:** no mínimo **8 caracteres**. A regra fica num lugar só (`lib/auth/senha.ts`) e é configurada igual no Supabase Auth. *O Imob tinha 8 num lugar e 10 em outro; não repetir.*
 - **Sair** desconecta **só o aparelho em uso** (`signOut({ scope: "local" })`). O login é compartilhado entre dono, sócio e gerente (D-10), e sair "de todos" derrubaria os outros celulares. **Trocar a senha** desconecta os outros aparelhos (`scope: "others"`), porque a senha velha deixou de valer para todos.
 - **"Esqueci a senha":**
@@ -99,7 +119,7 @@ Copiado do CRM:
 - **Formulário com senha ou dado sensível:**
   - leva `method="post"` e o botão de enviar **desligado até a página carregar** (`components/forms/use-hidratado.ts`). Se o dono apertar Enter antes de o JavaScript chegar, o navegador faz o envio nativo; sem `method="post"` ele seria um GET e a senha iria para a URL (histórico, registro do servidor e Referer). Pela especificação do HTML, Enter num campo não envia o formulário quando o botão de enviar está desabilitado;
   - o `next.config.ts` mantém `allowedDevOrigins: ["127.0.0.1"]` (sem isso o Next bloqueia o `/_next/hmr` nesse endereço e a página nunca hidrata no login local) e `logging.serverFunctions: false`. **Este último não pode sair**: sem ele o `next dev` imprime no terminal os argumentos das funções do servidor, inclusive e-mail e senha;
-  - a etapa 3 cria formulários com senha (D-32): seguem a mesma regra. O teste `tests/entrada/formularios-antes-de-carregar.test.tsx` cobre os quatro de hoje.
+  - os formulários do admin (cadastro, e-mail, token, reenvio e as confirmações) seguem a mesma regra, mesmo sem campo de senha, porque a senha provisória é gerada pelo sistema (D-55). Os testes `tests/entrada/formularios-antes-de-carregar.test.tsx` e `tests/admin/formularios-antes-de-carregar.test.tsx` cobrem os da entrada e os do admin.
 - **Mensagens:** frases do produto, escolhidas pelo `code` do erro do Supabase (`lib/auth/erros.ts`), nunca o texto cru. "E-mail ou senha incorretos." só aparece quando o login recusou a credencial; limite de tentativas e queda do serviço têm frase própria.
 - **Limite de tentativas (D-52):** **não há bloqueio próprio** por senha errada. Vale o limite do próprio Supabase Auth, por endereço de internet, e a tela de entrada sempre mostra o caminho "Esqueci a senha". O limitador em memória do Imob não serve aqui: na Vercel cada requisição pode cair numa instância diferente.
   - **Risco conhecido:** o Supabase vê o endereço do servidor da Vercel, não o de quem tenta. Uma pessoa errando a senha pode bloquear o login de todos por alguns minutos. Está na dívida técnica (item 23), para decidir antes da etapa 4.
@@ -107,7 +127,7 @@ Copiado do CRM:
 ## 6. Recepção de dados
 
 - Token por restaurante, guardado só como SHA-256. Ele é mostrado **uma vez**, na criação.
-- Troca de token: o antigo para **na hora** (padrão) ou **em 24 h** (D-38).
+- Troca de token: o antigo para **na hora** (padrão) ou **em 24 h** (D-38). A troca é uma função do banco (`trocar_token_envio`), numa transação só e com histórico; o token novo nasce no servidor e só o hash vai para o banco.
 - `verify_jwt = false` só na função `receber-envio`, com comentário no `config.toml` explicando por quê.
 - Corpo limitado a 2 MB, até 2.000 entradas, e um envio por restaurante a cada 20 s.
 - **Só entra o que está na lista** do contrato §5 (D-29, D-51). Nome, RG, telefone e sexo são descartados; campo desconhecido também, e dele fica só o nome. Vale para as contas e para o JSON guardado, que é remontado só com a lista.

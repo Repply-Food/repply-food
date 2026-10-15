@@ -1,6 +1,6 @@
 /**
- * Cria, no banco LOCAL, contas de teste para abrir as telas antes do admin
- * existir (etapa 3). Recusa qualquer endereço que não seja desta máquina.
+ * Cria, no banco LOCAL, contas de teste para abrir as telas sem passar pelo
+ * admin. Recusa qualquer endereço que não seja desta máquina.
  *
  * Uso: npm run local:acesso
  * Pode rodar quantas vezes quiser: repõe a senha provisória e o aviso de troca.

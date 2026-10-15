@@ -211,7 +211,7 @@ npm run build        # build completa
 - `setInterval` ou estado em memória para rotina ou limite (Vercel).
 - Guardar dado pessoal de cliente do restaurante "só por enquanto".
 - Tela feita só para celular ou só para computador.
-- Formulário com senha ou outro dado sensível sem `method="post"` e sem o botão de enviar desligado até a página carregar (`components/forms/use-hidratado.ts`). Enviado antes de carregar, o navegador faz o envio nativo e põe os campos na URL: histórico, registro do servidor e Referer. A etapa 3 cria formulários com senha (D-32): siga os quatro de `app/(entrada)/`.
+- Formulário com senha ou outro dado sensível sem `method="post"` e sem o botão de enviar desligado até a página carregar (`components/forms/use-hidratado.ts`). Enviado antes de carregar, o navegador faz o envio nativo e põe os campos na URL: histórico, registro do servidor e Referer. Os formulários do admin (etapa 3) seguem a mesma regra: o modelo são os quatro de `app/(entrada)/`.
 - Tirar `logging.serverFunctions: false` do `next.config.ts`. Sem ele, o `next dev` imprime no terminal os argumentos das funções do servidor, e a senha vai junto.
 - Rodar `npx shadcn add` num componente que já foi personalizado: sobrescreve as decisões de marca (Imob).
 - O micro-rótulo `/ nome-da-seção` acima do título. O Imob baniu por parecer "gerado por IA".
@@ -247,18 +247,18 @@ repositorio/
 ├── app/                      # Next.js
 │   ├── (entrada)/            # entrar · esqueci-a-senha · nova-senha · trocar-senha · escolher-casa · acesso-pendente
 │   ├── r/[slug]/             # painel da casa: hoje · resultados · ajustes
-│   ├── admin/                # provisório até a etapa 3
+│   ├── admin/                # admin da Repply: lista, cadastro, detalhe e edição
 │   ├── auth/confirmar/       # rota do link do e-mail (recuperação de senha)
 │   └── styles/               # tokens.css e brand.css
-├── components/               # ui/ (shadcn personalizado) · forms/ · painel/ (moldura, menu, selo) · marca/ · entrada/ · providers/
-├── lib/                      # auth/ · painel/ (selo) · entrada/ · supabase/ · format/ (dinheiro, data) · validators/ · contato.ts · logger.ts
+├── components/               # ui/ (shadcn personalizado) · forms/ · painel/ (moldura, menu, selo, faixa só leitura) · admin/ (lista, cartões, formulários) · marca/ · entrada/ · providers/
+├── lib/                      # auth/ · painel/ (selo) · admin/ (funções puras, leitura e funções do servidor do admin) · entrada/ · supabase/ · format/ (dinheiro, data) · validators/ · contato.ts · logger.ts
 │                             # metricas/ (chamadas às funções SQL) chega com a etapa 5
 ├── supabase/
 │   ├── migrations/
 │   ├── functions/receber-envio/ · enviar-alerta/ (etapa 9)
 │   ├── templates/            # modelo do e-mail de recuperação de senha
 │   └── config.toml
-├── tests/                    # recepção, isolamento, login (auth), painel, métricas (exemplo de conta), design-tokens
+├── tests/                    # recepção, isolamento, login (auth), painel, admin, métricas (exemplo de conta), design-tokens
 ├── scripts/                  # gerador de dados fictícios, acesso-local.ts (contas de teste), sincronizar-skills.mjs
 ├── public/                   # ícones do app (copiados de identidade-visual/logos/app/)
 ├── identidade-visual/        # marca: brandbook, logos, fontes, gerador (fonte da verdade)

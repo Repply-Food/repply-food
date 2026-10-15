@@ -12,6 +12,8 @@
 
 ## Tabelas
 
+São **9 tabelas** e uma visão (`restaurantes_no_admin`, a lista do admin).
+
 ### `restaurantes`
 
 ```sql
@@ -19,10 +21,10 @@ create table public.restaurantes (
   id                       uuid primary key default gen_random_uuid(),
   slug                     text not null unique,                 -- usado na URL: /r/bar-do-ze/hoje
   nome                     text not null,
-  cnpj                     text unique,                          -- cadastro, NÃO é login (D-11)
+  cnpj                     text unique,                          -- opcional, conferido (D-60); cadastro, NÃO é login (D-11)
   fuso                     text not null default 'America/Fortaleza',
   hora_virada              time not null default '05:00',        -- início do dia de operação (B6)
-  horario_funcionamento    jsonb not null default '[]',          -- [{ "dia": 5, "abre": "11:00", "fecha": "02:00" }, ...] (0 = domingo)
+  horario_funcionamento    jsonb not null default '[]',          -- [{ "dia": 5, "abre": "11:00", "fecha": "02:00" }, ...] (0 = domingo); até dois por dia (D-56)
   turnos                   jsonb not null default '{"almoco_ate": "17:00"}',
   limite_conta_esquecida   interval not null default '4 hours',  -- M04
   intervalo_envio_segundos int not null default 300,             -- devolvido ao SCC em proximo_envio_em_segundos
@@ -35,7 +37,16 @@ create table public.restaurantes (
 
 - Escreve: só o admin. A exceção são os `turnos`, que o cliente edita em Ajustes (D-35).
 - `situacao = 'suspenso'` bloqueia o **painel**, mas **não** a recepção: os dados continuam chegando para não haver buraco se o cliente voltar.
-- Se `hora_virada` ou `fuso` mudar, o `dia_operacao` das entradas precisa ser recalculado. Isso é uma ação do admin, que chama `recalcular_dia_operacao(restaurante_id)`.
+- Se `hora_virada` ou `fuso` mudar, o `dia_operacao` das entradas precisa ser recalculado. Isso é uma ação do admin, que chama `recalcular_dia_operacao(restaurante_id)` (a edição do restaurante faz isso sozinha).
+- Mudar o `fuso` **não corrige as horas** das contas já recebidas: elas foram convertidas com o fuso antigo. A tela de edição avisa para pedir um reenvio (dívida técnica, item 46).
+- **O banco confere o cadastro** (migration `20261015120000`; o formulário do admin confere antes, com a mesma regra, e os testes comparam as duas):
+  - `restaurantes_horario_funcionamento_valido`, pela função `horario_funcionamento_valido`:
+    - lista de `{ dia, abre, fecha }`, com `dia` de 0 a 6 e horas no formato `HH:MM`;
+    - `abre` diferente de `fecha`, no máximo **dois por dia** (D-56) e sem sobreposição no mesmo dia;
+    - só o último do dia passa da meia-noite (`fecha` menor que `abre`);
+    - **a lista vazia continua aceita**: existe em cadastros antigos e conta como "sempre aberta" (ver [`recepcao-de-dados.md`](recepcao-de-dados.md) §7). O formulário do admin exige pelo menos um dia aberto;
+  - `restaurantes_fuso_do_brasil`: o `fuso` é um dos 16 fusos IANA do Brasil (a lista está em `lib/admin/fusos.ts`);
+  - `restaurantes_cnpj_valido`, pela função `cnpj_valido`: o `cnpj` é nulo ou tem 14 caracteres, sem pontuação e em maiúsculas. Os 12 primeiros podem ter letras (CNPJ alfanumérico da Receita) e os 2 últimos são os dígitos verificadores. Todos os caracteres iguais não vale. Além disso, o CNPJ é único (D-60).
 
 ### `acessos`
 
@@ -81,6 +92,7 @@ create table public.tokens_envio (
 - Token: `rf_` + 32 caracteres aleatórios. Ele é mostrado **uma única vez**, na criação.
 - **Token válido** = `revogado_em is null and (expira_em is null or expira_em > now())`.
 - Na troca de token, o antigo recebe `revogado_em = now()` (padrão) ou `expira_em = now() + 24h`.
+- **Ninguém escreve direto na tabela, nem o admin.** A troca e a revogação passam só por `trocar_token_envio` e `revogar_tokens_envio`, que rodam numa transação, travam a linha do restaurante e gravam o histórico (`registro_admin`) junto. Trocar com "24 h" nunca estica o prazo de um token que já está saindo. O admin só lê a tabela (a tela nunca pede o `hash`).
 
 ### `envios`
 
@@ -180,6 +192,56 @@ create table public.metas (
 - O cliente escreve em Ajustes (D-35).
 - Quando o mês vira sem meta nova, vale a do mês anterior. A tela já mostra o valor herdado, mas só grava quando o dono confirma.
 
+### `registro_admin`
+
+O histórico das ações do admin em cada restaurante (D-59). Migration `20261015120000`, com o endurecimento de `20261015130000`.
+
+```sql
+create table public.registro_admin (
+  id             bigint generated always as identity primary key,
+  criado_em      timestamptz not null default now(),
+  autor          uuid references auth.users (id) on delete set null,  -- o admin; se a conta sair, o histórico fica
+  restaurante_id uuid not null references public.restaurantes (id) on delete cascade,
+  acao           text not null check (acao in (
+                   'cadastrou', 'editou_dados', 'gerou_token', 'revogou_token',
+                   'criou_login', 'ligou_login', 'redefiniu_senha', 'trocou_email',
+                   'pediu_reenvio', 'suspendeu', 'reativou', 'abriu_painel')),
+  detalhe        text check (detalhe is null or char_length(detalhe) <= 200)
+);
+create index registro_admin_restaurante_idx on public.registro_admin (restaurante_id, criado_em desc);
+
+-- "abriu o painel do cliente": no máximo uma vez por hora, por admin e casa
+create unique index registro_admin_abriu_painel_por_hora
+  on public.registro_admin (autor, restaurante_id, date_trunc('hour', criado_em, 'UTC'))
+  where acao = 'abriu_painel';
+```
+
+- **Sem senha, sem token e sem e-mail completo** no `detalhe` (texto curto, até 200 caracteres). Os e-mails entram mascarados.
+- **RLS:** só o admin lê (`eh_admin_repply()`) e só registra em nome próprio (`autor = auth.uid()`). **Não há política de `update` nem de `delete`:** ninguém altera nem apaga, nem o admin. O dono não vê o histórico.
+- **Privilégios:** o admin insere só `autor`, `restaurante_id`, `acao` e `detalhe`. O `id` e a hora (`criado_em`) são do banco, para o admin não escolher a hora do próprio registro e driblar o limite de "abriu o painel" por hora. A chave de serviço também não altera nem apaga (sem `UPDATE`, `DELETE` e `TRUNCATE`). Apagar o restaurante leva o histórico junto (`on delete cascade`).
+- Quem grava: as funções do servidor do admin (`lib/admin/registro.ts`) e, no banco, `trocar_token_envio` e `revogar_tokens_envio`, na mesma transação da troca.
+- O gatilho `freeze_restaurante_id` impede mudar a casa de uma linha.
+
+### Visão `restaurantes_no_admin`
+
+A lista do admin: restaurante, estado do vigia e a versão do SCC do último envio. É uma visão com **`security_invoker`**: a RLS das tabelas vale para quem consulta, então o admin lê todas as casas e o dono lê só a dele (sem a versão do SCC, porque `envios` é só do admin).
+
+```sql
+create view public.restaurantes_no_admin with (security_invoker = true) as
+select r.id, r.slug, r.nome, r.situacao, r.fuso,
+       s.estado, s.ultimo_envio_ok_em,
+       ultimo.versao_scc            -- versão do SCC do último envio que a informou
+  from public.restaurantes r
+  left join public.sinal_de_vida s on s.restaurante_id = r.id
+  left join lateral (
+    select e.versao_scc from public.envios e
+     where e.restaurante_id = r.id and e.versao_scc is not null
+     order by e.recebido_em desc limit 1
+  ) as ultimo on true;
+```
+
+Só `authenticated` lê (`SELECT`); `anon` não tem nada nela.
+
 ## Gatilhos obrigatórios (padrão do Imob)
 
 - `set_updated_at`, em toda tabela com `atualizado_em` ou `atualizada_em`.
@@ -198,4 +260,10 @@ create table public.metas (
 | `abertura_do_intervalo(horario, fuso, momento)` | Abertura do intervalo de funcionamento que contém o momento |
 | `recalcular_dia_operacao(restaurante_id)` | Quando a virada ou o fuso mudarem |
 | `atualizar_turnos(restaurante_id, turnos)` | A única escrita do cliente em `restaurantes`: confere o acesso e muda só os turnos (D-35) |
+| `horario_funcionamento_valido(horario)` | Confere o horário de funcionamento (até dois por dia, D-56). Roda dentro da restrição de `restaurantes`, por isso o `authenticated` pode executá-la. Pura: não lê tabela |
+| `cnpj_valido(cnpj)` | Confere o CNPJ, numérico ou alfanumérico, com os dígitos verificadores (D-60). Mesma situação da anterior |
+| `trocar_token_envio(restaurante, hash, prefixo, antigo)` | Admin. Troca o token numa transação: o antigo para agora (`'agora'`) ou em 24 h (`'24h'`), o novo entra e o histórico é gravado. Devolve o id do token novo e quantos antigos saíram |
+| `revogar_tokens_envio(restaurante)` | Admin. Revoga todos os tokens válidos da casa e grava o histórico. Zero tokens é erro, não sucesso |
+| `id_do_login_por_email(email)` | **Só a chave de serviço.** Acha a conta no Auth pelo e-mail, sem listar todas; devolve nulo se não houver |
+| `encerrar_sessoes_do_login(user_id)` | **Só a chave de serviço.** Apaga as sessões do login (desconecta os aparelhos, em "Redefinir senha"). Zero é normal |
 | `metrica_*` | Uma função por métrica de [`../metricas.md`](../metricas.md), sempre recebendo `restaurante_id` e o período |
