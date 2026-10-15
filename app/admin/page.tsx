@@ -1,25 +1,22 @@
-import { BotaoSair } from "@/components/entrada/botao-sair";
-import { Logo } from "@/components/marca/logo";
+import { ListaRestaurantes } from "@/components/admin/lista-restaurantes";
+import { listarRestaurantes } from "@/lib/admin/dados";
 import { exigirAdmin } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Admin · repply food." };
 
-/** Provisório: o admin de verdade é a etapa 3. */
+/** Lista de restaurantes. No computador, à direita, "Escolha um restaurante". */
 export default async function PaginaAdmin() {
-  const sessao = await exigirAdmin();
+  await exigirAdmin();
+  const linhas = await listarRestaurantes();
   return (
-    // Ilha clara de página inteira: a logo é a versão "claro" (marca escura) e
-    // não pode cair sobre o fundo escuro do tema escuro.
-    <div className="scheme-paper min-h-dvh">
-      <main className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-6 px-6">
-        <Logo variante="claro" tamanho="grande" />
-        <h1 className="text-3xl font-semibold">Admin da Repply</h1>
-        <p className="text-muted-foreground">
-          Entrou como {sessao.email}. O cadastro de restaurantes, tokens e
-          acessos chega na próxima etapa.
+    <div className="lg:grid lg:grid-cols-[1.35fr_1fr] lg:items-start lg:gap-6">
+      <ListaRestaurantes linhas={linhas} agoraIso={new Date().toISOString()} />
+      <aside className="hidden lg:block">
+        <p className="brand-surface rounded-xl p-6 text-quiet">
+          Escolha um restaurante para ver os dados, o token de envio, o acesso
+          do cliente e os últimos envios.
         </p>
-        <BotaoSair variante="outline" />
-      </main>
+      </aside>
     </div>
   );
 }
