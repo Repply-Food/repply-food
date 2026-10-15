@@ -48,14 +48,24 @@ function primeiroErro(issues: { message: string }[]): string {
   return issues[0]?.message ?? "Confira os dados";
 }
 
-/** Para onde vai, lendo pela RLS as casas que este login enxerga. */
+/**
+ * Para onde vai, lendo as casas LIGADAS a este login em `acessos` (o mesmo
+ * filtro de `obterSessao`): sem ele a RLS devolveria todas as casas ao admin, a
+ * cada entrada ou troca de senha (pendência 43). O `!inner` é o que faz o filtro
+ * tirar a linha da casa, e não só esvaziar a lista embutida.
+ */
 async function destinoDe(
   supabase: ClienteServidor,
+  userId: string,
   trocaPendente: boolean
 ): Promise<string> {
   const [admin, casas] = await Promise.all([
     supabase.rpc("eh_admin_repply"),
-    supabase.from("restaurantes").select("slug, situacao").order("nome"),
+    supabase
+      .from("restaurantes")
+      .select("slug, situacao, acessos!inner(user_id)")
+      .eq("acessos.user_id", userId)
+      .order("nome"),
   ]);
   // Falha passageira ao ler as casas não pode virar "acesso pendente"
   // (pendência 27): a raiz refaz a conta com a sessão já aberta e, se falhar de
@@ -106,7 +116,11 @@ export async function entrarAction(
         : mensagemDoErroDeAuth(error),
     };
   }
-  const destino = await destinoDe(supabase, precisaTrocarSenha(data.user));
+  const destino = await destinoDe(
+    supabase,
+    data.user.id,
+    precisaTrocarSenha(data.user)
+  );
   await segurarLatencia(inicio);
   return { ok: true, data: { destino } };
 }
@@ -196,7 +210,10 @@ export async function definirNovaSenhaAction(
   }
   await fecharTroca(supabase);
   loja.delete({ name: COOKIE_RECUPERACAO, path: CAMINHO_COOKIE_RECUPERACAO });
-  return { ok: true, data: { destino: await destinoDe(supabase, false) } };
+  return {
+    ok: true,
+    data: { destino: await destinoDe(supabase, user.id, false) },
+  };
 }
 
 /** Primeiro acesso (sem a senha atual) ou troca voluntária (com a senha atual). */
@@ -244,5 +261,8 @@ export async function trocarSenhaAction(
     return { ok: false, error: mensagemDoErroDeAuth(null) };
   }
   await fecharTroca(supabase);
-  return { ok: true, data: { destino: await destinoDe(supabase, false) } };
+  return {
+    ok: true,
+    data: { destino: await destinoDe(supabase, user.id, false) },
+  };
 }

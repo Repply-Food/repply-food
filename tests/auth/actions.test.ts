@@ -12,6 +12,7 @@ const {
   resetPasswordForEmail,
   signOut,
   casasDoDestino,
+  ehAdmin,
   logError,
 } = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -23,6 +24,7 @@ const {
   resetPasswordForEmail: vi.fn(),
   signOut: vi.fn(),
   casasDoDestino: vi.fn(),
+  ehAdmin: vi.fn(),
   logError: vi.fn(),
 }));
 
@@ -41,8 +43,24 @@ vi.mock("@/lib/supabase/server", () => ({
       refreshSession: vi.fn(),
       signOut,
     },
-    rpc: async () => ({ data: false }),
-    from: () => ({ select: () => ({ order: async () => casasDoDestino() }) }),
+    rpc: async () => ehAdmin(),
+    // Guarda os filtros da consulta das casas para o teste conferir o que foi
+    // pedido ao banco.
+    from: () => {
+      const filtros: Record<string, unknown> = {};
+      const consulta = {
+        select: (colunas: string) => {
+          filtros.select = colunas;
+          return consulta;
+        },
+        eq: (coluna: string, valor: unknown) => {
+          filtros[coluna] = valor;
+          return consulta;
+        },
+        order: async () => casasDoDestino(filtros),
+      };
+      return consulta;
+    },
   }),
 }));
 vi.mock("@/lib/supabase/service", () => ({
@@ -81,6 +99,7 @@ const donoSemTroca = { id: "u1", email: "d@x.com", app_metadata: {} };
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "segredo-de-teste");
+  ehAdmin.mockReturnValue({ data: false, error: null });
   casasDoDestino.mockReturnValue({
     data: [{ slug: "casa-x", situacao: "ativo" }],
     error: null,
@@ -394,21 +413,91 @@ describe("primeiro acesso: repetir a senha provisória não libera nada", () => 
   });
 });
 
-describe("falha ao ler as casas depois de entrar (pendência 27)", () => {
+describe("o destino lê só as casas ligadas ao login (pendência 43)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-  });
-
-  it("vai para a raiz, que refaz a conta, e nunca para o acesso pendente", async () => {
     signInWithPassword.mockResolvedValue({
       data: { user: donoSemTroca },
       error: null,
     });
-    casasDoDestino.mockReturnValue({ data: null, error: { code: "08006" } });
-    const resultado = await semEspera(
-      entrarAction({ email: "dono@casa.com", senha: "qualquer-123" })
+  });
+
+  const dados = { email: "dono@casa.com", senha: "qualquer-123" };
+
+  it("pede as casas de `acessos` do próprio login, com o !inner", async () => {
+    await semEspera(entrarAction(dados));
+    expect(casasDoDestino).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.stringContaining("acessos!inner"),
+        "acessos.user_id": "u1",
+      })
     );
+  });
+
+  it("depois de trocar a senha também filtra pelo login", async () => {
+    getUser.mockResolvedValue({ data: { user: donoComTroca } });
+    await trocarSenhaAction({ senhaAtual: "", ...novaSenha });
+    expect(casasDoDestino).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.stringContaining("acessos!inner"),
+        "acessos.user_id": "u1",
+      })
+    );
+  });
+
+  it("admin vai para /admin sem depender da lista de casas", async () => {
+    ehAdmin.mockReturnValue({ data: true, error: null });
+    casasDoDestino.mockReturnValue({ data: [], error: null });
+    const resultado = await semEspera(entrarAction(dados));
+    expect(resultado).toEqual({ ok: true, data: { destino: "/admin" } });
+  });
+
+  it.each([
+    ["nenhuma casa", [], "/acesso-pendente"],
+    [
+      "uma casa ativa",
+      [{ slug: "casa-x", situacao: "ativo" }],
+      "/r/casa-x/hoje",
+    ],
+    [
+      "duas casas ativas",
+      [
+        { slug: "casa-x", situacao: "ativo" },
+        { slug: "casa-y", situacao: "ativo" },
+      ],
+      "/escolher-casa",
+    ],
+  ])("dono com %s", async (_nome, casas, destino) => {
+    casasDoDestino.mockReturnValue({ data: casas, error: null });
+    const resultado = await semEspera(entrarAction(dados));
+    expect(resultado).toEqual({ ok: true, data: { destino } });
+  });
+});
+
+describe("falha ao ler a sessão depois de entrar (pendência 27)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    signInWithPassword.mockResolvedValue({
+      data: { user: donoSemTroca },
+      error: null,
+    });
+  });
+
+  const dados = { email: "dono@casa.com", senha: "qualquer-123" };
+
+  it("falha ao ler as casas: vai para a raiz, que refaz a conta, e nunca para o acesso pendente", async () => {
+    casasDoDestino.mockReturnValue({ data: null, error: { code: "08006" } });
+    const resultado = await semEspera(entrarAction(dados));
     expect(resultado).toEqual({ ok: true, data: { destino: "/" } });
     expect(logError).toHaveBeenCalledWith("falha_leitura_sessao");
+    expect(logError).toHaveBeenCalledTimes(1);
+  });
+
+  it("falha ao saber se é admin: mesmo destino, nunca o acesso pendente, log só do código", async () => {
+    ehAdmin.mockReturnValue({ data: null, error: { code: "08006" } });
+    const resultado = await semEspera(entrarAction(dados));
+    expect(resultado).toEqual({ ok: true, data: { destino: "/" } });
+    expect(logError).toHaveBeenCalledWith("falha_leitura_sessao");
+    expect(logError).toHaveBeenCalledTimes(1);
   });
 });

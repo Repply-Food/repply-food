@@ -172,6 +172,14 @@ describe("o admin não carrega todas as casas (pendência 43)", () => {
       "restaurantes",
       expect.objectContaining({ "acessos.user_id": "u1" })
     );
+    // Sem o `!inner`, o filtro só esvaziaria a lista embutida e o admin voltaria
+    // a carregar todas as casas.
+    expect(casasDoLogin).toHaveBeenCalledWith(
+      "restaurantes",
+      expect.objectContaining({
+        select: expect.stringContaining("acessos!inner"),
+      })
+    );
   });
 
   it("o admin abre a casa pelo endereço, em modo admin", async () => {
@@ -203,6 +211,7 @@ describe("falha de leitura vira erro, não 'acesso pendente' (pendência 27)", (
     entrou({}, false);
     ehAdmin.mockReturnValue(FALHA_DE_REDE);
     await expect(obterSessao()).rejects.toThrow("falha_leitura_sessao");
+    expect(logError).toHaveBeenCalledWith("falha_leitura_sessao");
   });
 
   it("falha ao ler a casa que o admin pediu", async () => {
