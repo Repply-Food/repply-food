@@ -97,7 +97,7 @@ As tarefas entre colchetes rodam **ao mesmo tempo**, na mesma pasta, porque mexe
 
 **Arquivos:** nenhum (o desenho e este plano já estão commitados ou entram no commit da Tarefa 8).
 
-- [ ] **Passo 1: Conferir o repositório**
+- [x] **Passo 1: Conferir o repositório**
 
 ```bash
 git fetch --all --prune && git status -sb && git log --oneline -5 origin/main
@@ -105,7 +105,7 @@ git fetch --all --prune && git status -sb && git log --oneline -5 origin/main
 
 Esperado: sem `[behind]`. Commits novos de outra pessoa: ler antes de seguir.
 
-- [ ] **Passo 2: Conferir o banco local, a função e a caixa de e-mail**
+- [x] **Passo 2: Conferir o banco local, a função e a caixa de e-mail**
 
 ```bash
 curl --max-time 5 -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:54321/functions/v1/receber-envio
@@ -115,7 +115,7 @@ npx supabase migration list --local
 
 Esperado: `405`, `200`, e as 8 migrations de `20261009120000` a `20261014120000` aplicadas no local. Se a função não responder `405`: `npx supabase functions serve receber-envio` em segundo plano (não reinicie o banco).
 
-- [ ] **Passo 3: Linha de base da suíte**
+- [x] **Passo 3: Linha de base da suíte**
 
 `npx vitest run` → esperado: 38 arquivos, 594 testes passando.
 
@@ -139,7 +139,7 @@ Esperado: `405`, `200`, e as 8 migrations de `20261009120000` a `20261014120000`
 - Visão `public.restaurantes_no_admin (id, slug, nome, situacao, fuso, estado, ultimo_envio_ok_em, versao_scc)`, `security_invoker = true`, `select` só para `authenticated`.
 - Tipos regenerados: `Database["public"]["Tables"]["registro_admin"]`, `Database["public"]["Views"]["restaurantes_no_admin"]`, `Database["public"]["Functions"]` com as seis funções novas.
 
-- [ ] **Passo 1: Teste das validações do cadastro (falha)**
+- [x] **Passo 1: Teste das validações do cadastro (falha)**
 
 Crie `tests/isolamento/cadastro-validado.test.ts`:
 
@@ -319,7 +319,7 @@ describe("o banco confere o cadastro do restaurante (pendência 9, D-56, D-60)",
 
 Rode `npx vitest run tests/isolamento/cadastro-validado.test.ts` → esperado: FALHA nos casos "recusado" (hoje tudo é aceito).
 
-- [ ] **Passo 2: Casos de almoço e jantar no vigia (passam já: regressão)**
+- [x] **Passo 2: Casos de almoço e jantar no vigia (passam já: regressão)**
 
 Em `tests/rotinas/aberto-desde.test.ts`, depois da constante `sempreAberto`, acrescente:
 
@@ -387,7 +387,7 @@ E, depois do teste `"casa 24 horas não ganha uma 'abertura' nova a cada meia-no
 
 Rode `npx vitest run tests/rotinas/aberto-desde.test.ts` → esperado: PASSA (a função já trata; o teste trava o comportamento).
 
-- [ ] **Passo 3: Teste da troca de token (falha)**
+- [x] **Passo 3: Teste da troca de token (falha)**
 
 Crie `tests/isolamento/tokens-de-envio.test.ts`:
 
@@ -626,7 +626,7 @@ describe("troca e revogação do token de envio (D-38)", () => {
 
 Rode `npx vitest run tests/isolamento/tokens-de-envio.test.ts` → esperado: FALHA (a função não existe).
 
-- [ ] **Passo 4: Teste do histórico (falha)**
+- [x] **Passo 4: Teste do histórico (falha)**
 
 Crie `tests/isolamento/registro-admin.test.ts`:
 
@@ -800,7 +800,7 @@ describe("histórico das ações do admin (D-59)", () => {
 
 Rode `npx vitest run tests/isolamento/registro-admin.test.ts` → esperado: FALHA (a tabela não existe).
 
-- [ ] **Passo 5: Teste das funções de login (falha)**
+- [x] **Passo 5: Teste das funções de login (falha)**
 
 Crie `tests/isolamento/funcoes-de-login.test.ts`:
 
@@ -911,7 +911,7 @@ describe("funções da chave de serviço para os logins (D-55)", () => {
 
 Rode `npx vitest run tests/isolamento/funcoes-de-login.test.ts` → esperado: FALHA (as funções não existem).
 
-- [ ] **Passo 6: Teste da visão da lista (falha)**
+- [x] **Passo 6: Teste da visão da lista (falha)**
 
 Crie `tests/isolamento/visao-do-admin.test.ts`:
 
@@ -1006,7 +1006,7 @@ describe("visão restaurantes_no_admin (lista do admin)", () => {
 
 Rode `npx vitest run tests/isolamento/visao-do-admin.test.ts` → esperado: FALHA (a visão não existe).
 
-- [ ] **Passo 7: Listas de funções e privilégios (falham)**
+- [x] **Passo 7: Listas de funções e privilégios (falham)**
 
 Em `tests/isolamento/funcoes-fechadas.test.ts`, troque a constante `abertas` por:
 
@@ -1122,7 +1122,7 @@ describe("privilégios explícitos (pendência 14)", () => {
 
 Rode `npx vitest run tests/isolamento/funcoes-fechadas.test.ts tests/isolamento/rpc-privilegada.test.ts tests/isolamento/todas-as-tabelas.test.ts` → esperado: FALHA nos testes alterados e no de privilégios.
 
-- [ ] **Passo 8: A migration**
+- [x] **Passo 8: A migration**
 
 Crie `supabase/migrations/20261015120000_admin_da_repply.sql`:
 
@@ -1559,7 +1559,7 @@ grant select on public.admins_repply, public.envios, public.sinal_de_vida, publi
 commit;
 ```
 
-- [ ] **Passo 9: Fixtures do vigia que a restrição nova recusaria**
+- [x] **Passo 9: Fixtures do vigia que a restrição nova recusaria**
 
 Em `tests/rotinas/estados-retencao.test.ts`:
 
@@ -1594,7 +1594,7 @@ const SEMPRE_ABERTO = Array.from({ length: 7 }, (_, dia) => [
 
    - no segundo `update` desse teste (o do fuso `'Marte/Olimpo'`), troque o `JSON.stringify(Array.from({ length: 7 }, (_, dia) => ({ dia, abre: "00:00", fecha: "00:00" })))` por `JSON.stringify(SEMPRE_ABERTO)`.
 
-- [ ] **Passo 10: Aplicar a migration no banco local**
+- [x] **Passo 10: Aplicar a migration no banco local**
 
 ```bash
 npx supabase migration up --local
@@ -1609,7 +1609,7 @@ Se um teste que chama a API (`servico.rpc(...)`) disser que a função não exis
 node --input-type=module -e "import pg from 'pg'; const c = new pg.Client('postgresql://postgres:postgres@127.0.0.1:54322/postgres'); await c.connect(); await c.query(\"notify pgrst, 'reload schema'\"); await c.end();"
 ```
 
-- [ ] **Passo 11: Rodar os testes do banco**
+- [x] **Passo 11: Rodar os testes do banco**
 
 ```bash
 npx vitest run tests/isolamento tests/rotinas tests/helpers
@@ -1617,7 +1617,7 @@ npx vitest run tests/isolamento tests/rotinas tests/helpers
 
 Esperado: tudo passa. Se aparecer `over_request_rate_limit`/`429` no login de teste (o Auth local aceita 30 entradas a cada 5 min), espere 5 minutos e rode de novo; não é defeito.
 
-- [ ] **Passo 12: Tipos do banco**
+- [x] **Passo 12: Tipos do banco**
 
 ```bash
 npm run types -- --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
@@ -1626,7 +1626,7 @@ git diff --stat types/database.types.ts
 
 Esperado: "Tipos válidos; destino substituído atomicamente." e o arquivo com `registro_admin`, `restaurantes_no_admin` e as seis funções novas.
 
-- [ ] **Passo 13: Verificação completa e commit**
+- [x] **Passo 13: Verificação completa e commit**
 
 ```bash
 npx biome check --write tests/isolamento tests/rotinas
@@ -1668,7 +1668,7 @@ Esperado: tipos limpos; suíte inteira verde (43 arquivos).
 - `@/lib/admin/historico`: `ACOES_ADMIN` (as 12), tipo `AcaoAdmin`, `acaoAdmin(valor: string): AcaoAdmin | null`, tipo `RegistroDoHistorico = { id: number; criadoEm: string; autor: string; acao: AcaoAdmin; detalhe: string | null }` (`autor` já é o nome mostrado), `textoDaAcao(acao: AcaoAdmin, detalhe: string | null): string`, `nomeDoAutor(u: { nome?: unknown; email?: string | null } | null): string`, `linhaDoHistorico(r: RegistroDoHistorico, fuso: string): string`.
 - `@/lib/admin/schemas`: `restauranteSchema` (zod) e `RestauranteInput = { nome: string; cnpj: string; fuso: string; horaVirada: string; dias: DiaDoFormulario[] }` (`horaVirada` é `"0"`…`"23"`; `dias` tem 7 posições, índice = dia), `VALORES_INICIAIS: RestauranteInput`, tipo `DadosDoRestaurante = { nome: string; cnpj: string | null; fuso: string; hora_virada: string; horario_funcionamento: Intervalo[] }`, `paraOBanco(d: RestauranteInput): DadosDoRestaurante`, `formularioDoRestaurante(r: { nome: string; cnpj: string | null; fuso: string; hora_virada: string; horario_funcionamento: unknown }): RestauranteInput`, `emailSchema` e `EmailInput = { email: string }`, `DIAS_MAXIMOS_DO_REENVIO = 120`, `primeiroDiaDoReenvio(hoje: string): string`, `problemaNoReenvio(desde: string, hoje: string): string | null`.
 
-- [ ] **Passo 1: Testes do token, da senha, do CNPJ e do endereço (falham)**
+- [x] **Passo 1: Testes do token, da senha, do CNPJ e do endereço (falham)**
 
 Crie `tests/admin/token.test.ts`:
 
@@ -1862,7 +1862,7 @@ describe("endereço da casa (slug)", () => {
 
 Rode `npx vitest run tests/admin/token.test.ts tests/admin/senha-provisoria.test.ts tests/admin/cnpj.test.ts tests/admin/slug.test.ts` → esperado: FALHA (módulos não existem).
 
-- [ ] **Passo 2: `sha256Hex` num lugar só, token, senha, CNPJ e endereço**
+- [x] **Passo 2: `sha256Hex` num lugar só, token, senha, CNPJ e endereço**
 
 Crie `supabase/functions/_shared/token.ts`:
 
@@ -2029,7 +2029,7 @@ export function slugLivre(base: string, ocupados: readonly string[]): string {
 
 Rode os testes do Passo 1 → esperado: PASSA (o de recepção precisa do `405` da função).
 
-- [ ] **Passo 3: Testes de fusos, horário, lista e datas (falham)**
+- [x] **Passo 3: Testes de fusos, horário, lista e datas (falham)**
 
 Crie `tests/admin/horario.test.ts`:
 
@@ -2263,7 +2263,7 @@ describe("datas no fuso da casa", () => {
 
 Rode `npx vitest run tests/admin/horario.test.ts tests/admin/lista.test.ts tests/admin/datas.test.ts` → esperado: FALHA (módulos não existem).
 
-- [ ] **Passo 4: Fusos, horário, lista, datas e textos**
+- [x] **Passo 4: Fusos, horário, lista, datas e textos**
 
 Crie `lib/admin/fusos.ts`:
 
@@ -2691,7 +2691,7 @@ export function somarDias(dia: string, n: number): string {
 
 Rode os testes do Passo 3 → esperado: PASSA.
 
-- [ ] **Passo 5: Testes das mensagens, do histórico, dos envios e dos esquemas (falham)**
+- [x] **Passo 5: Testes das mensagens, do histórico, dos envios e dos esquemas (falham)**
 
 Crie `tests/admin/textos.test.ts`:
 
@@ -3080,7 +3080,7 @@ describe("a tela e o banco conferem igual", () => {
 
 Rode `npx vitest run tests/admin/textos.test.ts tests/admin/schemas.test.ts tests/admin/espelho-do-banco.test.ts` → esperado: FALHA (módulos não existem).
 
-- [ ] **Passo 6: Mensagens, envios, histórico e esquemas**
+- [x] **Passo 6: Mensagens, envios, histórico e esquemas**
 
 Crie `lib/admin/mensagens.ts`:
 
@@ -3411,7 +3411,7 @@ export function problemaNoReenvio(desde: string, hoje: string): string | null {
 
 Rode os testes do Passo 5 → esperado: PASSA.
 
-- [ ] **Passo 7: Verificar e commitar**
+- [x] **Passo 7: Verificar e commitar**
 
 ```bash
 npx biome check --write lib/admin supabase/functions/_shared/token.ts supabase/functions/receber-envio/index.ts tests/admin
@@ -3444,7 +3444,7 @@ git commit -m "Cria as funções puras do admin: token, senha provisória, CNPJ,
 - `@/lib/logger`: códigos novos `"falha_leitura_sessao"`, `"falha_admin"`, `"falha_registro_admin"`, `"falha_recalculo_dia"`.
 - `app/error.tsx`: tela de erro com "Tentar de novo" (`retry`, Next 16.3+).
 
-- [ ] **Passo 1: Testes da sessão (falham)**
+- [x] **Passo 1: Testes da sessão (falham)**
 
 Substitua `tests/auth/sessao.test.ts` por:
 
@@ -3738,7 +3738,7 @@ describe("tela de erro (pendência 27)", () => {
 
 Rode `npx vitest run tests/auth tests/logger.test.ts` → esperado: FALHA nos testes novos (`modoAdmin`, filtros, erro, `podeTrocarDeCasa`, códigos, `app/error`).
 
-- [ ] **Passo 2: Sessão e guardas**
+- [x] **Passo 2: Sessão e guardas**
 
 Substitua `lib/auth/sessao.ts` por:
 
@@ -3964,7 +3964,7 @@ export default function ErroDaTela({
 
 Rode `npx vitest run tests/auth tests/logger.test.ts tests/painel tests/entrada` → esperado: PASSA.
 
-- [ ] **Passo 3: Verificar e commitar**
+- [x] **Passo 3: Verificar e commitar**
 
 ```bash
 npx biome check --write lib/auth lib/logger.ts app/error.tsx tests/auth tests/logger.test.ts
@@ -3983,7 +3983,7 @@ git commit -m "Lê só as casas do login, abre a casa do admin pelo endereço e 
 
 ## Verificação do par 2 ‖ 3 (controlador)
 
-- [ ] Com as Tarefas 2 e 3 commitadas: `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 npm run build`. Esperado: tudo limpo. Erro de integração vai para um agente de conserto com a lista completa, antes da Tarefa 4.
+- [x] Com as Tarefas 2 e 3 commitadas: `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 npm run build`. Esperado: tudo limpo. Erro de integração vai para um agente de conserto com a lista completa, antes da Tarefa 4.
 
 ---
 
@@ -4004,7 +4004,7 @@ git commit -m "Lê só as casas do login, abre a casa do admin pelo endereço e 
 - `@/lib/admin/actions` (`"use server"`): `cadastrarRestauranteAction(input: RestauranteInput): Promise<Resultado<{ id: string }>>`, `editarRestauranteAction(id: string, input: RestauranteInput): Promise<Resultado<EdicaoSalva>>`, `gerarTokenAction(restauranteId: string, antigo: "agora" | "24h"): Promise<Resultado<TokenGerado>>`, `revogarTokensAction(restauranteId: string): Promise<Resultado>`, `criarLoginAction(restauranteId: string, input: EmailInput): Promise<Resultado<LoginCriado>>`, `redefinirSenhaAction(restauranteId: string, userId: string): Promise<Resultado<SenhaRedefinida>>`, `trocarEmailAction(restauranteId: string, userId: string, input: EmailInput): Promise<Resultado<{ outrasCasas: number }>>`, `pedirReenvioAction(restauranteId: string, input: { desde: string }): Promise<Resultado>`, `mudarSituacaoAction(restauranteId: string, situacao: "ativo" | "suspenso"): Promise<Resultado>`. Todas chamam `revalidatePath("/admin", "layout")` depois de mudar algo.
 - `@/components/admin/cartao`: `Cartao({ titulo: string; children: ReactNode; className?: string })` (componente sem estado, serve no servidor e no navegador).
 
-- [ ] **Passo 1: Teste "recusa sem tocar no banco" (falha)**
+- [x] **Passo 1: Teste "recusa sem tocar no banco" (falha)**
 
 Crie `tests/admin/acoes-recusam.test.ts`:
 
@@ -4088,7 +4088,7 @@ describe("toda função do servidor do admin confere por dentro (POST direto)", 
 
 Rode `npx vitest run tests/admin/acoes-recusam.test.ts` → esperado: FALHA (módulo não existe).
 
-- [ ] **Passo 2: Teste contra o banco e o Auth locais (falha)**
+- [x] **Passo 2: Teste contra o banco e o Auth locais (falha)**
 
 Crie `tests/admin/acoes-contra-o-banco.test.ts`:
 
@@ -4464,7 +4464,7 @@ describe("funções do servidor do admin contra o banco e o Auth locais", () => 
 
 Rode `npx vitest run tests/admin/acoes-contra-o-banco.test.ts` → esperado: FALHA (módulos não existem).
 
-- [ ] **Passo 3: Tipos, histórico e casca dos cartões**
+- [x] **Passo 3: Tipos, histórico e casca dos cartões**
 
 Crie `lib/admin/tipos.ts`:
 
@@ -4639,7 +4639,7 @@ export function Cartao({
 }
 ```
 
-- [ ] **Passo 4: Leitura dos dados**
+- [x] **Passo 4: Leitura dos dados**
 
 Crie `lib/admin/dados.ts`:
 
@@ -4934,7 +4934,7 @@ export async function emailsDosLoginsDaCasa(restauranteId: string): Promise<stri
 }
 ```
 
-- [ ] **Passo 5: As funções do servidor**
+- [x] **Passo 5: As funções do servidor**
 
 Crie `lib/admin/actions.ts`:
 
@@ -5531,7 +5531,7 @@ export async function mudarSituacaoAction(
 }
 ```
 
-- [ ] **Passo 6: Rodar os testes**
+- [x] **Passo 6: Rodar os testes**
 
 ```bash
 npx vitest run tests/admin/acoes-recusam.test.ts tests/admin/acoes-contra-o-banco.test.ts
@@ -5539,7 +5539,7 @@ npx vitest run tests/admin/acoes-recusam.test.ts tests/admin/acoes-contra-o-banc
 
 Esperado: PASSA. Se aparecer `over_request_rate_limit`/`429` no login de teste (o Auth local aceita 30 entradas a cada 5 min), espere 5 minutos e rode de novo; não é defeito. Confira também que nenhum texto do Supabase vai cru para a tela: `grep -nE "error\??\.message" lib/admin/actions.ts lib/admin/dados.ts lib/admin/registro.ts` deve voltar vazio (o `issues[0]?.message` do zod é a frase do próprio produto).
 
-- [ ] **Passo 7: Verificar e commitar**
+- [x] **Passo 7: Verificar e commitar**
 
 ```bash
 npx biome check --write lib/admin components/admin tests/admin
@@ -5570,7 +5570,7 @@ git commit -m "Cria as funções do servidor do admin: cadastro, token, login do
 - `@/components/admin/cartoes/cartao-dados`: `CartaoDados({ detalhe })`; o botão "Ver o painel do cliente" é um `<a href="/r/<slug>/hoje">` comum (sem pré-carregamento).
 - `CartaoEnvios({ detalhe })`, `CartaoHistorico({ detalhe })`.
 
-- [ ] **Passo 1: Testes da lista, do topo e dos cartões de leitura (falham)**
+- [x] **Passo 1: Testes da lista, do topo e dos cartões de leitura (falham)**
 
 Crie `tests/admin/lista-restaurantes.test.tsx`:
 
@@ -5848,7 +5848,7 @@ describe("cartão Histórico", () => {
 
 Rode `npx vitest run tests/admin/lista-restaurantes.test.tsx tests/admin/topo-admin.test.tsx tests/admin/cartoes-de-leitura.test.tsx` → esperado: FALHA (componentes não existem).
 
-- [ ] **Passo 2: Topo e lista**
+- [x] **Passo 2: Topo e lista**
 
 Crie `components/admin/topo-admin.tsx`:
 
@@ -6061,7 +6061,7 @@ export function ListaRestaurantes({
 }
 ```
 
-- [ ] **Passo 3: Cartões de leitura**
+- [x] **Passo 3: Cartões de leitura**
 
 Crie `components/admin/cartoes/cartao-dados.tsx`:
 
@@ -6195,7 +6195,7 @@ export function CartaoHistorico({ detalhe }: { detalhe: DetalheDoRestaurante }) 
 
 Rode os testes do Passo 1 → esperado: PASSA.
 
-- [ ] **Passo 4: As páginas do admin**
+- [x] **Passo 4: As páginas do admin**
 
 Crie `app/admin/layout.tsx`:
 
@@ -6333,7 +6333,7 @@ export default async function PaginaRestaurante({
 }
 ```
 
-- [ ] **Passo 5: Verificar e commitar**
+- [x] **Passo 5: Verificar e commitar**
 
 ```bash
 npx biome check --write app/admin/layout.tsx app/admin/page.tsx "app/admin/restaurantes/[id]/page.tsx" components/admin/topo-admin.tsx components/admin/lista-restaurantes.tsx components/admin/cartoes/cartao-dados.tsx components/admin/cartoes/cartao-envios.tsx components/admin/cartoes/cartao-historico.tsx tests/admin/lista-restaurantes.test.tsx tests/admin/topo-admin.test.tsx tests/admin/cartoes-de-leitura.test.tsx
@@ -6368,7 +6368,7 @@ git commit -m "Cria a casca do admin, a lista de restaurantes e o detalhe com os
 - `@/components/admin/cartoes/cartao-situacao`: `CartaoSituacao({ detalhe }: { detalhe: DetalheDoRestaurante })`.
 - `FormularioRestaurante(props: { modo: "cadastro"; valoresIniciais: RestauranteInput } | { modo: "edicao"; restauranteId: string; valoresIniciais: RestauranteInput })`, `EditorHorario()`, `FormularioEmail({ rotulo, botao, aviso?, aoEnviar, aoCancelar? })`, `Confirmacao({ texto, rotuloConfirmar, enviando, aoConfirmar, aoCancelar, children? })`, `QuadroCopieAgora({ titulo, rotulo, valor, copias })`, `BotaoCopiar({ rotulo, texto })`.
 
-- [ ] **Passo 1: Testes dos formulários antes de carregar (falham)**
+- [x] **Passo 1: Testes dos formulários antes de carregar (falham)**
 
 Crie `tests/admin/formularios-antes-de-carregar.test.tsx`:
 
@@ -6594,7 +6594,7 @@ describe("formulário do restaurante (cadastro e edição)", () => {
 
 Rode `npx vitest run tests/admin/formularios-antes-de-carregar.test.tsx tests/admin/formulario-restaurante.test.tsx` → esperado: FALHA (componentes não existem).
 
-- [ ] **Passo 2: Peças pequenas: copiar, quadro, confirmação e e-mail**
+- [x] **Passo 2: Peças pequenas: copiar, quadro, confirmação e e-mail**
 
 Crie `components/admin/botao-copiar.tsx`:
 
@@ -6855,7 +6855,7 @@ export function FormularioEmail({
 }
 ```
 
-- [ ] **Passo 3: Editor de horário e formulário do restaurante**
+- [x] **Passo 3: Editor de horário e formulário do restaurante**
 
 Crie `components/admin/editor-horario.tsx`:
 
@@ -7175,7 +7175,7 @@ export function FormularioRestaurante(props: Props) {
 
 Rode `npx vitest run tests/admin/formulario-restaurante.test.tsx` → esperado: PASSA. (O de "antes de carregar" só passa no Passo 5, porque usa o `CartaoReenvio`.)
 
-- [ ] **Passo 4: Testes dos cartões com ação (falham)**
+- [x] **Passo 4: Testes dos cartões com ação (falham)**
 
 Crie `tests/admin/cartoes-com-acao.test.tsx`:
 
@@ -7452,7 +7452,7 @@ describe("cartão Situação (D-57)", () => {
 
 Rode `npx vitest run tests/admin/cartoes-com-acao.test.tsx` → esperado: FALHA (cartões não existem).
 
-- [ ] **Passo 5: Os quatro cartões com ação**
+- [x] **Passo 5: Os quatro cartões com ação**
 
 Crie `components/admin/cartoes/cartao-token.tsx`:
 
@@ -8026,7 +8026,7 @@ export function CartaoSituacao({ detalhe }: { detalhe: DetalheDoRestaurante }) {
 
 Rode `npx vitest run tests/admin/formularios-antes-de-carregar.test.tsx tests/admin/formulario-restaurante.test.tsx tests/admin/cartoes-com-acao.test.tsx` → esperado: PASSA.
 
-- [ ] **Passo 6: Páginas de cadastro e edição**
+- [x] **Passo 6: Páginas de cadastro e edição**
 
 Crie `app/admin/restaurantes/novo/page.tsx`:
 
@@ -8100,7 +8100,7 @@ export default async function PaginaEditarRestaurante({
 }
 ```
 
-- [ ] **Passo 7: Verificar e commitar**
+- [x] **Passo 7: Verificar e commitar**
 
 ```bash
 npx biome check --write components/admin/botao-copiar.tsx components/admin/quadro-copie-agora.tsx components/admin/confirmacao.tsx components/admin/formulario-email.tsx components/admin/editor-horario.tsx components/admin/formulario-restaurante.tsx components/admin/cartoes/cartao-token.tsx components/admin/cartoes/cartao-acesso.tsx components/admin/cartoes/cartao-reenvio.tsx components/admin/cartoes/cartao-situacao.tsx app/admin/restaurantes/novo "app/admin/restaurantes/[id]/editar" tests/admin/formularios-antes-de-carregar.test.tsx tests/admin/formulario-restaurante.test.tsx tests/admin/cartoes-com-acao.test.tsx
@@ -8133,7 +8133,7 @@ git commit -m "Cria o cadastro e a edição do restaurante e os cartões de toke
 - `MolduraPainel({ casa, selo, faixa?: ReactNode, trocarDeCasa?: boolean, children })` (as duas props novas são opcionais; quem já usa continua igual).
 - `FaixaModoLeitura({ nome: string; restauranteId: string })`: `<section aria-label="Modo leitura do admin">`.
 
-- [ ] **Passo 1: Testes (falham)**
+- [x] **Passo 1: Testes (falham)**
 
 Crie `tests/painel/modo-leitura.test.tsx`:
 
@@ -8390,7 +8390,7 @@ describe("Ajustes", () => {
 
 Rode `npx vitest run tests/painel` → esperado: FALHA nos três arquivos novos (a faixa não existe, a moldura não tem as props novas, o layout e o Ajustes não conhecem `modoAdmin`). `tests/painel/menu-painel.test.tsx` continua passando.
 
-- [ ] **Passo 2: Faixa e moldura**
+- [x] **Passo 2: Faixa e moldura**
 
 Crie `components/painel/faixa-modo-leitura.tsx`:
 
@@ -8512,7 +8512,7 @@ export function MolduraPainel({
 }
 ```
 
-- [ ] **Passo 3: Layout da casa e Ajustes**
+- [x] **Passo 3: Layout da casa e Ajustes**
 
 Substitua `app/r/[slug]/layout.tsx` por:
 
@@ -8661,7 +8661,7 @@ export default async function PaginaAjustes({
 
 Rode `npx vitest run tests/painel` → esperado: PASSA (os cinco arquivos).
 
-- [ ] **Passo 4: Verificar e commitar**
+- [x] **Passo 4: Verificar e commitar**
 
 ```bash
 npx biome check --write "app/r/[slug]/layout.tsx" "app/r/[slug]/ajustes/page.tsx" components/painel/moldura-painel.tsx components/painel/faixa-modo-leitura.tsx tests/painel/modo-leitura.test.tsx tests/painel/layout-da-casa.test.tsx tests/painel/ajustes.test.tsx
@@ -8680,8 +8680,8 @@ git commit -m "Mostra a faixa só leitura do admin, o login do cliente em Ajuste
 
 ## Verificação do trio 5 ‖ 6 ‖ 7 (controlador)
 
-- [ ] Com as Tarefas 5, 6 e 7 commitadas: `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 npm run build`. Esperado: tudo limpo (agora a página de detalhe acha os quatro cartões da Tarefa 6). Erro de integração vai para um agente de conserto com a lista completa, antes da Tarefa 8.
-- [ ] `grep -rnE "error\??\.message" app/admin components/admin lib/admin "app/r"` volta vazio (nenhum texto cru do Supabase na tela).
+- [x] Com as Tarefas 5, 6 e 7 commitadas: `npx tsc --noEmit`, `npm run check`, `npx vitest run`, `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 npm run build`. Esperado: tudo limpo (agora a página de detalhe acha os quatro cartões da Tarefa 6). Erro de integração vai para um agente de conserto com a lista completa, antes da Tarefa 8.
+- [x] `grep -rnE "error\??\.message" app/admin components/admin lib/admin "app/r"` volta vazio (nenhum texto cru do Supabase na tela).
 
 ---
 
@@ -8689,11 +8689,11 @@ git commit -m "Mostra a faixa só leitura do admin, o login do cliente em Ajuste
 
 **Arquivos:** `docs/decisoes.md`, `docs/arquitetura/seguranca-e-isolamento.md`, `docs/arquitetura/modelo-de-dados.md`, `docs/arquitetura/recepcao-de-dados.md`, `docs/divida-tecnica.md`, `docs/operacao/cadastrar-restaurante.md`, `docs/README.md`, `README.md`, `CLAUDE.md` (§13), `scripts/acesso-local.ts` (só o comentário do topo), este plano.
 
-- [ ] **Passo 1: Servidor de desenvolvimento e contas de teste**
+- [x] **Passo 1: Servidor de desenvolvimento e contas de teste**
 
 `npm run local:acesso`, depois o `food-dev` do `.claude/launch.json` da pasta de trabalho (o mesmo da etapa 2), sempre em **`http://127.0.0.1:3000`**. Antes de cada commit desta tarefa: `git checkout -- AGENTS.md next-env.d.ts`.
 
-- [ ] **Passo 2: Conferir no navegador, em 390 px e 1280 px, claro e escuro**
+- [x] **Passo 2: Conferir no navegador, em 390 px e 1280 px, claro e escuro**
 
 O tema é trocado em Ajustes de qualquer casa (no modo leitura o seletor continua) e vale para o admin no mesmo navegador. Roteiro (desenho §4):
 
@@ -8720,7 +8720,7 @@ O tema é trocado em Ajustes de qualquer casa (no modo leitura o seletor continu
 
 Alvos de toque: conferir com o inspetor que botões, links do cabeçalho, "Trocar de casa", "Voltar ao admin" e as opções do editor de horário têm pelo menos 44 px de altura em 390 px. Sem rolagem lateral em 390 px. Capturas de tela de cada tela nova nas duas larguras e nos dois temas, para mostrar ao Lucas Ferreira. Qualquer problema: agente de conserto, e conferir de novo. As contas e casas criadas aqui ficam só no banco local.
 
-- [ ] **Passo 3: Documentação**
+- [x] **Passo 3: Documentação**
 
 `docs/decisoes.md`, no fim da tabela (mesmo formato das linhas D-52 a D-54):
 
@@ -8800,7 +8800,7 @@ e, na tabela "Quando algo dá errado", troque a última linha por `| Precisa ree
 
 Este plano: marcar os checkboxes e escrever o "Registro da execução" (commits por tarefa, consertos, desvios aceitos, decisões do controlador, conferência no navegador), no modelo da etapa 2.
 
-- [ ] **Passo 4: Revisão final, commit e pedido de envio**
+- [x] **Passo 4: Revisão final, commit e pedido de envio**
 
 Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa, com atenção a: toda função de `lib/admin/actions.ts` começa por `exigirAdmin()`; nenhuma senha ou token em log, URL ou histórico; `count !== 1` em toda escrita que deveria mudar uma linha; nenhum `error.message` na tela; formulários com `method="post"` e botão desligado até carregar. Consertos num agente só; verificação completa de novo (`npx tsc --noEmit`, `npm run check`, `npx vitest run`, `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000 npm run build`); `git checkout -- AGENTS.md next-env.d.ts`; commit da documentação listando os arquivos; mostrar a lista de commits ao Lucas Ferreira e pedir o ok para enviar ao GitHub.
 
@@ -8808,21 +8808,44 @@ Revisão do conjunto (modelo mais capaz) sobre o intervalo da etapa, com atenç�
 
 ## Critérios de aceite da etapa 3
 
-- [ ] Só o admin abre `/admin` e as páginas abaixo; toda função do servidor do admin recusa quem não é admin sem tocar no banco (teste), e ids que vêm do navegador são conferidos.
-- [ ] O banco recusa horário, fuso e CNPJ malformados (pendência 9); o mesmo CNPJ não entra duas vezes; o formulário dá a mesma resposta que o banco (teste de espelho).
-- [ ] Lista na ordem de atenção, com contadores, selo do vigia (D-53), último envio no fuso da casa, versão do SCC e etiqueta "suspenso"; estado vazio; cartões no celular e tabela no computador.
-- [ ] Cadastro e edição pelo mesmo formulário, com até dois horários por dia (D-56), "Copiar para os outros dias" e pelo menos um dia aberto; mudar o fuso ou a virada recalcula o dia de operação e a tela diz isso.
-- [ ] Token: gerado no servidor, guardado só o hash (o mesmo cálculo da recepção, testado), mostrado uma vez, com as instruções para a SCC; troca "agora" ou "em 24 h" numa transação só; revogar; o gerador entra com o token gerado na tela.
-- [ ] Login do cliente: criar (senha provisória uma vez, mensagem do WhatsApp, troca obrigatória); e-mail existente só liga a casa; redefinir desconecta os aparelhos; trocar e-mail sem confirmação; avisos de login com mais de uma casa.
-- [ ] Pedir reenvio (até 120 dias, nunca no futuro), suspender e reativar (D-57), histórico das ações (D-59) sem senha, token nem e-mail completo.
-- [ ] Painel: faixa "só leitura" com "Voltar ao admin", Ajustes do admin com o login do cliente, "abriu o painel" uma vez por hora, "Trocar de casa" para quem tem duas casas ativas (D-58).
-- [ ] A sessão do admin não carrega mais todas as casas (pendência 43) e erro de leitura vira a tela de erro, não "acesso pendente" (pendência 27); privilégios explícitos nas tabelas (pendência 14).
-- [ ] Celular (390 px) e computador (1280 px), claro e escuro, em todas as telas novas e na faixa; alvos de 44 px; cor nunca sozinha; texto quase-preto sobre laranja; o tomate só no símbolo.
-- [ ] Tipos, lint, testes e build limpos; capturas mostradas ao Lucas Ferreira; nada publicado na nuvem; nenhum `git push` sem o ok dele.
+- [x] Só o admin abre `/admin` e as páginas abaixo; toda função do servidor do admin recusa quem não é admin sem tocar no banco (teste), e ids que vêm do navegador são conferidos.
+- [x] O banco recusa horário, fuso e CNPJ malformados (pendência 9); o mesmo CNPJ não entra duas vezes; o formulário dá a mesma resposta que o banco (teste de espelho).
+- [x] Lista na ordem de atenção, com contadores, selo do vigia (D-53), último envio no fuso da casa, versão do SCC e etiqueta "suspenso"; estado vazio; cartões no celular e tabela no computador.
+- [x] Cadastro e edição pelo mesmo formulário, com até dois horários por dia (D-56), "Copiar para os outros dias" e pelo menos um dia aberto; mudar o fuso ou a virada recalcula o dia de operação e a tela diz isso.
+- [x] Token: gerado no servidor, guardado só o hash (o mesmo cálculo da recepção, testado), mostrado uma vez, com as instruções para a SCC; troca "agora" ou "em 24 h" numa transação só; revogar; o gerador entra com o token gerado na tela.
+- [x] Login do cliente: criar (senha provisória uma vez, mensagem do WhatsApp, troca obrigatória); e-mail existente só liga a casa; redefinir desconecta os aparelhos; trocar e-mail sem confirmação; avisos de login com mais de uma casa.
+- [x] Pedir reenvio (até 120 dias, nunca no futuro), suspender e reativar (D-57), histórico das ações (D-59) sem senha, token nem e-mail completo.
+- [x] Painel: faixa "só leitura" com "Voltar ao admin", Ajustes do admin com o login do cliente, "abriu o painel" uma vez por hora, "Trocar de casa" para quem tem duas casas ativas (D-58).
+- [x] A sessão do admin não carrega mais todas as casas (pendência 43) e erro de leitura vira a tela de erro, não "acesso pendente" (pendência 27); privilégios explícitos nas tabelas (pendência 14).
+- [x] Celular (390 px) e computador (1280 px), claro e escuro, em todas as telas novas e na faixa; alvos de 44 px; cor nunca sozinha; texto quase-preto sobre laranja; o tomate só no símbolo.
+- [x] Tipos, lint, testes e build limpos; capturas mostradas ao Lucas Ferreira; nada publicado na nuvem; nenhum `git push` sem o ok dele.
 
 ---
 
 ## Registro da execução
 
-*(Preenchido pelo controlador na Tarefa 8.)*
+Executada em 15/10/2026 com subagentes (um por tarefa, revisão entre as tarefas). Commits em `8a55b68..7dd5b30` (13 commits).
+
+**Commits por tarefa:**
+- Tarefa 1 (banco): `65cea57`, mais o endurecimento `130c0b0` (depois da revisão: tirar a escrita direta de `tokens_envio`, `registro_admin` só com 4 colunas, sequência fechada).
+- Tarefa 2 (funções puras): `b260de3`.
+- Tarefa 3 (sessão e guardas): `4c6ffa9`, mais os reforços `64fb3d4` (prender o `acessos!inner`, `destinoDe` filtrando pelo login).
+- Tarefa 4 (funções do servidor): `ab4af1a`.
+- Tarefa 5 (lista e detalhe): `075caf8`.
+- Tarefa 6 (cadastro, edição, cartões): `16aff7a`.
+- Tarefa 7 (painel do cliente): `f2b44d6`.
+- Tarefa 8 (fechamento): docs `41f893b`, tela 404 em PT-BR `7dd5b30`.
+
+**Revisões:** cada tarefa passou por revisão própria (as de banco, segurança e formulários com o modelo mais capaz) e consertos; revisão do conjunto no fim, sem achados Crítico nem Importante.
+
+**Desvios aceitos (conferidos):**
+- o `editarRestauranteAction` devolve `ok:false` quando o recálculo falha depois de salvar (a mensagem diz "foram salvos"); a Tarefa 6 renderiza como aviso, não como erro vermelho (dívida 52/53);
+- a Tarefa 6 corrigiu dois pontos do código literal do plano que violavam as regras: `avisoDeLoginLigado(0)` ("1 casas") e o aviso de "não recalculou" como erro vermelho;
+- migration nova `20261015130000` para o endurecimento (a da Tarefa 1 não se edita).
+
+**Conferência no navegador (390 px e 1280 px):** fluxo completo do admin, do cadastro ao primeiro envio do gerador. Login admin; cadastro com CNPJ alfanumérico e dois horários cruzando a meia-noite; os 7 cartões; token (quadro "Copie agora" some ao recarregar, fora de `localStorage`, "usado há…" depois do envio); criar login (senha uma vez, fora de `localStorage`); o dono entra com a provisória, troca a senha e cai no painel; o gerador com o token deixa o selo "em dia"; a faixa "só leitura" com "Voltar ao admin"; o Ajustes do admin com o login do cliente, sem "Trocar senha"/"Sair"; o histórico com e-mail mascarado; suspender e reativar; o dono em `/admin` é redirecionado; o 404 em português; sem rolagem lateral em 390 px.
+
+**Verificação final:** `tsc` 0, `npm run check` limpo (193 arquivos), `npm run build` ok, `npx vitest run` 65 arquivos / 939 testes. (Uma falha isolada em `tests/recepcao/envio.test.ts` por lentidão da máquina sob carga; o arquivo sozinho passou 21/21 e a suíte completa repetida passou 939/939.)
+
+**Dívida registrada:** itens 46 a 57 de `docs/divida-tecnica.md`. Só o item 47 (conferências na nuvem antes das migrations) bloqueia a etapa 4; nenhum bloqueia o envio ao GitHub. Pergunta de produto em aberto: item 46 (mudar o fuso não corrige as horas já recebidas; a tela avisa e oferece "Pedir reenvio").
 

@@ -17,7 +17,7 @@ repositorio/docs/superpowers/plans/, cobrindo:
 1) o projeto Next.js + Supabase com as peças do Repply Imob listadas no CLAUDE.md §2
    (tokens de marca, clientes Supabase, guardas de auth, cabeçalhos de segurança, logger,
    Biome, Vitest, teste de contraste de tokens);
-2) as 8 tabelas de docs/arquitetura/modelo-de-dados.md, com RLS e testes de isolamento;
+2) as 9 tabelas de docs/arquitetura/modelo-de-dados.md, com RLS e testes de isolamento;
 3) a função receber-envio + processar_envio, com os testes de docs/arquitetura/recepcao-de-dados.md §4;
 4) o gerador de dados fictícios enviando pelo mesmo caminho.
 
