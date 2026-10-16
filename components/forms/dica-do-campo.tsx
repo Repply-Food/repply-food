@@ -48,7 +48,7 @@ export function DicaDoCampo({
         <span
           id={id}
           role="tooltip"
-          className="brand-surface absolute left-0 top-full z-20 mt-2 w-full max-w-xs rounded-lg border p-2.5 text-sm font-normal text-foreground shadow-lg"
+          className="brand-surface absolute left-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-lg border p-2.5 text-sm font-normal text-foreground shadow-lg"
         >
           {children}
         </span>

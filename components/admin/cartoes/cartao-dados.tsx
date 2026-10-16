@@ -1,6 +1,12 @@
 import { Cartao } from "@/components/admin/cartao";
+import { DicaDoCampo } from "@/components/forms/dica-do-campo";
 import { buttonVariants } from "@/components/ui/button";
 import { formatarCnpj } from "@/lib/admin/cnpj";
+import {
+  DICA_CNPJ,
+  DICA_DIA_VIRA,
+  DICA_FUSO,
+} from "@/lib/admin/dicas-dos-campos";
 import { rotuloDoFuso } from "@/lib/admin/fusos";
 import { formatarHora, resumoDoHorario } from "@/lib/admin/horario";
 import type { DetalheDoRestaurante } from "@/lib/admin/tipos";
@@ -15,23 +21,37 @@ const BOTAO = cn(
 /** Cartão 1 do detalhe (desenho §1.1). */
 export function CartaoDados({ detalhe }: { detalhe: DetalheDoRestaurante }) {
   const r = detalhe.restaurante;
-  const linhas: [string, string][] = [
-    ["Nome", r.nome],
-    ["CNPJ", r.cnpj ? formatarCnpj(r.cnpj) : "não informado"],
-    ["Fuso", rotuloDoFuso(r.fuso)],
-    ["O dia vira às", formatarHora(r.horaVirada)],
-    ["Funcionamento", resumoDoHorario(r.horario)],
-    ["Situação", r.situacao === "suspenso" ? "suspenso" : "ativo"],
+  const linhas: { rotulo: string; valor: string; dica?: string }[] = [
+    { rotulo: "Nome", valor: r.nome },
+    {
+      rotulo: "CNPJ",
+      valor: r.cnpj ? formatarCnpj(r.cnpj) : "não informado",
+      dica: DICA_CNPJ,
+    },
+    { rotulo: "Fuso", valor: rotuloDoFuso(r.fuso), dica: DICA_FUSO },
+    {
+      rotulo: "O dia vira às",
+      valor: formatarHora(r.horaVirada),
+      dica: DICA_DIA_VIRA,
+    },
+    { rotulo: "Funcionamento", valor: resumoDoHorario(r.horario) },
+    {
+      rotulo: "Situação",
+      valor: r.situacao === "suspenso" ? "suspenso" : "ativo",
+    },
   ];
   return (
     <Cartao titulo="Dados">
       <dl className="flex flex-col divide-y text-sm">
-        {linhas.map(([rotulo, valor]) => (
+        {linhas.map(({ rotulo, valor, dica }) => (
           <div
             key={rotulo}
             className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2"
           >
-            <dt className="text-quiet">{rotulo}</dt>
+            <dt className="relative flex items-center gap-1.5 text-quiet">
+              {rotulo}
+              {dica ? <DicaDoCampo titulo={rotulo}>{dica}</DicaDoCampo> : null}
+            </dt>
             <dd className="text-right">{valor}</dd>
           </div>
         ))}

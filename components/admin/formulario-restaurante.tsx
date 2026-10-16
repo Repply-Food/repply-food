@@ -15,6 +15,11 @@ import {
   cadastrarRestauranteAction,
   editarRestauranteAction,
 } from "@/lib/admin/actions";
+import {
+  DICA_CNPJ,
+  DICA_DIA_VIRA,
+  DICA_FUSO,
+} from "@/lib/admin/dicas-dos-campos";
 import { FUSOS_DO_BRASIL } from "@/lib/admin/fusos";
 import { mensagemDaEdicao } from "@/lib/admin/mensagens";
 import { type RestauranteInput, restauranteSchema } from "@/lib/admin/schemas";
@@ -129,7 +134,7 @@ export function FormularioRestaurante(props: Props) {
             name="cnpj"
             control={form.control}
             label="CNPJ (opcional)"
-            dica="Opcional. Pode digitar com ou sem pontuação."
+            dica={DICA_CNPJ}
             inputProps={{ autoComplete: "off" }}
           />
           <FormField
@@ -137,10 +142,7 @@ export function FormularioRestaurante(props: Props) {
             name="fuso"
             render={({ field }) => (
               <FormItem>
-                <RotuloComDica
-                  label="Fuso"
-                  dica="O fuso horário da cidade da casa. Todos os horários e o fechamento do dia usam este fuso."
-                />
+                <RotuloComDica label="Fuso" dica={DICA_FUSO} />
                 <FormControl>
                   <select {...field} className={CLASSE_DO_SELETOR}>
                     {FUSOS_DO_BRASIL.map((fuso) => (
@@ -159,10 +161,7 @@ export function FormularioRestaurante(props: Props) {
             name="horaVirada"
             render={({ field }) => (
               <FormItem>
-                <RotuloComDica
-                  label="O dia vira às"
-                  dica="A hora em que o 'dia' da casa recomeça. Ex.: às 5h, uma mesa aberta às 2h da madrugada ainda conta no dia anterior — como é costume em bar e restaurante."
-                />
+                <RotuloComDica label="O dia vira às" dica={DICA_DIA_VIRA} />
                 <FormControl>
                   <select {...field} className={CLASSE_DO_SELETOR}>
                     {HORAS.map((hora) => (
