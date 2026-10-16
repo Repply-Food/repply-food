@@ -1,6 +1,7 @@
 "use client";
 
 import { EditorHorario } from "@/components/admin/editor-horario";
+import { RotuloComDica } from "@/components/forms/dica-do-campo";
 import { TextField } from "@/components/forms/form-field";
 import { useHidratado } from "@/components/forms/use-hidratado";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import {
@@ -129,7 +129,7 @@ export function FormularioRestaurante(props: Props) {
             name="cnpj"
             control={form.control}
             label="CNPJ (opcional)"
-            description="Com ou sem pontuação."
+            dica="Opcional. Pode digitar com ou sem pontuação."
             inputProps={{ autoComplete: "off" }}
           />
           <FormField
@@ -137,7 +137,10 @@ export function FormularioRestaurante(props: Props) {
             name="fuso"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Fuso</FormLabel>
+                <RotuloComDica
+                  label="Fuso"
+                  dica="O fuso horário da cidade da casa. Todos os horários e o fechamento do dia usam este fuso."
+                />
                 <FormControl>
                   <select {...field} className={CLASSE_DO_SELETOR}>
                     {FUSOS_DO_BRASIL.map((fuso) => (
@@ -156,7 +159,10 @@ export function FormularioRestaurante(props: Props) {
             name="horaVirada"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>O dia vira às</FormLabel>
+                <RotuloComDica
+                  label="O dia vira às"
+                  dica="A hora em que o 'dia' da casa recomeça. Ex.: às 5h, uma mesa aberta às 2h da madrugada ainda conta no dia anterior — como é costume em bar e restaurante."
+                />
                 <FormControl>
                   <select {...field} className={CLASSE_DO_SELETOR}>
                     {HORAS.map((hora) => (

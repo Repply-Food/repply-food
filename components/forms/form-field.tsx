@@ -1,5 +1,6 @@
 "use client";
 
+import { RotuloComDica } from "@/components/forms/dica-do-campo";
 import {
   FormControl,
   FormDescription,
@@ -15,7 +16,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, type ReactNode, useState } from "react";
 import {
   type FieldPath,
   type FieldValues,
@@ -29,6 +30,8 @@ type Props<T extends FieldValues, N extends FieldPath<T>> = UseControllerProps<
 > & {
   label: string;
   description?: string;
+  /** Explicação curta numa dica "?" ao lado do rótulo (ver `RotuloComDica`). */
+  dica?: ReactNode;
   inputProps?: ComponentProps<typeof Input>;
 };
 
@@ -42,6 +45,7 @@ type Props<T extends FieldValues, N extends FieldPath<T>> = UseControllerProps<
 export function TextField<T extends FieldValues, N extends FieldPath<T>>({
   label,
   description,
+  dica,
   inputProps,
   ...controller
 }: Props<T, N>) {
@@ -55,7 +59,11 @@ export function TextField<T extends FieldValues, N extends FieldPath<T>>({
 
   return (
     <FormItem>
-      <FormLabel>{label}</FormLabel>
+      {dica ? (
+        <RotuloComDica label={label} dica={dica} />
+      ) : (
+        <FormLabel>{label}</FormLabel>
+      )}
 
       {ehSenha ? (
         /* `InputGroup` é a mesma casca do `Input` (retângulo de 10px, borda
