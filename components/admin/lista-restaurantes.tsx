@@ -87,7 +87,8 @@ export function ListaRestaurantes({
             {ordenadas.map((l) => (
               <li key={l.id}>
                 <Link
-                  href={endereco(l)}
+                  href={l.id === selecionado ? "/admin" : endereco(l)}
+                  data-linha-restaurante
                   aria-current={l.id === selecionado ? "page" : undefined}
                   className="flex min-h-14 items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3"
                 >
@@ -126,7 +127,10 @@ export function ListaRestaurantes({
               {ordenadas.map((l) => {
                 const atual = l.id === selecionado;
                 return (
-                  <tr key={l.id} className={cn(atual && "bg-muted")}>
+                  <tr
+                    key={l.id}
+                    className={cn("relative", atual && "bg-muted")}
+                  >
                     <td
                       className={cn(
                         "border-b px-3 py-2",
@@ -134,11 +138,17 @@ export function ListaRestaurantes({
                       )}
                     >
                       <span className="flex flex-wrap items-center gap-2">
+                        {/* Link "esticado": o `after:inset-0` se ancora no <tr>
+                            `relative` e cobre a linha toda, deixando qualquer
+                            ponto dela clicável (continua link de verdade —
+                            teclado e abrir em nova aba funcionam). A linha já
+                            aberta aponta para /admin: clicar de novo fecha. */}
                         <Link
-                          href={endereco(l)}
+                          href={atual ? "/admin" : endereco(l)}
+                          data-linha-restaurante
                           aria-current={atual ? "page" : undefined}
                           className={cn(
-                            "underline-offset-4 hover:underline",
+                            "underline-offset-4 after:absolute after:inset-0 hover:underline",
                             atual && "font-bold"
                           )}
                         >

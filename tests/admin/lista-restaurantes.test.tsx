@@ -134,4 +134,42 @@ describe("lista de restaurantes do admin", () => {
       screen.getByRole("heading", { level: 2, name: "Restaurantes" })
     ).toBeTruthy();
   });
+
+  it("a casa já aberta aponta para /admin — clicar de novo fecha", () => {
+    render(
+      <ListaRestaurantes
+        linhas={linhas}
+        agoraIso={agoraIso}
+        selecionado="bar"
+      />
+    );
+    const tabela = screen.getByRole("table");
+    // A aberta (Bar do Zé) não leva mais ao próprio detalhe...
+    expect(
+      within(tabela)
+        .getByRole("link", { name: "Bar do Zé" })
+        .getAttribute("href")
+    ).toBe("/admin");
+    // ...e uma não aberta continua levando ao detalhe dela.
+    expect(
+      within(tabela)
+        .getByRole("link", { name: "Sabor do Mar" })
+        .getAttribute("href")
+    ).toBe("/admin/restaurantes/mar");
+  });
+
+  it("cada linha é link esticado e marcada para o fechar-ao-clicar-fora", () => {
+    const { container } = render(
+      <ListaRestaurantes linhas={linhas} agoraIso={agoraIso} />
+    );
+    // O link do nome estica por toda a linha (after:inset-0 sobre o <tr>).
+    const linkNome = within(screen.getByRole("table")).getByRole("link", {
+      name: "Bar do Zé",
+    });
+    expect(linkNome.className).toContain("after:inset-0");
+    // E as linhas levam a marca que o DetalheFechavel usa para não fechar junto.
+    expect(
+      container.querySelectorAll("a[data-linha-restaurante]").length
+    ).toBeGreaterThan(0);
+  });
 });

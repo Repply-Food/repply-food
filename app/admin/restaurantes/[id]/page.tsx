@@ -5,6 +5,7 @@ import { CartaoHistorico } from "@/components/admin/cartoes/cartao-historico";
 import { CartaoReenvio } from "@/components/admin/cartoes/cartao-reenvio";
 import { CartaoSituacao } from "@/components/admin/cartoes/cartao-situacao";
 import { CartaoToken } from "@/components/admin/cartoes/cartao-token";
+import { DetalheFechavel } from "@/components/admin/detalhe-fechavel";
 import {
   EtiquetaSuspenso,
   ListaRestaurantes,
@@ -52,7 +53,7 @@ export default async function PaginaRestaurante({
           tituloPrincipal={false}
         />
       </div>
-      <div className="flex flex-col gap-4">
+      <DetalheFechavel className="flex flex-col gap-4">
         <Link
           href="/admin"
           className="inline-flex min-h-11 w-fit items-center text-sm underline underline-offset-4 lg:hidden"
@@ -73,7 +74,7 @@ export default async function PaginaRestaurante({
         <CartaoReenvio detalhe={detalhe} />
         <CartaoSituacao detalhe={detalhe} />
         <CartaoHistorico detalhe={detalhe} />
-      </div>
+      </DetalheFechavel>
     </div>
   );
 }
