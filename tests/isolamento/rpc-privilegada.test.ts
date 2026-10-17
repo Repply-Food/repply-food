@@ -14,6 +14,9 @@ const funcoesReservadas = [
   "public.atualizar_estados()",
   "public.id_do_login_por_email(text)",
   "public.encerrar_sessoes_do_login(uuid)",
+  "public.registrar_tentativa_errada(text)",
+  "public.limpar_tentativas(text)",
+  "public.login_bloqueado(text)",
 ] as const;
 
 describe("RPCs reservadas", () => {
@@ -79,6 +82,9 @@ describe("RPCs reservadas", () => {
       "select public.atualizar_estados()",
       "select public.id_do_login_por_email(null::text)",
       "select public.encerrar_sessoes_do_login(null::uuid)",
+      "select public.registrar_tentativa_errada(null::text)",
+      "select public.limpar_tentativas(null::text)",
+      "select public.login_bloqueado(null::text)",
     ];
     const identidades = [
       { papel: "anon", usuario: null },

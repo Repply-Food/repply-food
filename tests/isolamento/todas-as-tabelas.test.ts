@@ -348,6 +348,9 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
     restaurantes: SO_RLS,
     restaurantes_no_admin: { anon: [], authenticated: ["SELECT"] },
     sinal_de_vida: SO_RLS,
+    // Trava de tentativas de senha (D-62): só a chave de serviço, pelas funções
+    // registrar_tentativa_errada, limpar_tentativas e login_bloqueado.
+    tentativas_de_login: { anon: [], authenticated: [] },
     // A escrita passa só por trocar_token_envio e revogar_tokens_envio
     // (security definer); ninguém grava direto, nem o admin.
     tokens_envio: { anon: ["SELECT"], authenticated: ["SELECT"] },

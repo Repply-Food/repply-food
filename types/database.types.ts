@@ -207,6 +207,20 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"tentativas_de_login": {
+                  Row: {
+                    "atualizado_em": string,"bloqueado_ate": string | null,"email": string,"tentativas": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atualizado_em"?: string,"bloqueado_ate"?: string | null,"email": string,"tentativas"?: number
+                  }
+                  Update: {
+                    "atualizado_em"?: string,"bloqueado_ate"?: string | null,"email"?: string,"tentativas"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"tokens_envio": {
                   Row: {
                     "criado_em": string,"criado_por": string | null,"expira_em": string | null,"hash": string,"id": string,"prefixo": string,"restaurante_id": string,"revogado_em": string | null,"ultimo_uso_em": string | null
@@ -280,6 +294,12 @@ isOneToOne: false
 "id_do_login_por_email":
 { Args: { "p_email": string }; Returns: string
                            },
+"limpar_tentativas":
+{ Args: { "p_email": string }; Returns: undefined
+                           },
+"login_bloqueado":
+{ Args: { "p_email": string }; Returns: string
+                           },
 "normaliza_numeric":
 { Args: { "p_valor": string }; Returns: number
                            },
@@ -288,6 +308,9 @@ isOneToOne: false
                            },
 "recalcular_dia_operacao":
 { Args: { "p_restaurante_id": string }; Returns: undefined
+                           },
+"registrar_tentativa_errada":
+{ Args: { "p_email": string }; Returns: string
                            },
 "revogar_tokens_envio":
 { Args: { "p_restaurante": string }; Returns: number
