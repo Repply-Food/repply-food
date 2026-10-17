@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   // O `next dev` registra no terminal os argumentos de cada função do servidor,
   // e o login passa e-mail e senha como argumento. Nenhuma senha vai para log.
   logging: { serverFunctions: false },
+  // Guarda no navegador o conteúdo das rotas dinâmicas por alguns segundos, para
+  // ir e voltar no admin (abrir e fechar o detalhe de uma casa) ficar instantâneo
+  // em vez de buscar tudo na nuvem de novo a cada clique. As ações do admin
+  // chamam revalidatePath("/admin", "layout"), então depois de suspender, gerar
+  // token, etc. a lista se renova — o cache não deixa dado velho.
+  experimental: {
+    staleTimes: { dynamic: 30 },
+  },
   async headers() {
     return [
       {
