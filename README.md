@@ -2,9 +2,28 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 15/10/2026:** depois da fundação (etapa 1) e de entrar e moldura do painel (etapa 2), a **etapa 3 do plano do MVP (o admin da Repply) está fechada localmente**. O admin lista os restaurantes com o estado do envio, cadastra e edita a casa (horário com até dois turnos por dia, fuso, CNPJ), gera e troca o token de envio, cria o login do cliente com senha provisória, redefine a senha, pede reenvio, suspende e reativa a casa, e mostra o histórico das ações. Também abre o painel do cliente em só leitura, e o dono com duas casas troca de casa pelo painel. Já abrem as telas de entrar, esqueci a senha, senha nova, troca de senha, escolha da casa e acesso pendente, e o painel da casa com a moldura (celular e computador), o selo do vigia e a conta em Ajustes. Os números chegam nas etapas 5 e 7. A verificação (tipos, lint, testes e build) passa no Windows, com **939 testes em 65 arquivos**, sobre um banco local montado do zero pelas migrations. Ainda falta rodá-la numa máquina Linux: o ramo do teste de tipos que só vale no Linux nunca foi executado. PDF e alarme por e-mail não estão implementados. Nada foi publicado na nuvem.
+> **Estado em 16/10/2026 — no ar.** O repply food. está **publicado e funcionando** em **[https://food.repplyhub.com.br](https://food.repplyhub.com.br)** (etapa 4b): banco, login e a função que recebe os dados do SCC no **Supabase** (nuvem), o site na **Vercel** e os e-mails de senha com a marca pelo **Resend**. A versão no ar é a das etapas 1 a 3 (fundação; entrar e moldura; admin da Repply): o admin lista as casas com o estado do envio, cadastra e edita (horário com até dois turnos por dia, fuso, CNPJ), gera e troca o token de envio, cria o login do cliente com senha provisória, redefine a senha, pede reenvio, suspende e reativa a casa, e mostra o histórico; abre o painel do cliente em só leitura e troca de casa. Os números do dia (telas **Hoje** e **Resultados**) chegam nas etapas 5 e 7.
+>
+> **Falta publicar a etapa 4a** — endurecer o código (trava de tentativas de senha no banco, CSP que bloqueia, link de senha à prova de antivírus, e-mails formalizados com teste) — e então o sistema é **republicado**. PDF e alarme por e-mail são as etapas 8 e 9. A verificação (tipos, lint, testes e build) passa no Windows; ainda falta rodá-la numa máquina Linux (o ramo do teste de tipos que só vale no Linux nunca foi executado).
 
-> **O que falta:** ver [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/).
+## Roteiro das etapas (plano do MVP)
+
+| # | Etapa | Estado |
+|---|---|---|
+| 1 | Fundação (projeto, banco com RLS, recepção do SCC) | ✅ feito |
+| 2 | Entrar e moldura do painel | ✅ feito |
+| 3 | Admin da Repply (casas, token, login, situação, histórico) | ✅ feito |
+| **4b** | **Primeira publicação na nuvem** (Supabase + Vercel + domínio + e-mails) | ✅ **no ar (16/10/2026)** |
+| 4a | Endurecer o código para produção (trava de tentativas, CSP, link à prova de antivírus) | ⏳ pendente → **republica** |
+| 5 | Hoje (os números do dia) | ⬜ próxima |
+| 6 | Ajustes e instalar no celular | ⬜ |
+| 7 | Resultados (vendas, horários, equipe, descontos) | ⬜ |
+| 8 | PDF | ⬜ |
+| 9 | Alarme por e-mail (vigia) | ⬜ |
+| 10 | Ensaio geral (pronto para demonstração) | ⬜ |
+| 11 | Piloto com a SCC | ⬜ |
+
+> **O que falta, em detalhe:** [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/). **Como foi publicado:** [`docs/operacao/publicar.md`](docs/operacao/publicar.md).
 
 ## Ordem de leitura
 
