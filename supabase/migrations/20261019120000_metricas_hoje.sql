@@ -64,4 +64,34 @@ $$;
 grant execute on function public.metrica_mesas_abertas(uuid, timestamptz)
   to authenticated, service_role;
 
+-- Contas esquecidas no instante p_agora: abertas ali (aberta_em <= p_agora e
+-- ainda não fechadas naquele instante) há MAIS que p_limite (limite_conta_esquecida
+-- do restaurante, padrão 4 h; quem chama passa o valor). Da mais antiga para a
+-- mais nova; empate na abertura desempata pelo código, para a ordem não variar.
+-- Devolve TODAS: a tela mostra 3 + "ver todas (N)" (D-33). O valor em aberto
+-- leva a taxa (é o que o cliente vai pagar). Uma conta que nunca fecha segue
+-- esquecida: é exatamente o alarme desta métrica.
+create or replace function public.metrica_contas_esquecidas(
+  p_restaurante_id uuid, p_agora timestamptz, p_limite interval
+) returns table (
+  cod_entrada bigint, cod_cartao_mesa int, aberta_em timestamptz,
+  aberta_ha interval, valor_em_aberto text
+)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select e.cod_entrada, e.cod_cartao_mesa, e.aberta_em,
+         (p_agora - e.aberta_em), e.valor_consumido::text
+  from public.entradas e
+  where e.restaurante_id = p_restaurante_id and e.removida_em is null
+    and e.aberta_em <= p_agora and (e.fechada_em is null or e.fechada_em > p_agora)
+    and (p_agora - e.aberta_em) > p_limite
+  order by e.aberta_em asc, e.cod_entrada asc;
+$$;
+
+grant execute on function public.metrica_contas_esquecidas(uuid, timestamptz, interval)
+  to authenticated, service_role;
+
 commit;
