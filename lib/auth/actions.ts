@@ -12,10 +12,16 @@ import {
 } from "./cookie-recuperacao";
 import { destinoDepoisDeEntrar } from "./destino";
 import {
+  MENSAGEM_LOGIN_BLOQUEADO,
   MENSAGEM_LOGIN_RECUSADO,
   credencialRecusada,
   mensagemDoErroDeAuth,
 } from "./erros";
+import {
+  limparTentativas,
+  loginBloqueadoAte,
+  registrarTentativaErrada,
+} from "./limitador-de-login";
 import {
   liberarPrimeiroAcesso,
   precisaTrocarSenha,
@@ -100,11 +106,21 @@ export async function entrarAction(
     return { ok: false, error: primeiroErro(dados.error.issues) };
   }
   const supabase = await createClient();
+  // Trava por e-mail ANTES de falar com o Supabase: não denuncia se o e-mail
+  // existe, e a resposta não depende do login.
+  if (await loginBloqueadoAte(dados.data.email)) {
+    await segurarLatencia(inicio);
+    return { ok: false, error: MENSAGEM_LOGIN_BLOQUEADO };
+  }
   const { data, error } = await supabase.auth.signInWithPassword({
     email: dados.data.email,
     password: dados.data.senha,
   });
   if (error || !data.user) {
+    // Só credencial recusada conta como tentativa: limite e queda não.
+    if (credencialRecusada(error)) {
+      await registrarTentativaErrada(dados.data.email);
+    }
     await segurarLatencia(inicio);
     // "Incorretos" só quando o login recusou a credencial. Limite de tentativas
     // e falha de infraestrutura têm a própria frase: dizer "incorretos" para
@@ -116,6 +132,7 @@ export async function entrarAction(
         : mensagemDoErroDeAuth(error),
     };
   }
+  await limparTentativas(dados.data.email);
   const destino = await destinoDe(
     supabase,
     data.user.id,
@@ -162,7 +179,12 @@ export async function pedirNovaSenhaAction(
   // mostrar o limite aqui diria quem é cliente. Então esse vira o sucesso de
   // sempre. Já `over_request_rate_limit` é por endereço de internet e vale
   // antes de procurar o usuário, então não revela nada e continua visível.
-  if (error?.code === "over_email_send_rate_limit") return { ok: true };
+  // Quem pediu não vê, mas a cota estourada fica no log: é o sinal de que o
+  // envio de e-mail do Supabase precisa de um provedor próprio (dívida 24).
+  if (error?.code === "over_email_send_rate_limit") {
+    logError("cota_email_estourada");
+    return { ok: true };
+  }
   if (error) return { ok: false, error: mensagemDoErroDeAuth(error) };
   return { ok: true };
 }

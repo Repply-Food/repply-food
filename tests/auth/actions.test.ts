@@ -14,6 +14,9 @@ const {
   casasDoDestino,
   ehAdmin,
   logError,
+  loginBloqueadoAte,
+  registrarTentativaErrada,
+  limparTentativas,
 } = vi.hoisted(() => ({
   getUser: vi.fn(),
   updateUser: vi.fn(),
@@ -26,6 +29,9 @@ const {
   casasDoDestino: vi.fn(),
   ehAdmin: vi.fn(),
   logError: vi.fn(),
+  loginBloqueadoAte: vi.fn(),
+  registrarTentativaErrada: vi.fn(),
+  limparTentativas: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -71,6 +77,11 @@ vi.mock("@/lib/auth/nucleo", async (original) => ({
   senhaConfere,
 }));
 vi.mock("@/lib/logger", () => ({ logError }));
+vi.mock("@/lib/auth/limitador-de-login", () => ({
+  loginBloqueadoAte,
+  registrarTentativaErrada,
+  limparTentativas,
+}));
 
 import {
   definirNovaSenhaAction,
@@ -80,7 +91,10 @@ import {
   trocarSenhaAction,
 } from "@/lib/auth/actions";
 import { criarCookieRecuperacao } from "@/lib/auth/cookie-recuperacao";
-import { MENSAGEM_LOGIN_RECUSADO } from "@/lib/auth/erros";
+import {
+  MENSAGEM_LOGIN_BLOQUEADO,
+  MENSAGEM_LOGIN_RECUSADO,
+} from "@/lib/auth/erros";
 
 const novaSenha = { senha: "senha-nova-123", confirmacao: "senha-nova-123" };
 const FRASE_DE_LIMITE =
@@ -99,6 +113,9 @@ const donoSemTroca = { id: "u1", email: "d@x.com", app_metadata: {} };
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "segredo-de-teste");
+  loginBloqueadoAte.mockResolvedValue(null);
+  registrarTentativaErrada.mockResolvedValue(undefined);
+  limparTentativas.mockResolvedValue(undefined);
   ehAdmin.mockReturnValue({ data: false, error: null });
   casasDoDestino.mockReturnValue({
     data: [{ slug: "casa-x", situacao: "ativo" }],
@@ -499,5 +516,117 @@ describe("falha ao ler a sessão depois de entrar (pendência 27)", () => {
     expect(resultado).toEqual({ ok: true, data: { destino: "/" } });
     expect(logError).toHaveBeenCalledWith("falha_leitura_sessao");
     expect(logError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a trava de tentativas protege o login (D-62)", () => {
+  const dados = { email: "dono@casa.com", senha: "qualquer-123" };
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it("bloqueado: devolve a frase do produto e NÃO fala com o Supabase", async () => {
+    loginBloqueadoAte.mockResolvedValue(new Date(Date.now() + 60_000));
+    const resultado = await semEspera(entrarAction(dados));
+    expect(resultado).toEqual({ ok: false, error: MENSAGEM_LOGIN_BLOQUEADO });
+    expect(signInWithPassword).not.toHaveBeenCalled();
+    expect(registrarTentativaErrada).not.toHaveBeenCalled();
+  });
+
+  it("bloqueado: demora o mesmo tempo mínimo de qualquer resposta de login", async () => {
+    loginBloqueadoAte.mockResolvedValue(new Date(Date.now() + 60_000));
+    let respondeu = false;
+    const chamada = entrarAction(dados).then((resultado) => {
+      respondeu = true;
+      return resultado;
+    });
+    await vi.advanceTimersByTimeAsync(700);
+    expect(respondeu).toBe(false);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(respondeu).toBe(true);
+    expect(await chamada).toEqual({
+      ok: false,
+      error: MENSAGEM_LOGIN_BLOQUEADO,
+    });
+  });
+
+  it("consulta a trava com o e-mail já normalizado, antes de tentar o login", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { code: "invalid_credentials" },
+    });
+    await semEspera(
+      entrarAction({ email: "  Dono@Casa.com ", senha: dados.senha })
+    );
+    expect(loginBloqueadoAte).toHaveBeenCalledWith("dono@casa.com");
+    const [ordemDaTrava = Number.POSITIVE_INFINITY] =
+      loginBloqueadoAte.mock.invocationCallOrder;
+    const [ordemDoLogin = Number.NEGATIVE_INFINITY] =
+      signInWithPassword.mock.invocationCallOrder;
+    expect(ordemDaTrava).toBeLessThan(ordemDoLogin);
+  });
+
+  it("credencial errada registra a tentativa e mostra 'incorretos'", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { code: "invalid_credentials" },
+    });
+    const resultado = await semEspera(entrarAction(dados));
+    expect(resultado).toEqual({ ok: false, error: MENSAGEM_LOGIN_RECUSADO });
+    expect(registrarTentativaErrada).toHaveBeenCalledWith(dados.email);
+    expect(limparTentativas).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["falha de infraestrutura", { code: "unexpected_failure" }],
+    ["limite por endereço de internet", { code: "over_request_rate_limit" }],
+    ["falha de rede, sem código", { name: "AuthRetryableFetchError" }],
+  ])("%s NÃO conta como tentativa errada", async (_nome, erro) => {
+    signInWithPassword.mockResolvedValue({ data: { user: null }, error: erro });
+    await semEspera(entrarAction(dados));
+    expect(registrarTentativaErrada).not.toHaveBeenCalled();
+  });
+
+  it("entrada inválida (e-mail ou senha em branco) nem consulta nem conta", async () => {
+    await semEspera(entrarAction({ email: "isto-nao-e-email", senha: "x" }));
+    expect(loginBloqueadoAte).not.toHaveBeenCalled();
+    expect(registrarTentativaErrada).not.toHaveBeenCalled();
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("login certo limpa a contagem", async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { user: donoSemTroca },
+      error: null,
+    });
+    const resultado = await semEspera(entrarAction(dados));
+    expect(resultado.ok).toBe(true);
+    expect(limparTentativas).toHaveBeenCalledWith(dados.email);
+    expect(registrarTentativaErrada).not.toHaveBeenCalled();
+  });
+});
+
+describe("cota de e-mail estourada é registrada (dívida 24, parte local)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    resetPasswordForEmail.mockResolvedValue({
+      error: { code: "over_email_send_rate_limit" },
+    });
+  });
+
+  it("registra o código e mantém a resposta de sucesso", async () => {
+    const resultado = await semEspera(
+      pedirNovaSenhaAction({ email: "dono@casa.com" })
+    );
+    expect(resultado).toEqual({ ok: true });
+    expect(logError).toHaveBeenCalledWith("cota_email_estourada");
+  });
+
+  it("o limite por endereço de internet não é cota de e-mail e não é registrado como tal", async () => {
+    resetPasswordForEmail.mockResolvedValue({
+      error: { code: "over_request_rate_limit" },
+    });
+    await semEspera(pedirNovaSenhaAction({ email: "dono@casa.com" }));
+    expect(logError).not.toHaveBeenCalledWith("cota_email_estourada");
   });
 });

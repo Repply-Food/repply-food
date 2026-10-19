@@ -7,6 +7,8 @@ const codigosErro = [
   "falha_admin",
   "falha_registro_admin",
   "falha_recalculo_dia",
+  "cota_email_estourada",
+  "falha_limitador_login",
 ] as const;
 const codigosInfo = ["envio_processado", "envio_rejeitado"] as const;
 const contextos = ["receber-envio"] as const;

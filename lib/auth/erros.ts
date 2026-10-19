@@ -2,6 +2,10 @@ import { SENHA_MINIMA } from "./senha";
 
 export const MENSAGEM_LOGIN_RECUSADO = "E-mail ou senha incorretos.";
 
+/** A trava por e-mail (D-62) bloqueou: não diz por quanto tempo nem se o e-mail existe. */
+export const MENSAGEM_LOGIN_BLOQUEADO =
+  "Muitas tentativas. Tente de novo em alguns minutos.";
+
 /** Os únicos códigos em que o login recusou a CREDENCIAL; o resto é falha ou limite. */
 const CODIGOS_DE_CREDENCIAL_RECUSADA = new Set([
   "invalid_credentials",
