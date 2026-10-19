@@ -30,6 +30,11 @@ const abertas = [
   },
   // Métricas do painel (security invoker: o isolamento é a RLS de entradas).
   {
+    funcao: "metrica_comparacao_do_dia(uuid, timestamp with time zone)",
+    anon: false,
+    authenticated: true,
+  },
+  {
     funcao:
       "metrica_contas_esquecidas(uuid, timestamp with time zone, interval)",
     anon: false,
