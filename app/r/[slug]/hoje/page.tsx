@@ -1,18 +1,78 @@
-import { EstadoVazio } from "@/components/painel/estado-vazio";
+import { AtualizaHoje } from "@/components/painel/hoje/atualiza-hoje";
+import { CartaoFaturamento } from "@/components/painel/hoje/cartao-faturamento";
+import { ContasEsquecidas } from "@/components/painel/hoje/contas-esquecidas";
+import { limiteEmTexto } from "@/components/painel/hoje/formato";
+import { QuadroMeta } from "@/components/painel/hoje/quadro-meta";
+import { QuadrosDoDia } from "@/components/painel/hoje/quadros-do-dia";
 import { exigirCasa } from "@/lib/auth/sessao";
+import { logError } from "@/lib/logger";
+import { obterHoje } from "@/lib/metricas/hoje";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Hoje · repply food." };
 
+/**
+ * A tela que o dono abre durante o expediente (fiel a `docs/telas/hoje.html`):
+ * o faturamento da casa de hoje com a taxa à parte (D-14) e a curva acumulada,
+ * os três quadros (mesas, pessoas, por pessoa), o alerta de contas esquecidas
+ * quando existe (D-33) e a meta do mês. Atualiza sozinha a cada ~1 min.
+ *
+ * A sessão (`exigirCasa`) não carrega o limite de conta esquecida, nem a hora
+ * de virada; só o fuso. Os três campos vêm de `restaurantes` por um select
+ * simples, já atrás do guarda de acesso (a RLS de `restaurantes` ainda confere).
+ * Falha de leitura vira a tela de erro, nunca número errado.
+ */
 export default async function PaginaHoje({
   params,
 }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  await exigirCasa(slug);
+  const { casa } = await exigirCasa(slug);
+
+  const supabase = await createClient();
+  const { data: config, error } = await supabase
+    .from("restaurantes")
+    .select("fuso, hora_virada, limite_conta_esquecida")
+    .eq("id", casa.id)
+    .maybeSingle();
+  if (error || !config) {
+    logError("falha_metricas_hoje");
+    throw new Error("falha_leitura_hoje");
+  }
+
+  const dados = await obterHoje(casa.id, config.limite_conta_esquecida);
+  const agora = new Date();
+  // "05:00:00" → 5: a hora inteira da virada, para o eixo de horas da curva.
+  const horaDeVirada = Number.parseInt(config.hora_virada, 10) || 0;
 
   return (
-    <EstadoVazio
-      titulo="Hoje"
-      texto="Em breve: o faturamento de hoje comparado com o mesmo dia da semana, as mesas abertas, as contas esquecidas e a meta do mês."
-    />
+    <div className="flex flex-col gap-4 md:gap-5">
+      <h1 className="sr-only">Hoje</h1>
+      <AtualizaHoje intervaloMs={60_000} />
+      <div className="grid gap-4 md:grid-cols-3 md:gap-5">
+        <CartaoFaturamento
+          faturamento={dados.faturamento}
+          curva={dados.curva}
+          fuso={config.fuso}
+          agora={agora}
+          horaDeVirada={horaDeVirada}
+          className="md:col-span-2"
+        />
+        <QuadrosDoDia
+          mesas={dados.mesasAbertas}
+          porPessoa={dados.porPessoa}
+          fuso={config.fuso}
+          agora={agora}
+        />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+        {dados.contasEsquecidas.length > 0 ? (
+          <ContasEsquecidas
+            contas={dados.contasEsquecidas}
+            limiteTexto={limiteEmTexto(config.limite_conta_esquecida)}
+          />
+        ) : null}
+        <QuadroMeta meta={dados.meta} fuso={config.fuso} agora={agora} />
+      </div>
+    </div>
   );
 }
