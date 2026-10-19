@@ -171,4 +171,91 @@ $$;
 grant execute on function public.metrica_comparacao_do_dia(uuid, timestamptz)
   to authenticated, service_role;
 
+-- Curva acumulada do dia (metricas.md §4): a curva de HOJE (até p_agora) contra a
+-- curva "dia típico" (média das 4 últimas ocorrências do MESMO dia da semana COM
+-- movimento), amostrada de 30 em 30 min desde a virada (0, 30, ... 1410). Cada
+-- ponto é o faturamento da casa (valor_consumido - taxa_servico) das contas pagas
+-- com fechada_em <= início do dia + minuto_do_dia. acumulado_hoje é null nas faixas
+-- DEPOIS do decorrido (a tela não desenha o futuro); acumulado_tipico é null com
+-- menos de 2 ocorrências (a tela mostra "—"). HOJE e as ocorrências são curvas
+-- SEPARADAS: assim a curva de hoje existe em toda faixa (left join + coalesce 0)
+-- sem se misturar à média, e a média é "ponto a ponto" (§4), nunca o dia inteiro.
+-- Sem acesso (RLS de restaurantes não devolve a casa) a função sai sem linha.
+create or replace function public.metrica_curva_do_dia(
+  p_restaurante_id uuid, p_agora timestamptz
+) returns table (minuto_do_dia int, acumulado_hoje text, acumulado_tipico text)
+language plpgsql stable security invoker set search_path = public
+as $$
+declare
+  v_fuso text; v_virada time; v_dia_hoje date; v_dow int;
+  v_inicio_hoje timestamptz; v_decorrido_min int;
+begin
+  select fuso, hora_virada into v_fuso, v_virada
+    from public.restaurantes where id = p_restaurante_id;
+  if v_fuso is null then return; end if;   -- sem acesso (RLS) ou inexistente
+  v_dia_hoje := public.dia_operacao_de(p_agora, v_fuso, v_virada);
+  v_dow := extract(dow from v_dia_hoje)::int;
+  v_inicio_hoje := ((v_dia_hoje::text || ' ' || v_virada::text)::timestamp) at time zone v_fuso;
+  v_decorrido_min := floor(extract(epoch from (p_agora - v_inicio_hoje)) / 60)::int;
+
+  return query
+  with faixas as (  -- 0, 30, 60, ... 1410 (24 h em passos de 30 min)
+    select generate_series(0, 1410, 30) as m
+  ),
+  ocorrencias as (  -- as 4 últimas ocorrências anteriores do mesmo dia da semana com movimento
+    select e.dia_operacao as d
+    from public.entradas e
+    where e.restaurante_id = p_restaurante_id and e.removida_em is null
+      and e.dia_operacao < v_dia_hoje
+      and extract(dow from e.dia_operacao)::int = v_dow
+    group by e.dia_operacao
+    having count(*) filter (where e.pago) >= 1
+    order by e.dia_operacao desc
+    limit 4
+  ),
+  curva_hoje as (  -- faturamento acumulado de HOJE até o fim de cada faixa
+    select f.m,
+           coalesce(sum(e.valor_consumido - e.taxa_servico) filter (
+             where e.pago and e.fechada_em <= v_inicio_hoje + make_interval(mins => f.m)
+           ), 0) as acumulado
+    from faixas f
+    left join public.entradas e
+      on e.restaurante_id = p_restaurante_id and e.removida_em is null
+     and e.dia_operacao = v_dia_hoje
+    group by f.m
+  ),
+  curva_ocorrencia as (  -- acumulado de CADA ocorrência até o fim de cada faixa
+    select f.m, o.d,
+           coalesce(sum(e.valor_consumido - e.taxa_servico) filter (
+             where e.pago and e.fechada_em <=
+               (((o.d::text || ' ' || v_virada::text)::timestamp at time zone v_fuso)
+                 + make_interval(mins => f.m))
+           ), 0) as acumulado
+    from faixas f
+    cross join ocorrencias o
+    left join public.entradas e
+      on e.restaurante_id = p_restaurante_id and e.removida_em is null
+     and e.dia_operacao = o.d
+    group by f.m, o.d
+  ),
+  tipico as (  -- média ponto a ponto das ocorrências (só quando >= 2)
+    select c.m,
+           case when count(*) >= 2 then round(avg(c.acumulado), 2) else null end as media
+    from curva_ocorrencia c
+    group by c.m
+  )
+  select
+    f.m,
+    case when f.m <= v_decorrido_min then h.acumulado::text else null end,
+    t.media::text
+  from faixas f
+  join curva_hoje h on h.m = f.m
+  left join tipico t on t.m = f.m
+  order by f.m;
+end;
+$$;
+
+grant execute on function public.metrica_curva_do_dia(uuid, timestamptz)
+  to authenticated, service_role;
+
 commit;

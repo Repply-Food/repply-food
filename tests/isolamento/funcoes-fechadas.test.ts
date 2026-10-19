@@ -41,6 +41,11 @@ const abertas = [
     authenticated: true,
   },
   {
+    funcao: "metrica_curva_do_dia(uuid, timestamp with time zone)",
+    anon: false,
+    authenticated: true,
+  },
+  {
     funcao: "metrica_faturamento_do_dia(uuid, timestamp with time zone)",
     anon: false,
     authenticated: true,
