@@ -82,6 +82,11 @@ export function diaDaSemana(momento: Date, fuso: string): NomeDoDia {
   return DIAS[indice] ?? DIAS[0];
 }
 
+/** O dia do mês de `momento` no fuso da casa (9, 10, 31...). */
+export function diaDoMes(momento: Date, fuso: string): number {
+  return partesNoFuso(momento, fuso).dia;
+}
+
 /** O mês de `momento` no fuso da casa, por extenso ("outubro"). */
 export function nomeDoMes(momento: Date, fuso: string): string {
   const p = partesNoFuso(momento, fuso);

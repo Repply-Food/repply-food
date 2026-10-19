@@ -165,6 +165,56 @@ describe("tela Hoje", () => {
     expect(screen.queryByRole("button", { name: /ver todas/ })).toBeNull();
   });
 
+  it("sem conta esquecida: a meta ocupa a largura inteira, sem coluna vazia no computador", async () => {
+    await abrir({ ...base(), contasEsquecidas: [] });
+    const grade = screen.getByText(/Meta de/).closest(".grid");
+    expect(grade).not.toBeNull();
+    expect(grade?.className).not.toContain("md:grid-cols-2");
+  });
+
+  it("com conta esquecida: alerta e meta dividem a linha em duas colunas", async () => {
+    await abrir(base());
+    const grade = screen.getByText(/Meta de/).closest(".grid");
+    expect(grade?.className).toContain("md:grid-cols-2");
+  });
+
+  it("no computador mostra o cabeçalho 'Hoje' com a data e a hora no fuso da casa", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(UMA_SEXTA));
+    try {
+      await abrir(base());
+    } finally {
+      vi.useRealTimers();
+    }
+    const titulo = screen.getByRole("heading", { level: 1, name: /Hoje/ });
+    // Visível a partir de `md:`; no celular fica só para o leitor de tela.
+    expect(titulo.className).toContain("sr-only");
+    expect(titulo.className).toContain("md:not-sr-only");
+    const data = screen.getByText("sexta, 9 de outubro · 21h40");
+    expect(data.className).toContain("hidden");
+    expect(data.className).toContain("md:block");
+  });
+
+  it("a data do cabeçalho usa o fuso da casa, não o do servidor", async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        fuso: "America/Manaus",
+        hora_virada: "05:00:00",
+        limite_conta_esquecida: "04:00:00",
+      },
+      error: null,
+    });
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // 02:30 de sábado em UTC = 22h30 de sexta em Manaus (UTC-4).
+    vi.setSystemTime(new Date("2026-10-10T02:30:00Z"));
+    try {
+      await abrir(base());
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(screen.getByText("sexta, 9 de outubro · 22h30")).toBeTruthy();
+  });
+
   it("com meta: mostra o andamento, a barra e a projeção", async () => {
     await abrir(base());
     expect(screen.getByText(/Meta de/)).toBeTruthy();
@@ -174,6 +224,41 @@ describe("tela Hoje", () => {
         /no ritmo atual, fecha em R\$ 182\.000,00 \(meta R\$ 170\.000,00\)/
       )
     ).toBeTruthy();
+  });
+
+  describe("cor da barra da meta", () => {
+    const barra = () =>
+      document.querySelector<HTMLElement>('[style*="width: 62%"]');
+
+    it("com projeção que alcança a meta: verde", async () => {
+      await abrir(base());
+      expect(barra()?.className).toContain("status-success");
+      expect(barra()?.className).not.toContain("status-warning");
+    });
+
+    it("com projeção abaixo da meta: âmbar", async () => {
+      await abrir({
+        ...base(),
+        meta: { ...base().meta, projecao: "150000.00" },
+      });
+      expect(barra()?.className).toContain("status-warning");
+      expect(barra()?.className).not.toContain("status-success");
+    });
+
+    it("sem projeção (antes do 3º dia): neutra, nem verde nem âmbar", async () => {
+      await abrir({
+        ...base(),
+        meta: {
+          ...base().meta,
+          projecao: null,
+          projecaoDisponivel: false,
+        },
+      });
+      expect(barra()).not.toBeNull();
+      expect(barra()?.className).not.toContain("status-success");
+      expect(barra()?.className).not.toContain("status-warning");
+      expect(screen.queryByText(/no ritmo atual/)).toBeNull();
+    });
   });
 
   it("sem meta: diz 'sem meta definida', sem barra nem projeção", async () => {
