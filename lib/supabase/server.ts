@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "../../types/database.types";
+import { opcoesDeCookieSeguro } from "./cookies";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -16,7 +17,7 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             for (const { name, value, options } of cookiesToSet) {
-              cookieStore.set(name, value, options);
+              cookieStore.set(name, value, opcoesDeCookieSeguro(options));
             }
           } catch {
             // Chamado num Server Component (que não grava cookie): o proxy renova a sessão.

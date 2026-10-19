@@ -2,8 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "../../types/database.types";
-
-const EM_PRODUCAO = process.env.NODE_ENV === "production";
+import { opcoesDeCookieSeguro } from "./cookies";
 
 /** Renova a sessão do Supabase a cada requisição (padrão do @supabase/ssr). */
 export async function atualizarSessao(
@@ -27,17 +26,7 @@ export async function atualizarSessao(
             request.cookies.set(name, value);
           resposta = NextResponse.next({ request });
           for (const { name, value, options } of cookiesToSet) {
-            resposta.cookies.set(
-              name,
-              value,
-              EM_PRODUCAO
-                ? {
-                    ...options,
-                    secure: true,
-                    sameSite: options?.sameSite ?? "lax",
-                  }
-                : options
-            );
+            resposta.cookies.set(name, value, opcoesDeCookieSeguro(options));
           }
           for (const [chave, valor] of Object.entries(cabecalhos)) {
             resposta.headers.set(chave, valor);
