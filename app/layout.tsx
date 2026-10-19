@@ -2,6 +2,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import "./globals.css";
 
 const generalSans = localFont({
@@ -76,11 +77,16 @@ export const viewport: Viewport = {
   themeColor: "#ff5a1f",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // A senha de uso único (nonce) da CSP vem do porteiro no cabeçalho do pedido.
+  // O next-themes injeta um `<script>` em linha (aplica o tema antes de pintar,
+  // para não piscar o tema errado); sem o nonce, a CSP bloquearia esse script.
+  // Ler o cabeçalho torna o layout dinâmico — custo esperado da CSP com nonce.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="pt-BR"
@@ -93,6 +99,7 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
+          nonce={nonce}
         >
           {children}
           <Toaster />

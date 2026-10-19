@@ -28,11 +28,9 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          {
-            key: "Content-Security-Policy-Report-Only",
-            value:
-              "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'",
-          },
+          // A CSP não está aqui: ela precisa de uma senha de uso único (nonce)
+          // por carregamento, que só o porteiro (proxy.ts) consegue gerar. Um
+          // cabeçalho estático não serve. Os demais são fixos e ficam aqui.
           {
             key: "X-Frame-Options",
             value: "DENY",

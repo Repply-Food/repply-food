@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { atualizarSessao } = vi.hoisted(() => ({ atualizarSessao: vi.fn() }));
 vi.mock("@/lib/supabase/proxy", () => ({ atualizarSessao }));
+vi.mock("server-only", () => ({}));
 
 import { proxy } from "@/proxy";
 
@@ -131,5 +132,55 @@ describe("o porteiro", () => {
       usuario: comUsuario({ precisa_trocar_senha: "true" }),
     });
     expect(await pedir("/r/casa-x/hoje")).toBe(resposta);
+  });
+});
+
+describe("o porteiro carimba a CSP com senha de uso único (nonce)", () => {
+  function politicaDe(resposta: Response): string {
+    const valor = resposta.headers.get("content-security-policy");
+    expect(valor).toBeTruthy();
+    return valor as string;
+  }
+  function nonceDe(politica: string): string {
+    const valor = politica.match(/'nonce-([^']+)'/)?.[1];
+    expect(valor).toBeTruthy();
+    return valor as string;
+  }
+
+  it("arquivo estático também carrega a CSP, e não o cabeçalho que só observa", async () => {
+    const r = await pedir("/marca/simbolo.svg");
+    const politica = politicaDe(r);
+    expect(politica).toContain("default-src 'self'");
+    expect(politica.toLowerCase()).not.toContain("report-only");
+  });
+
+  it("a resposta que segue carrega a CSP com o script amarrado ao nonce", async () => {
+    atualizarSessao.mockImplementation(async () => ({
+      resposta: respostaComSessaoRenovada(),
+      usuario: null,
+    }));
+    const politica = politicaDe(await pedir("/entrar"));
+    expect(politica).toMatch(/script-src [^;]*'nonce-/);
+    expect(politica).toContain("style-src 'self' 'unsafe-inline'");
+  });
+
+  it("o redirecionamento também carrega a CSP", async () => {
+    atualizarSessao.mockImplementation(async () => ({
+      resposta: respostaComSessaoRenovada(),
+      usuario: null,
+    }));
+    const r = await pedir("/r/casa-x/hoje");
+    expect(r.status).toBe(307);
+    expect(politicaDe(r)).toContain("default-src 'self'");
+  });
+
+  it("cada carregamento recebe um nonce diferente", async () => {
+    atualizarSessao.mockImplementation(async () => ({
+      resposta: respostaComSessaoRenovada(),
+      usuario: null,
+    }));
+    const a = nonceDe(politicaDe(await pedir("/entrar")));
+    const b = nonceDe(politicaDe(await pedir("/entrar")));
+    expect(a).not.toBe(b);
   });
 });

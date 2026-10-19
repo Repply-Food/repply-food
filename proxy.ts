@@ -1,21 +1,47 @@
 import { precisaTrocarSenha } from "@/lib/auth/nucleo";
 import { decidirRota, ehArquivoEstatico } from "@/lib/auth/rotas";
+import { montarCsp } from "@/lib/seguranca/csp";
 import { atualizarSessao } from "@/lib/supabase/proxy";
 import { type NextRequest, NextResponse } from "next/server";
 
 /** O porteiro (Next 16 chama o antigo middleware de proxy). */
 export async function proxy(request: NextRequest) {
-  // Ícone, manifesto e marca não precisam de sessão: não consulta o login.
-  if (ehArquivoEstatico(request.nextUrl.pathname)) return NextResponse.next();
+  // A trava de segurança das telas (CSP) é montada aqui porque precisa de uma
+  // senha de uso único (nonce) por carregamento, que um cabeçalho estático do
+  // next.config não consegue dar.
+  const { nonce, politica } = montarCsp(process.env.NODE_ENV !== "production");
 
-  const { resposta, usuario } = await atualizarSessao(request);
+  // Ícone, manifesto e marca não precisam de sessão: não consulta o login.
+  // Ainda assim carregam a CSP, como toda resposta do site.
+  if (ehArquivoEstatico(request.nextUrl.pathname)) {
+    const estatico = NextResponse.next();
+    estatico.headers.set("content-security-policy", politica);
+    return estatico;
+  }
+
+  // O nonce e a CSP vão nos cabeçalhos do PEDIDO para o Next carimbar o nonce
+  // nos `<script>` em linha que injeta; sem isso a CSP bloqueia os próprios
+  // scripts do Next e a página nunca inicia.
+  const cabecalhosExtras = new Headers();
+  cabecalhosExtras.set("x-nonce", nonce);
+  cabecalhosExtras.set("content-security-policy", politica);
+
+  const { resposta, usuario } = await atualizarSessao(
+    request,
+    cabecalhosExtras
+  );
   const decisao = decidirRota({
     pathname: request.nextUrl.pathname,
     search: request.nextUrl.search,
     temUsuario: usuario !== null,
     precisaTrocarSenha: precisaTrocarSenha(usuario),
   });
-  if (decisao.tipo === "segue") return resposta;
+  if (decisao.tipo === "segue") {
+    // O navegador obedece a CSP pelo cabeçalho da RESPOSTA (o do pedido só serve
+    // para o Next achar o nonce); por isso ela também vai aqui.
+    resposta.headers.set("content-security-policy", politica);
+    return resposta;
+  }
 
   // Endereço ABSOLUTO de propósito. Medido num `next dev` real: o adaptador do
   // Next recusa um `Location` relativo vindo do proxy (erro 500, "Invalid URL")
@@ -35,6 +61,7 @@ export async function proxy(request: NextRequest) {
     const valor = resposta.headers.get(nome);
     if (valor) redirecionamento.headers.set(nome, valor);
   }
+  redirecionamento.headers.set("content-security-policy", politica);
   return redirecionamento;
 }
 

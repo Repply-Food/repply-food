@@ -4,11 +4,25 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { Database } from "../../types/database.types";
 import { opcoesDeCookieSeguro } from "./cookies";
 
-/** Renova a sessão do Supabase a cada requisição (padrão do @supabase/ssr). */
+/** Renova a sessão do Supabase a cada requisição (padrão do @supabase/ssr).
+ *
+ * `cabecalhosExtras` (o nonce e a CSP, vindos do porteiro) vão nos cabeçalhos
+ * encaminhados ao Next. São montados a partir de `request.headers` AO VIVO, que
+ * já reflete os cookies renovados pela @supabase/ssr (o `request.cookies.set`
+ * reescreve o cabeçalho `cookie`), para não perder a sessão no caminho. */
 export async function atualizarSessao(
-  request: NextRequest
+  request: NextRequest,
+  cabecalhosExtras?: Headers
 ): Promise<{ resposta: NextResponse; usuario: User | null }> {
-  let resposta = NextResponse.next({ request });
+  const cabecalhosDoPedido = () => {
+    const h = new Headers(request.headers);
+    if (cabecalhosExtras)
+      for (const [nome, valor] of cabecalhosExtras) h.set(nome, valor);
+    return h;
+  };
+  let resposta = NextResponse.next({
+    request: { headers: cabecalhosDoPedido() },
+  });
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -24,7 +38,9 @@ export async function atualizarSessao(
         setAll(cookiesToSet, cabecalhos) {
           for (const { name, value } of cookiesToSet)
             request.cookies.set(name, value);
-          resposta = NextResponse.next({ request });
+          resposta = NextResponse.next({
+            request: { headers: cabecalhosDoPedido() },
+          });
           for (const { name, value, options } of cookiesToSet) {
             resposta.cookies.set(name, value, opcoesDeCookieSeguro(options));
           }
