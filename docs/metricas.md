@@ -101,8 +101,9 @@ As fórmulas usam só contas válidas do restaurante, dentro do período e do di
   A curva "dia típico" é a média das 4 curvas acumuladas, ponto a ponto. *Não comparar com o dia inteiro: às 21h o dono sempre pareceria "abaixo".*
 - **Meta do mês e projeção.**
   - `andamento = faturamento do mês ÷ meta`.
-  - `projeção = (faturamento do mês até ontem ÷ dias de operação decorridos até ontem) × dias do mês`.
-  - A projeção só aparece a partir do 3º dia do mês.
+  - `projeção = (faturamento do mês até ontem ÷ dias de operação decorridos até ontem) × dias do mês`. O divisor é o **calendário** (do dia 1 até ontem), inclusive os dias em que a casa ficou fechada, e não só os dias com movimento.
+  - A projeção só aparece a partir do 3º dia do mês e só com faturamento até ontem (sem base, fica indisponível: nunca R$ 0,00).
+  - A projeção é a previsão e independe da meta; a tela só a mostra quando há meta.
   - Fica amarela quando a projeção é menor que a meta.
   - Limitação conhecida: a projeção não pesa os dias da semana. Fica para depois do piloto.
 

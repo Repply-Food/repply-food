@@ -62,8 +62,8 @@ A mesma regra vale para "por pessoa" (M09).
 
 **Meta e projeção** (`metrica_meta_do_mes`, metricas.md §4):
 - `andamento = faturamento do mês ÷ meta`.
-- `projecao = (faturamento do mês até ontem ÷ dias de operação decorridos até ontem) × dias do mês`.
-- A projeção só a partir do **3º dia** do mês (`projecao_disponivel`).
+- `projecao = (faturamento do mês até ontem ÷ dias de operação decorridos até ontem) × dias do mês`. O divisor é o **calendário** (dia 1 até ontem), com ou sem movimento em cada dia.
+- A projeção só a partir do **3º dia** do mês e com faturamento até ontem (`projecao_disponivel`); é a previsão e independe da meta (a tela a mostra só com meta).
 - Sem meta definida para o mês → `meta = null` (a tela mostra "sem meta definida").
 
 ---

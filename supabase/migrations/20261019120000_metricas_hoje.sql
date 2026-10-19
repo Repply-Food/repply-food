@@ -260,16 +260,19 @@ grant execute on function public.metrica_curva_do_dia(uuid, timestamptz)
 
 -- Meta do mês e projeção (metricas.md §4).
 --   andamento = faturamento do mês ÷ meta;
---   projeção  = (faturamento do mês até ONTEM ÷ dias de operação com movimento
---               até ontem) × dias do mês;
---   a projeção só aparece a partir do 3º dia do mês. Proxy (provisório): já
---   houve pelo menos 2 dias de operação com movimento antes de hoje.
+--   projeção  = (faturamento do mês até ONTEM ÷ dias de calendário decorridos
+--               até ontem) × dias do mês. O divisor é o calendário, não os dias
+--               com movimento: um dia em que a casa ficou fechada puxa a
+--               projeção para baixo, como puxa o mês de verdade;
+--   a projeção só aparece do 3º dia de calendário em diante (já passaram 2
+--   dias) e só com faturamento passado: sem ele não há base para projetar
+--   (null, em vez de R$ 0,00 numa casa recém-criada).
 -- O mês é o do DIA DE OPERAÇÃO de p_agora (antes da virada, 01/09 03:00 ainda
 -- é 31/08 e, portanto, agosto). Conta só o que já fechou até p_agora, como
 -- metrica_faturamento_do_dia. Mês sem meta herda a mais recente anterior (mes
 -- <= início do mês atual); sem nenhuma, meta e andamento saem null e a tela
--- mostra "sem meta definida". A projeção sai calculada mesmo sem meta (a tela
--- a ignora nesse caso). Sem acesso à casa (a RLS de restaurantes não a devolve)
+-- mostra "sem meta definida". A projeção é a PREVISÃO e independe da meta: sai
+-- calculada mesmo sem meta (mostrá-la só quando há meta é com a tela). Sem acesso à casa (a RLS de restaurantes não a devolve)
 -- a função sai sem linha nenhuma.
 create or replace function public.metrica_meta_do_mes(
   p_restaurante_id uuid, p_agora timestamptz
@@ -282,7 +285,7 @@ as $$
 declare
   v_fuso text; v_virada time; v_dia_hoje date; v_ini_mes date;
   v_fat_mes numeric; v_fat_ate_ontem numeric; v_meta numeric;
-  v_dias_ate_ontem int; v_dias_no_mes int;
+  v_dias_decorridos int; v_dias_no_mes int; v_projecao_disponivel boolean;
 begin
   select fuso, hora_virada into v_fuso, v_virada
     from public.restaurantes where id = p_restaurante_id;
@@ -298,14 +301,18 @@ begin
    where restaurante_id = p_restaurante_id and removida_em is null
      and dia_operacao >= v_ini_mes and dia_operacao <= v_dia_hoje;
 
-  -- faturamento e dias de operação com movimento ATÉ ONTEM (para a projeção)
+  -- faturamento ATÉ ONTEM (para a projeção)
   select coalesce(sum(valor_consumido - taxa_servico)
-           filter (where pago and fechada_em <= p_agora), 0),
-         count(distinct dia_operacao) filter (where pago and fechada_em <= p_agora)
-    into v_fat_ate_ontem, v_dias_ate_ontem
+           filter (where pago and fechada_em <= p_agora), 0)
+    into v_fat_ate_ontem
     from public.entradas
    where restaurante_id = p_restaurante_id and removida_em is null
      and dia_operacao >= v_ini_mes and dia_operacao < v_dia_hoje;
+
+  -- dias de calendário já passados no mês (do dia 1 até ontem): 0 no dia 1º,
+  -- 2 no 3º dia. É o divisor da projeção, com ou sem movimento em cada dia.
+  v_dias_decorridos := (v_dia_hoje - v_ini_mes)::int;
+  v_projecao_disponivel := (v_dias_decorridos >= 2) and (v_fat_ate_ontem > 0);
 
   -- meta do mês, herdando a mais recente <= mês atual
   select valor into v_meta from public.metas
@@ -316,10 +323,10 @@ begin
     v_fat_mes::text,
     v_meta::text,
     case when v_meta > 0 then round(v_fat_mes / v_meta, 4) else null end,
-    case when v_dias_ate_ontem >= 2   -- 3º dia do mês = já houve 2 dias com movimento
-         then round((v_fat_ate_ontem / v_dias_ate_ontem) * v_dias_no_mes, 2)::text
+    case when v_projecao_disponivel
+         then round((v_fat_ate_ontem / v_dias_decorridos) * v_dias_no_mes, 2)::text
          else null end,
-    (v_dias_ate_ontem >= 2);
+    v_projecao_disponivel;
 end;
 $$;
 

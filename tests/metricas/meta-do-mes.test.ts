@@ -13,8 +13,12 @@ import {
 
 // Meta do mês e projeção (docs/metricas.md §4):
 //   andamento = faturamento do mês ÷ meta
-//   projeção  = (faturamento do mês até ontem ÷ dias de operação até ontem) × dias do mês
-//   a projeção só aparece a partir do 3º dia do mês
+//   projeção  = (faturamento do mês até ontem ÷ dias de CALENDÁRIO decorridos até ontem) × dias do mês
+//   o divisor é o calendário, não os dias com movimento: dia em que a casa
+//   ficou fechada puxa a projeção para baixo, como puxa o mês de verdade.
+//   a projeção só aparece do 3º dia de calendário em diante E com faturamento
+//   passado (sem base, null: nunca R$ 0,00).
+//   a projeção é a PREVISÃO e independe da meta; mostrá-la só com meta é da tela.
 //   mês sem meta herda a mais recente anterior; sem nenhuma, meta = null.
 //
 // Histórico controlado em restauranteA (America/Fortaleza, virada 05:00), em
@@ -73,6 +77,15 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     await banco.query(
       "insert into public.metas (restaurante_id, mes, valor) values ($1, $2, $3)",
       [casa ?? fixture.restauranteA, mes, valor]
+    );
+  }
+
+  // A casa ficou fechada nesse dia: a conta única dele sai (removida_em, como
+  // o cod 200), e o dia fica sem nenhum movimento.
+  async function fecharDia(codEntrada: number) {
+    await banco.query(
+      "update public.entradas set removida_em = now() where restaurante_id = $1 and cod_entrada = $2",
+      [fixture.restauranteA, codEntrada]
     );
   }
 
@@ -174,7 +187,9 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     expect(rows[0]?.faturamento_mes).toBe("105000.00");
     expect(rows[0]?.meta).toBeNull();
     expect(rows[0]?.andamento).toBeNull();
-    // A tela mostra "sem meta definida" e ignora a projeção neste caso.
+    // A projeção é a previsão e independe da meta: sem meta ela continua
+    // calculada ((100.000 ÷ 10) × 30). A tela é que decide mostrá-la só com meta.
+    expect(rows[0]?.projecao).toBe("300000.00");
     expect(rows[0]?.projecao_disponivel).toBe(true);
   });
 
@@ -206,7 +221,7 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     expect(rows[0]?.andamento).toBeNull();
   });
 
-  it("no 1º dia do mês ainda não há projeção (nenhum dia fechado)", async () => {
+  it("no 1º dia do mês ainda não há projeção (0 dias de calendário decorridos)", async () => {
     await definirMeta("2026-09-01", 170000);
     const rows = await consultar("2026-09-01 15:00:00-03:00");
     expect(rows[0]).toMatchObject({
@@ -217,7 +232,7 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     });
   });
 
-  it("no 2º dia do mês (1 dia fechado) a projeção ainda não aparece", async () => {
+  it("no 2º dia do mês (1 dia de calendário decorrido) a projeção ainda não aparece", async () => {
     await definirMeta("2026-09-01", 170000);
     const rows = await consultar("2026-09-02 15:00:00-03:00");
     expect(rows[0]).toMatchObject({
@@ -228,13 +243,53 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     expect(Number(rows[0]?.andamento)).toBeCloseTo(20000 / 170000, 4);
   });
 
-  it("no 3º dia do mês (2 dias fechados) a projeção aparece: (20.000 ÷ 2) × 30", async () => {
+  it("no 3º dia do mês (2 dias de calendário decorridos) a projeção aparece: (20.000 ÷ 2) × 30", async () => {
     await definirMeta("2026-09-01", 170000);
     const rows = await consultar("2026-09-03 15:00:00-03:00");
     expect(rows[0]).toMatchObject({
       faturamento_mes: "30000.00", // dias 1, 2 e 3 (a conta do dia 3 fechou às 14:00)
       projecao: "300000.00",
       projecao_disponivel: true,
+    });
+  });
+
+  it("casa fechada num dia do meio do mês: o divisor é o calendário (9 dias com movimento, 10 de calendário)", async () => {
+    // 05/09 sem nenhuma conta (a casa fechou). Até ontem (10/09): R$ 90.000.
+    //   calendário: (90.000 ÷ 10) × 30 = 270.000  ← o que a função tem de dar
+    //   movimento:  (90.000 ÷  9) × 30 = 300.000  ← o divisor antigo, que escondia o dia fechado
+    await definirMeta("2026-09-01", 170000);
+    await fecharDia(105);
+    const rows = await consultar();
+    expect(rows[0]).toMatchObject({
+      faturamento_mes: "95000.00", // 9 × 10.000 + 5.000 de hoje
+      projecao: "270000.00",
+      projecao_disponivel: true,
+    });
+    expect(rows[0]?.projecao).not.toBe("300000.00");
+    expect(Number(rows[0]?.andamento)).toBeCloseTo(95000 / 170000, 4);
+  });
+
+  it("o 3º dia de calendário libera a projeção mesmo com um dia fechado antes: (10.000 ÷ 2) × 30", async () => {
+    // 02/09 sem conta: até ontem (02/09) só o dia 1 teve movimento (R$ 10.000),
+    // mas já passaram 2 dias de calendário. Pelo divisor de movimento haveria
+    // 1 dia só e a projeção ficaria indisponível.
+    await fecharDia(102);
+    const rows = await consultar("2026-09-03 15:00:00-03:00");
+    expect(rows[0]).toMatchObject({
+      faturamento_mes: "20000.00", // dia 1 + dia 3 (fechou 14:00)
+      projecao: "150000.00",
+      projecao_disponivel: true,
+    });
+  });
+
+  it("do 3º dia em diante, mas sem faturamento passado no mês: sem base, sem projeção (nunca R$ 0,00)", async () => {
+    for (const dia of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+      await fecharDia(100 + dia);
+    const rows = await consultar();
+    expect(rows[0]).toMatchObject({
+      faturamento_mes: "5000.00", // só a venda de hoje
+      projecao: null,
+      projecao_disponivel: false,
     });
   });
 
@@ -245,6 +300,8 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     expect(rows[0]).toMatchObject({
       faturamento_mes: "50000.00", // só a conta de 31/08
       meta: "150000.00", // a meta de agosto, não a de setembro
+      // Há 30 dias de calendário decorridos em agosto, mas o único faturamento
+      // (31/08) é de "hoje": até ontem não há base, então sem projeção.
       projecao: null,
       projecao_disponivel: false,
     });
@@ -312,7 +369,7 @@ describe("metrica_meta_do_mes no PostgreSQL", () => {
     expect(r.rows[0]?.andamento).toBeNull();
   });
 
-  it("casa recém-cadastrada, sem nenhuma conta: faturamento zero, sem projeção, andamento zero com meta", async () => {
+  it("casa recém-cadastrada, sem nenhuma conta (11º dia, sem faturamento passado): faturamento zero, sem projeção, andamento zero com meta", async () => {
     await definirMeta("2026-09-01", 100000, fixture.restauranteB);
     const r = await comoAutenticado(banco, fixture.usuarioB, () =>
       banco.query<Meta>(CONSULTA, [fixture.restauranteB, AGORA])
