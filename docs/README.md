@@ -7,7 +7,7 @@
 | [`decisoes.md`](decisoes.md) | As decisões numeradas (D-01…). Decisão nova vai no fim | Todos |
 | [`metricas.md`](metricas.md) | Definição exata de cada métrica, com exemplo de conta que vira teste | Dev, SCC |
 | [`integracao-scc/contrato-de-dados.md`](integracao-scc/contrato-de-dados.md) | Como o SCC envia os dados: envelope, regras, respostas | **Pedro (SCC)**, dev |
-| [`arquitetura/modelo-de-dados.md`](arquitetura/modelo-de-dados.md) | As 9 tabelas e a visão do admin, com o SQL de referência | Dev |
+| [`arquitetura/modelo-de-dados.md`](arquitetura/modelo-de-dados.md) | As 10 tabelas (inclui `tentativas_de_login`) e a visão do admin, com o SQL de referência | Dev |
 | [`arquitetura/recepcao-de-dados.md`](arquitetura/recepcao-de-dados.md) | Como `receber-envio` funciona; testes; gerador de dados fictícios; vigia | Dev |
 | [`arquitetura/seguranca-e-isolamento.md`](arquitetura/seguranca-e-isolamento.md) | RLS, regras absolutas, login, LGPD, checklist de tabela nova | Dev |
 | [`operacao/cadastrar-restaurante.md`](operacao/cadastrar-restaurante.md) | Roteiro para colocar um cliente no ar | Equipe Repply |

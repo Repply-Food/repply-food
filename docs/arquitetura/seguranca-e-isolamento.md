@@ -38,7 +38,7 @@
 
     Dois casos à parte:
     - **função usada dentro de uma restrição `check`** precisa de `execute` para quem grava. O Postgres confere o privilégio de quem faz o `insert` ou o `update`, e quem grava é o admin pelo login. Sem o `grant`, o cadastro falha com "permission denied for function". Foi o caso de `horario_funcionamento_valido` e `cnpj_valido`, que são puras (não leem tabela) e entram na lista de `funcoes-fechadas.test.ts`;
-    - **função só da chave de serviço** (`id_do_login_por_email` e `encerrar_sessoes_do_login`, que leem e apagam dados do Auth) não leva `grant` para ninguém além do `service_role` e entra na lista de `tests/isolamento/rpc-privilegada.test.ts`.
+    - **função só da chave de serviço** (`id_do_login_por_email` e `encerrar_sessoes_do_login`, que leem e apagam dados do Auth; e `registrar_tentativa_errada`, `limpar_tentativas` e `login_bloqueado`, da trava de tentativas, D-64) não leva `grant` para ninguém além do `service_role` e entra na lista de `tests/isolamento/rpc-privilegada.test.ts`.
 
 ## 3. Políticas por tabela
 
@@ -112,6 +112,7 @@ Copiado do CRM:
 - **"Esqueci a senha":**
   - o e-mail sai pelo Supabase Auth, com o modelo da marca (`supabase/templates/recuperar-senha.html`);
   - o link leva `token_hash` (`/auth/confirmar?token_hash=…&type=recovery&next=/nova-senha`), então **vale em outro aparelho**. O link padrão do Supabase só vale no navegador que pediu;
+  - o link **cai numa página intermediária**: o GET de `/auth/confirmar` só mostra um botão e **não gasta o token**; quem valida é o POST (`/auth/confirmar/validar`), contra o antivírus de e-mail corporativo que abre o link e gastaria o token antes do dono (dívida 40). A volta aceita **só `recovery` e `invite`**, sem o ramo `code` (dívida 39);
   - `/auth/confirmar` **não troca uma sessão aberta** pela do link. Se o aparelho já tem outra conta, vai para `/entrar` com a explicação (fixação de sessão);
   - o retorno grava um **cookie assinado** (HMAC com a chave de serviço, 10 min, amarrado ao usuário, `HttpOnly`, restrito a `/nova-senha`). A função do servidor que define a senha nova o **exige por dentro**, não só a página;
   - recuperar a senha também cumpre o primeiro acesso;
@@ -121,8 +122,7 @@ Copiado do CRM:
   - o `next.config.ts` mantém `allowedDevOrigins: ["127.0.0.1"]` (sem isso o Next bloqueia o `/_next/hmr` nesse endereço e a página nunca hidrata no login local) e `logging.serverFunctions: false`. **Este último não pode sair**: sem ele o `next dev` imprime no terminal os argumentos das funções do servidor, inclusive e-mail e senha;
   - os formulários do admin (cadastro, e-mail, token, reenvio e as confirmações) seguem a mesma regra, mesmo sem campo de senha, porque a senha provisória é gerada pelo sistema (D-55). Os testes `tests/entrada/formularios-antes-de-carregar.test.tsx` e `tests/admin/formularios-antes-de-carregar.test.tsx` cobrem os da entrada e os do admin.
 - **Mensagens:** frases do produto, escolhidas pelo `code` do erro do Supabase (`lib/auth/erros.ts`), nunca o texto cru. "E-mail ou senha incorretos." só aparece quando o login recusou a credencial; limite de tentativas e queda do serviço têm frase própria.
-- **Limite de tentativas (D-52):** **não há bloqueio próprio** por senha errada. Vale o limite do próprio Supabase Auth, por endereço de internet, e a tela de entrada sempre mostra o caminho "Esqueci a senha". O limitador em memória do Imob não serve aqui: na Vercel cada requisição pode cair numa instância diferente.
-  - **Risco conhecido:** o Supabase vê o endereço do servidor da Vercel, não o de quem tenta. Uma pessoa errando a senha pode bloquear o login de todos por alguns minutos. Está na dívida técnica (item 23), para decidir antes da etapa 4.
+- **Limite de tentativas (D-52 e D-64):** além do limite do próprio Supabase Auth (por endereço de internet), há uma **trava própria por e-mail, no banco** (D-64), porque o limite do Supabase vê o endereço do servidor da Vercel, não o de quem tenta — uma conta atacada travava o login de todas. O `entrarAction` consulta a trava **antes** do Supabase (`login_bloqueado`); só a credencial recusada conta (`registrar_tentativa_errada`) e o acerto zera (`limpar_tentativas`). Bloqueia a partir do 5º erro, com recuo que cresce (até 24 h), e **degrada com elegância**: banco fora não trava o login (fail-open). O e-mail é normalizado e um e-mail inexistente conta igual (não revela quem existe). A rotina `rf-limpa-tentativas` limpa as linhas antigas à noite. O limitador em memória do Imob não serve na Vercel (cada requisição pode cair numa instância diferente). A tela de entrada sempre mostra "Esqueci a senha". Fecha a dívida 23.
 
 ## 6. Recepção de dados
 
@@ -134,10 +134,10 @@ Copiado do CRM:
 
 ## 7. Navegador
 
-Copiado do Imob:
-- cabeçalhos de segurança no `next.config.ts`: HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` e `Permissions-Policy`;
-- CSP começando em modo "só relatar";
-- cookies de sessão `secure`, `httpOnly` e `sameSite=lax` em produção;
+- cabeçalhos de segurança fixos no `next.config.ts` (copiados do Imob): HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` e `Permissions-Policy`;
+- **a CSP bloqueia desde a etapa 4a**, com uma senha de uso única (`nonce`) por carregamento, montada no porteiro (`proxy.ts`, D-67): `script-src 'self' 'nonce-…'` (sem `'unsafe-inline'`; `'unsafe-eval'` só no desenvolvimento, para o Turbopack), `style-src 'self' 'unsafe-inline'` (o Next injeta estilo em linha, que não executa JavaScript), e `default-src`/`base-uri`/`frame-ancestors`/`form-action`/`object-src` fechados. O Next carimba o `nonce` nos scripts que injeta; o layout lê o `nonce` e **vira dinâmico**. Fecha a dívida 45;
+- cookies de sessão `secure`, `httpOnly` e `sameSite=lax` em produção, por uma **função única** (`lib/supabase/cookies.ts`) usada pelo porteiro e pelo `server.ts` (dívida 37); fora de produção o login local em `http` continua;
+- **trava no código contra apontar o dev para a nuvem** com a chave de serviço: `createServiceClient` recusa uma URL de nuvem fora de produção, salvo `PERMITIR_NUVEM_NO_DEV=1` (dívida 10);
 - a build falha se `NEXT_PUBLIC_APP_URL` estiver faltando.
 
 ## 8. LGPD

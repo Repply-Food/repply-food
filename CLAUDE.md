@@ -256,7 +256,7 @@ repositorio/
 ├── supabase/
 │   ├── migrations/
 │   ├── functions/receber-envio/ · enviar-alerta/ (etapa 9)
-│   ├── templates/            # modelo do e-mail de recuperação de senha
+│   ├── templates/            # modelos de e-mail (recuperação e aviso de senha alterada)
 │   └── config.toml
 ├── tests/                    # recepção, isolamento, login (auth), painel, admin, métricas (exemplo de conta), design-tokens
 ├── scripts/                  # gerador de dados fictícios, acesso-local.ts (contas de teste), sincronizar-skills.mjs

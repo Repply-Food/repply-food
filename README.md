@@ -4,7 +4,7 @@
 
 > **Estado em 16/10/2026 — no ar.** O repply food. está **publicado e funcionando** em **[https://food.repplyhub.com.br](https://food.repplyhub.com.br)** (etapa 4b): banco, login e a função que recebe os dados do SCC no **Supabase** (nuvem), o site na **Vercel** e os e-mails de senha com a marca pelo **Resend**. A versão no ar é a das etapas 1 a 3 (fundação; entrar e moldura; admin da Repply): o admin lista as casas com o estado do envio, cadastra e edita (horário com até dois turnos por dia, fuso, CNPJ), gera e troca o token de envio, cria o login do cliente com senha provisória, redefine a senha, pede reenvio, suspende e reativa a casa, e mostra o histórico; abre o painel do cliente em só leitura e troca de casa. Os números do dia (telas **Hoje** e **Resultados**) chegam nas etapas 5 e 7.
 >
-> **Falta publicar a etapa 4a** — endurecer o código (trava de tentativas de senha no banco, CSP que bloqueia, link de senha à prova de antivírus, e-mails formalizados com teste) — e então o sistema é **republicado**. PDF e alarme por e-mail são as etapas 8 e 9. A verificação (tipos, lint, testes e build) passa no Windows; ainda falta rodá-la numa máquina Linux (o ramo do teste de tipos que só vale no Linux nunca foi executado).
+> **A etapa 4a está feita no código e testada** — endurecer o código (trava de tentativas de senha no banco, CSP que bloqueia com nonce, link de senha à prova de antivírus, e-mails formalizados com teste) — e **falta enviá-la ao GitHub e republicar** na nuvem; até lá, o que está no ar é a versão das etapas 1 a 3. PDF e alarme por e-mail são as etapas 8 e 9. A verificação (tipos, lint, testes e build) passa no Windows; ainda falta rodá-la numa máquina Linux (o ramo do teste de tipos que só vale no Linux nunca foi executado).
 
 ## Roteiro das etapas (plano do MVP)
 
@@ -14,7 +14,7 @@
 | 2 | Entrar e moldura do painel | ✅ feito |
 | 3 | Admin da Repply (casas, token, login, situação, histórico) | ✅ feito |
 | **4b** | **Primeira publicação na nuvem** (Supabase + Vercel + domínio + e-mails) | ✅ **no ar (16/10/2026)** |
-| 4a | Endurecer o código para produção (trava de tentativas, CSP, link à prova de antivírus) | ⏳ pendente → **republica** |
+| 4a | Endurecer o código para produção (trava de tentativas, CSP com nonce, link à prova de antivírus) | 🟡 código feito e testado — **a enviar ao GitHub e republicar** |
 | 5 | Hoje (os números do dia) | ⬜ próxima |
 | 6 | Ajustes e instalar no celular | ⬜ |
 | 7 | Resultados (vendas, horários, equipe, descontos) | ⬜ |
@@ -67,6 +67,8 @@ Valores do `npx supabase status -o env` e a variável do `.env.local` que recebe
 
 O `.env.local` aponta **sempre** para o banco local. As chaves da nuvem ficam em `.env.nuvem.local`, que o git ignora e o Next.js não lê. O `cp -n` não sobrescreve: se o seu `.env.local` atual tiver chaves da nuvem (endereço com `supabase.co`), renomeie-o para `.env.nuvem.local` **antes** do passo 3.
 
+> **A chave de serviço não fala com a nuvem no desenvolvimento.** `createServiceClient` recusa uma URL de nuvem fora de produção; a **única porta** para liberá-la é `PERMITIR_NUVEM_NO_DEV=1`, e só quando for mesmo necessário — nunca no `.env.local` do dia a dia.
+
 **Windows, com ou sem HD.** Se a subida falhar nos contêineres `vector` ou `logflare`, rode `npx supabase stop` e depois `npx supabase start -x vector,logflare`.
 
 **Windows com o Rancher num HD (disco mecânico).** O banco funciona, mas o disco lento pede três cuidados. Os comandos abaixo são do Git Bash:
@@ -91,6 +93,7 @@ npm run dev
 - Abra **`http://127.0.0.1:3000`**. É o `site_url` do login local, para onde o link do e-mail volta. `localhost` é **outra sessão**: o login de um endereço não vale no outro.
 - `npm run local:acesso` cria a "Casa de Teste Local", uma segunda casa (para testar a escolha da casa), um login de dono com senha provisória e troca obrigatória, e um admin. As credenciais são valores de teste fixos, em `scripts/acesso-local.ts` (`ACESSO_LOCAL`). Rodar de novo não duplica nada.
 - O e-mail de "esqueci a senha" não sai para a internet: cai na caixa de e-mail local, o Mailpit, em **`http://127.0.0.1:54324`**.
+- **A trava de tentativas de senha vive no banco local** (tabela `tentativas_de_login`): 5 erros bloqueiam por um tempo que cresce, e o acerto zera. A rotina `rf-limpa-tentativas` limpa as linhas antigas à noite. Se um teste manual travar o login, espere o tempo passar ou apague a linha da tabela no banco local.
 - **Cuidado ao commitar:** o `next dev` do Next 16.4 reescreve `AGENTS.md` e `next-env.d.ts`. Não commite essas mudanças: rode `git checkout -- AGENTS.md next-env.d.ts` antes do `git add`.
 
 **O caminho pelo admin** (cadastrar uma casa nova e fazê-la receber dados, como a equipe Repply fará). O `npm run local:acesso` continua criando as contas de teste; este caminho cria uma casa a mais, só no banco local. Os comandos são do Git Bash.

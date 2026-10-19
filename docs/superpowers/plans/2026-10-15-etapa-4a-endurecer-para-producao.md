@@ -1675,4 +1675,26 @@ Mostre a lista de commits ao Lucas Ferreira e **peça o ok para enviar ao GitHub
 
 ## Registro da execução
 
-*(preencher na execução: commits por tarefa, consertos, desvios aceitos, decisões do controlador, conferência no navegador e no Mailpit)*
+Execução por subagent-driven-development, a partir de `f41c631` (estado do 4b). Ledger em `.superpowers/sdd/2026-10-15-etapa-4a-endurecer-para-producao/progress.md`.
+
+**Commits por tarefa (todos revisados e aprovados):**
+- Tarefa 1 (banco da trava de tentativas): `bf054d7` (16/10).
+- Tarefa 2 (trava ligada no login + cota de e-mail): `aeb16fb` (19/10).
+- Tarefa 3 (cookie seguro numa função única + trava dev-contra-nuvem): `36ba579` (19/10).
+- Tarefa 4 (link à prova de antivírus, tipos de link, e-mails com a marca): `2f0bc83` (19/10).
+- Tarefa 5 (CSP que bloqueia com nonce): `041ce4d` (19/10).
+- Tarefa 6 (documentação): commit da documentação (este registro).
+
+**Decisão de produto na Tarefa 5 (o desvio aceito).** O Passo 2 previa uma CSP estática no `next.config.ts`. A conferência no navegador (Passo 1) mostrou que ela **bloqueia os `<script>` em linha do próprio Next** (App Router) — no dev e, confirmado no HTML da build, em produção também — e a página não inicia. O plano já previa parar nesse ponto ("pode exigir nonce, que é outra decisão"). O **Lucas Ferreira escolheu fazer a trava completa agora** (CSP com `nonce` no porteiro), em vez de adiar. Resultado: a CSP saiu do `next.config` para o `proxy.ts` com um `nonce` por carregamento (`lib/seguranca/csp.ts`); o `next-themes` recebe o `nonce` (`app/layout.tsx`, que vira dinâmico); `atualizarSessao` encaminha os cabeçalhos sem perder a sessão. Registrado em **D-67**.
+
+**Decisões do controlador (ajustes mecânicos, sem mudar produto):**
+- **Renumeração das decisões.** O plano (Passo 2) propunha D-61 a D-64, mas o 4b já usou D-61, D-62 e D-63. As decisões da 4a entraram como **D-64** (trava de tentativas), **D-65** (`secure_password_change` desligada), **D-66** (fuso só avisa) e **D-67** (CSP com nonce).
+- **Referências "D-62" imutáveis.** O commit `bf054d7` e a migration `20261015140000` comentam "D-62" pela numeração do plano; a decisão virou **D-64**. Migration e commit não se editam: a ressalva fica no `decisoes.md`, no `divida-tecnica.md` e no `modelo-de-dados.md`.
+- **Conferência em paralelo não feita.** Pela lentidão do HD, as Tarefas 2, 3 e 4 rodaram em sequência, não em paralelo.
+
+**Verificação (Passo 7 e critérios de aceite):**
+- Verificação do grupo limpa: `tsc` 0 erros; Biome 210 arquivos; **1022 testes** (75 arquivos), saída limpa; build ok.
+- **CSP conferida no navegador**, em dev (`127.0.0.1:3001`) e na **build de produção** (`next start`): `/entrar`, `/esqueci-a-senha`, `/auth/confirmar`, `/nova-senha` com cabeçalho **bloqueante** e **zero** script em linha sem nonce; `/entrar` hidrata (o botão habilita), o tema aplica; em produção **sem `'unsafe-eval'`**. Capturas (celular e produção) mostradas ao Lucas. As telas autenticadas (`/admin`, painel) usam o mesmo porteiro e layout (mecanismo uniforme, provado em `/entrar` e nos testes das duas saídas do porteiro); a conferência visual delas depende de login, que o Lucas digita.
+- **Mailpit (local):** o e-mail de recuperação chega com a marca (logo PNG, `#FF5A1F`, texto `#0A0A0A`, "repply food.", sem SVG) e o botão leva à página intermediária `/auth/confirmar?token_hash=…&type=recovery&next=/nova-senha`. Captura mostrada ao Lucas. (O 4b já confirmara o e-mail ao vivo pelo Resend.)
+
+**Falta (fora da 4a):** enviar os commits ao GitHub (com o ok do Lucas, um a um) e **republicar** na nuvem (a 4b). Na republicação: reconciliar a trava de tentativas que o Lucas Duarte já aplicou à nuvem (migration `20261015140000`) com este código antes do `db push`, e subir os **dois** modelos de e-mail com o SMTP, senão o link usa `code` e quebra.

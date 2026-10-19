@@ -12,7 +12,7 @@
 
 ## Tabelas
 
-São **9 tabelas** e uma visão (`restaurantes_no_admin`, a lista do admin).
+São **10 tabelas** e uma visão (`restaurantes_no_admin`, a lista do admin).
 
 ### `restaurantes`
 
@@ -221,6 +221,24 @@ create unique index registro_admin_abriu_painel_por_hora
 - **Privilégios:** o admin insere só `autor`, `restaurante_id`, `acao` e `detalhe`. O `id` e a hora (`criado_em`) são do banco, para o admin não escolher a hora do próprio registro e driblar o limite de "abriu o painel" por hora. A chave de serviço também não altera nem apaga (sem `UPDATE`, `DELETE` e `TRUNCATE`). Apagar o restaurante leva o histórico junto (`on delete cascade`).
 - Quem grava: as funções do servidor do admin (`lib/admin/registro.ts`) e, no banco, `trocar_token_envio` e `revogar_tokens_envio`, na mesma transação da troca.
 - O gatilho `freeze_restaurante_id` impede mudar a casa de uma linha.
+
+### `tentativas_de_login`
+
+A trava de tentativas de senha por e-mail (D-64, dívida 23). Migration `20261015140000`. **Segunda camada** além do limite do Supabase Auth (D-52), que na Vercel vê o endereço do servidor, não o de quem tenta.
+
+```sql
+create table public.tentativas_de_login (
+  email         text primary key,          -- normalizado (lower(btrim))
+  tentativas    int not null default 0,
+  bloqueado_ate timestamptz,
+  atualizado_em timestamptz not null default now()
+);
+```
+
+- **Só a chave de serviço** lê e escreve, pelas funções `registrar_tentativa_errada`, `limpar_tentativas` e `login_bloqueado` (`security definer`, `set row_security = off`). A RLS está ligada e `anon`/`authenticated` ficam sem nenhum privilégio: a tabela é fechada de vez, não é da RLS.
+- Opera sobre a **string do e-mail, exista ele ou não**, para não revelar quem é cliente. Bloqueia a partir do 5º erro, com recuo que cresce (15 min, 30, 60, …, teto de 24 h); o acerto zera.
+- A rotina `rf-limpa-tentativas` (pg_cron, diária) apaga as linhas antigas.
+- *(A migration comenta "D-62" pela numeração do plano; a decisão virou **D-64** — ver [`../decisoes.md`](../decisoes.md).)*
 
 ### Visão `restaurantes_no_admin`
 
