@@ -252,7 +252,7 @@ repositorio/
 │   └── styles/               # tokens.css e brand.css
 ├── components/               # ui/ (shadcn personalizado) · forms/ · painel/ (moldura, menu, selo, faixa só leitura) · admin/ (lista, cartões, formulários) · marca/ · entrada/ · providers/
 ├── lib/                      # auth/ · painel/ (selo) · admin/ (funções puras, leitura e funções do servidor do admin) · entrada/ · supabase/ · format/ (dinheiro, data) · validators/ · contato.ts · logger.ts
-│                             # metricas/ (chamadas às funções SQL) chega com a etapa 5
+│                             # metricas/ (leitura das funções SQL metrica_* da tela Hoje; etapa 5)
 ├── supabase/
 │   ├── migrations/
 │   ├── functions/receber-envio/ · enviar-alerta/ (etapa 9)
