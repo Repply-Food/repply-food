@@ -14,9 +14,23 @@ const abertas = [
   // Rodam dentro das restrições de `restaurantes`: o Postgres confere o
   // EXECUTE de quem grava (o admin, pelo login). São puras, sem ler tabela.
   { funcao: "cnpj_valido(text)", anon: false, authenticated: true },
+  // Pura (só calcula uma data, não lê tabela). As metrica_* são security
+  // invoker e a chamam com o login de quem consulta (etapa 5).
+  {
+    funcao:
+      "dia_operacao_de(timestamp with time zone, text, time without time zone)",
+    anon: false,
+    authenticated: true,
+  },
   { funcao: "eh_admin_repply()", anon: true, authenticated: true },
   {
     funcao: "horario_funcionamento_valido(jsonb)",
+    anon: false,
+    authenticated: true,
+  },
+  // Métricas do painel (security invoker: o isolamento é a RLS de entradas).
+  {
+    funcao: "metrica_faturamento_do_dia(uuid, timestamp with time zone)",
     anon: false,
     authenticated: true,
   },
