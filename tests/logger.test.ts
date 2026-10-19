@@ -35,4 +35,13 @@ describe("logger", () => {
     expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual(codigos);
     erro.mockRestore();
   });
+
+  it("aceita o código da leitura das métricas do Hoje (etapa 5)", () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logError("falha_metricas_hoje");
+    expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual([
+      "falha_metricas_hoje",
+    ]);
+    erro.mockRestore();
+  });
 });

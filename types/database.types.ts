@@ -300,6 +300,36 @@ isOneToOne: false
 "login_bloqueado":
 { Args: { "p_email": string }; Returns: string
                            },
+"metrica_comparacao_do_dia":
+{ Args: { "p_agora": string,"p_restaurante_id": string }; Returns: {
+              "faturamento_hoje": string,"media_faturamento": string,"media_por_pessoa": string,"ocorrencias": number,"por_pessoa_hoje": string,"variacao_faturamento": number,"variacao_por_pessoa": number
+            }[]
+                           },
+"metrica_contas_esquecidas":
+{ Args: { "p_agora": string,"p_limite": string,"p_restaurante_id": string }; Returns: {
+              "aberta_em": string,"aberta_ha": string,"cod_cartao_mesa": number,"cod_entrada": number,"valor_em_aberto": string
+            }[]
+                           },
+"metrica_curva_do_dia":
+{ Args: { "p_agora": string,"p_restaurante_id": string }; Returns: {
+              "acumulado_hoje": string,"acumulado_tipico": string,"minuto_do_dia": number
+            }[]
+                           },
+"metrica_faturamento_do_dia":
+{ Args: { "p_ate": string,"p_restaurante_id": string }; Returns: {
+              "contas_pagas": number,"faturamento": string,"pessoas_pagas": number,"taxa_servico": string
+            }[]
+                           },
+"metrica_mesas_abertas":
+{ Args: { "p_agora": string,"p_restaurante_id": string }; Returns: {
+              "pessoas_na_casa": number,"quantidade": number,"valor_em_aberto": string
+            }[]
+                           },
+"metrica_meta_do_mes":
+{ Args: { "p_agora": string,"p_restaurante_id": string }; Returns: {
+              "andamento": number,"faturamento_mes": string,"meta": string,"projecao": string,"projecao_disponivel": boolean
+            }[]
+                           },
 "normaliza_numeric":
 { Args: { "p_valor": string }; Returns: number
                            },
