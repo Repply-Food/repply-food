@@ -258,4 +258,72 @@ $$;
 grant execute on function public.metrica_curva_do_dia(uuid, timestamptz)
   to authenticated, service_role;
 
+-- Meta do mês e projeção (metricas.md §4).
+--   andamento = faturamento do mês ÷ meta;
+--   projeção  = (faturamento do mês até ONTEM ÷ dias de operação com movimento
+--               até ontem) × dias do mês;
+--   a projeção só aparece a partir do 3º dia do mês. Proxy (provisório): já
+--   houve pelo menos 2 dias de operação com movimento antes de hoje.
+-- O mês é o do DIA DE OPERAÇÃO de p_agora (antes da virada, 01/09 03:00 ainda
+-- é 31/08 e, portanto, agosto). Conta só o que já fechou até p_agora, como
+-- metrica_faturamento_do_dia. Mês sem meta herda a mais recente anterior (mes
+-- <= início do mês atual); sem nenhuma, meta e andamento saem null e a tela
+-- mostra "sem meta definida". A projeção sai calculada mesmo sem meta (a tela
+-- a ignora nesse caso). Sem acesso à casa (a RLS de restaurantes não a devolve)
+-- a função sai sem linha nenhuma.
+create or replace function public.metrica_meta_do_mes(
+  p_restaurante_id uuid, p_agora timestamptz
+) returns table (
+  faturamento_mes text, meta text, andamento numeric,
+  projecao text, projecao_disponivel boolean
+)
+language plpgsql stable security invoker set search_path = public
+as $$
+declare
+  v_fuso text; v_virada time; v_dia_hoje date; v_ini_mes date;
+  v_fat_mes numeric; v_fat_ate_ontem numeric; v_meta numeric;
+  v_dias_ate_ontem int; v_dias_no_mes int;
+begin
+  select fuso, hora_virada into v_fuso, v_virada
+    from public.restaurantes where id = p_restaurante_id;
+  if v_fuso is null then return; end if;
+  v_dia_hoje := public.dia_operacao_de(p_agora, v_fuso, v_virada);
+  v_ini_mes := date_trunc('month', v_dia_hoje)::date;
+  v_dias_no_mes := extract(day from (v_ini_mes + interval '1 month - 1 day'))::int;
+
+  select coalesce(sum(valor_consumido - taxa_servico)
+           filter (where pago and fechada_em <= p_agora), 0)
+    into v_fat_mes
+    from public.entradas
+   where restaurante_id = p_restaurante_id and removida_em is null
+     and dia_operacao >= v_ini_mes and dia_operacao <= v_dia_hoje;
+
+  -- faturamento e dias de operação com movimento ATÉ ONTEM (para a projeção)
+  select coalesce(sum(valor_consumido - taxa_servico)
+           filter (where pago and fechada_em <= p_agora), 0),
+         count(distinct dia_operacao) filter (where pago and fechada_em <= p_agora)
+    into v_fat_ate_ontem, v_dias_ate_ontem
+    from public.entradas
+   where restaurante_id = p_restaurante_id and removida_em is null
+     and dia_operacao >= v_ini_mes and dia_operacao < v_dia_hoje;
+
+  -- meta do mês, herdando a mais recente <= mês atual
+  select valor into v_meta from public.metas
+   where restaurante_id = p_restaurante_id and mes <= v_ini_mes
+   order by mes desc limit 1;
+
+  return query select
+    v_fat_mes::text,
+    v_meta::text,
+    case when v_meta > 0 then round(v_fat_mes / v_meta, 4) else null end,
+    case when v_dias_ate_ontem >= 2   -- 3º dia do mês = já houve 2 dias com movimento
+         then round((v_fat_ate_ontem / v_dias_ate_ontem) * v_dias_no_mes, 2)::text
+         else null end,
+    (v_dias_ate_ontem >= 2);
+end;
+$$;
+
+grant execute on function public.metrica_meta_do_mes(uuid, timestamptz)
+  to authenticated, service_role;
+
 commit;

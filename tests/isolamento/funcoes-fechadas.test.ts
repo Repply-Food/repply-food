@@ -55,6 +55,11 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  {
+    funcao: "metrica_meta_do_mes(uuid, timestamp with time zone)",
+    anon: false,
+    authenticated: true,
+  },
   // Conferem eh_admin_repply() por dentro (D-38).
   { funcao: "revogar_tokens_envio(uuid)", anon: false, authenticated: true },
   { funcao: "tem_acesso(uuid)", anon: true, authenticated: true },
