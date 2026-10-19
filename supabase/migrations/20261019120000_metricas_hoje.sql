@@ -41,4 +41,27 @@ $$;
 grant execute on function public.metrica_faturamento_do_dia(uuid, timestamptz)
   to authenticated, service_role;
 
+-- Mesas abertas no instante p_agora: aberta_em <= p_agora e ainda não fechada
+-- naquele instante (fechada_em nula ou depois de p_agora). O valor é com a
+-- taxa ("em aberto" é o que o cliente vai pagar).
+create or replace function public.metrica_mesas_abertas(
+  p_restaurante_id uuid, p_agora timestamptz
+) returns table (quantidade int, valor_em_aberto text, pessoas_na_casa int)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select
+    count(*)::int,
+    coalesce(sum(valor_consumido), 0)::text,
+    coalesce(sum(numero_ocupantes), 0)::int
+  from public.entradas
+  where restaurante_id = p_restaurante_id and removida_em is null
+    and aberta_em <= p_agora and (fechada_em is null or fechada_em > p_agora);
+$$;
+
+grant execute on function public.metrica_mesas_abertas(uuid, timestamptz)
+  to authenticated, service_role;
+
 commit;
