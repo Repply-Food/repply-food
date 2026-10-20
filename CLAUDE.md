@@ -249,9 +249,10 @@ repositorio/
 │   ├── r/[slug]/             # painel da casa: hoje · resultados · ajustes
 │   ├── admin/                # admin da Repply: lista, cadastro, detalhe e edição
 │   ├── auth/confirmar/       # rota do link do e-mail (recuperação de senha)
+│   ├── offline/              # página "sem conexão" do PWA (rota pública; etapa 6)
 │   └── styles/               # tokens.css e brand.css
-├── components/               # ui/ (shadcn personalizado) · forms/ · painel/ (moldura, menu, selo, faixa só leitura) · admin/ (lista, cartões, formulários) · marca/ · entrada/ · providers/
-├── lib/                      # auth/ · painel/ (selo) · admin/ (funções puras, leitura e funções do servidor do admin) · entrada/ · supabase/ · format/ (dinheiro, data) · validators/ · contato.ts · logger.ts
+├── components/               # ui/ (shadcn personalizado) · forms/ (campos, inclui campo-dinheiro) · painel/ (moldura, menu, selo, faixa só leitura, hoje/, ajustes/ (meta, turnos), instalar/ (guia "tela inicial")) · pwa/ (registra o service worker) · admin/ (lista, cartões, formulários) · marca/ · entrada/ · providers/
+├── lib/                      # auth/ · painel/ (selo, ajustes-schemas/actions, mes, guia-instalar, evento-instalar) · admin/ (funções puras, leitura e funções do servidor do admin) · entrada/ · supabase/ · format/ (dinheiro, data) · validators/ · contato.ts · logger.ts
 │                             # metricas/ (leitura das funções SQL metrica_* da tela Hoje; etapa 5)
 ├── supabase/
 │   ├── migrations/
@@ -260,7 +261,7 @@ repositorio/
 │   └── config.toml
 ├── tests/                    # recepção, isolamento, login (auth), painel, admin, métricas (exemplo de conta), design-tokens
 ├── scripts/                  # gerador de dados fictícios, acesso-local.ts (contas de teste), sincronizar-skills.mjs
-├── public/                   # ícones do app (copiados de identidade-visual/logos/app/)
+├── public/                   # ícones do app (copiados de identidade-visual/logos/app/) e sw.js (service worker mínimo do PWA; etapa 6)
 ├── identidade-visual/        # marca: brandbook, logos, fontes, gerador (fonte da verdade)
 ├── .claude/skills/ · .agents/skills/
 └── docs/                     # ver docs/README.md
