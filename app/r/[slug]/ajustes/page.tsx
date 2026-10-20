@@ -1,5 +1,6 @@
 import { SecaoMeta } from "@/components/painel/ajustes/secao-meta";
 import { SecaoTurnos } from "@/components/painel/ajustes/secao-turnos";
+import { AtalhoInstalar } from "@/components/painel/instalar/atalho-instalar";
 import { SeletorTema } from "@/components/painel/seletor-tema";
 import { Button } from "@/components/ui/button";
 import { formatarCnpj } from "@/lib/admin/cnpj";
@@ -149,6 +150,8 @@ export default async function PaginaAjustes({
             </div>
           </dl>
         </div>
+
+        <AtalhoInstalar />
 
         <a
           href={WHATSAPP_REPPLY.link}
