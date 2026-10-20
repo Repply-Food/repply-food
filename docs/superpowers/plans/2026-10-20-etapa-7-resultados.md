@@ -158,7 +158,7 @@ where e.restaurante_id = p_restaurante_id
   and e.dia_operacao between p_inicio and p_fim
 ```
 
-`metrica_resultados_resumo` devolve uma linha com faturamento, taxa, contas, pessoas, tickets, cada referência e cada variação. Para `anterior`, usar intervalo imediatamente anterior de mesmo tamanho. Para `semana`, CTE por dia do intervalo → quatro ocorrências anteriores com movimento → média por dia → soma; referência/variação ficam nulas se qualquer dia necessário não tiver duas ocorrências.
+`metrica_resultados_resumo` devolve uma linha com faturamento, taxa, contas, pessoas, tickets, `descontos_total`, `percentual_descontos`, cada referência e cada variação. Para `anterior`, usar intervalo imediatamente anterior de mesmo tamanho. Para `semana`, CTE por dia do intervalo → quatro ocorrências anteriores com movimento → média por dia → soma; referência/variação ficam nulas se qualquer dia necessário não tiver duas ocorrências. Os agregados de desconto ficam no resumo para existirem mesmo quando não há operador identificado.
 
 As demais RPCs retornam apenas dados atuais, já ordenados:
 
