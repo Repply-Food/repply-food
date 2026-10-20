@@ -24,13 +24,13 @@ repositorio/docs/superpowers/plans/, cobrindo:
 Telas, admin, vigia, PWA e PDF ficam para planos seguintes. Me mostre o plano antes de executar.
 ```
 
-## 📋 2. Planejar a próxima parte
+## 📋 2. Desenhar e planejar a próxima etapa
 
 ```
-Leia repositorio/AGENTS.md e repositorio/CLAUDE.md. Use a skill writing-plans para planejar
-<TEMA: telas Hoje e Resultados | admin | vigia e alarme | PWA e guia de instalação | PDF>,
-seguindo o desenho do MVP, docs/telas/ e docs/metricas.md. Celular e computador (D-39).
-Me mostre o plano antes de executar.
+Leia repositorio/AGENTS.md e repositorio/CLAUDE.md. Use a skill brainstorming (SEMPRE primeiro)
+para desenhar <TEMA: Resultados (7) | PDF (8) | alarme por e-mail do vigia (9)> e, com o
+desenho aprovado, a skill writing-plans para o plano. Siga o desenho do MVP, docs/telas/ e
+docs/metricas.md. Celular e computador (D-39). Me mostre o desenho e o plano antes de executar.
 ```
 
 ## 🔧 3. Executar um plano

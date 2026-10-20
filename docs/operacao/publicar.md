@@ -3,6 +3,8 @@
 *Fase de piloto, sem cliente pagante (D-09): Supabase **Free**, numa organização própria na conta do Lucas Ferreira, e painel na **Vercel Hobby**, com **deploy automático pela Vercel** (o repositório é público — D-62). No primeiro cliente pagante, siga [`migrar-para-pro.md`](migrar-para-pro.md).*
 
 > **Publicado em 16/10/2026** (etapa 4b). O projeto Supabase e as contas Vercel e Resend são **dedicados ao Food** (D-63); o repositório é **público** para a Vercel publicar sozinha de graça (D-62). Abaixo estão os passos reais. A CLI do Supabase fala com o projeto da nuvem por um acesso temporário da conta logada (`cli/login-role`), **sem pedir a senha do banco**. As edições do `config.toml` para a nuvem usam o endereço de produção **só na hora do `config push`** e são revertidas logo depois (`git checkout -- supabase/config.toml`); o arquivo versionado aponta sempre para o local.
+>
+> **Etapa só de frontend?** Quando a etapa não cria migration nem função SQL nova — foi o caso da **etapa 6** (Ajustes e instalar no celular) —, publicar é **só o `git push`**: a Vercel faz o deploy automático e **não há passo de Supabase** (pule a seção 1). Para referência: a etapa 5 teve só uma migration nova (um `db push --linked`, sem `config push`); a 4a teve migration + `config push`.
 
 ## 1. Banco e Edge Functions (Supabase)
 

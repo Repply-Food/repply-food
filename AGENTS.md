@@ -12,6 +12,8 @@ As skills vivem em `.claude/skills/` (lida pelo Claude Code) e `.agents/skills/`
 
 **Antes de qualquer tarefa, inclusive antes de perguntar ou abrir arquivos, veja se uma skill se aplica e use.** As de processo (brainstorming, systematic-debugging) vêm antes das de implementação. Se houver 1% de chance de uma skill servir, invoque. Pensamentos como "isso é simples demais" ou "primeiro deixa eu olhar o código" são o sinal para parar e invocar.
 
+> **Toda etapa nova do MVP começa pelo `brainstorming`** (desenho aprovado com o Lucas Ferreira), **depois `writing-plans`** (o plano) e **depois `subagent-driven-development`** (a execução) — nunca pule direto para o plano nem para o código. É assim que as etapas 4a, 5 e 6 foram feitas; a próxima é a **etapa 7 (Resultados)**. O desenho vai para `docs/superpowers/specs/`, o plano para `docs/superpowers/plans/` (os dois são commitados).
+
 | O pedido é… | Skill |
 |---|---|
 | Construir algo novo, discutir uma ideia | `brainstorming` (sempre primeiro), depois `writing-plans` |
