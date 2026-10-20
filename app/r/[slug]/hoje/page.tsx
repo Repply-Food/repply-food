@@ -10,6 +10,7 @@ import {
 } from "@/components/painel/hoje/formato";
 import { QuadroMeta } from "@/components/painel/hoje/quadro-meta";
 import { QuadrosDoDia } from "@/components/painel/hoje/quadros-do-dia";
+import { GuiaInstalar } from "@/components/painel/instalar/guia-instalar";
 import { exigirCasa } from "@/lib/auth/sessao";
 import { logError } from "@/lib/logger";
 import { obterHoje } from "@/lib/metricas/hoje";
@@ -56,6 +57,9 @@ export default async function PaginaHoje({
 
   return (
     <div className="flex flex-col gap-4 md:gap-5">
+      {/* Guia "coloque na tela inicial" (D-36): se esconde sozinho no computador,
+          no app instalado e depois de visto neste aparelho. */}
+      <GuiaInstalar />
       {/* No celular o título fica só para o leitor de tela (a moldura já traz o
           selo "há X min"); no computador (`md:`) aparece com a data e a hora. */}
       <h1 className="sr-only md:not-sr-only md:text-lg md:font-semibold md:tracking-tight">
