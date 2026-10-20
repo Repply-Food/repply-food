@@ -1,6 +1,6 @@
 # Etapa 9 — Alarme de sinal de vida · Desenho
 
-**Data:** 2026-10-20  
+**Data:** 2026-10-20
 **Objetivo:** avisar a equipe Repply por e-mail quando o SCC de uma casa ficar parado durante o expediente e quando ela voltar a enviar dados, sem avisos automáticos ao dono do restaurante, sem marcar um aviso como enviado antes da confirmação real e sem misturar dados entre restaurantes.
 
 > Este desenho vira um plano em `docs/superpowers/plans/` e é executado em commits pequenos, enviados à branch `etapa-9-alarme`. Nada desta etapa publica no `main`, aplica migration na nuvem, altera segredos ou dispara e-mail real sem uma operação autorizada separadamente.
