@@ -55,4 +55,13 @@ describe("logger", () => {
     ]);
     erro.mockRestore();
   });
+
+  it("aceita o código da leitura da tela de Ajustes (etapa 6)", () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logError("falha_leitura_ajustes");
+    expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual([
+      "falha_leitura_ajustes",
+    ]);
+    erro.mockRestore();
+  });
 });
