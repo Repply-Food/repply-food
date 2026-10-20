@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   chaveIdempotenciaAlerta,
   codigoSeguro,
+  criarManipuladorAlerta,
   montarEmailAlerta,
 } from "../../supabase/functions/_shared/alerta";
 
@@ -41,5 +42,60 @@ describe("conteúdo do alerta", () => {
     expect(
       codigoSeguro(new Error("token=segredo destinatario@exemplo.com"))
     ).toBe("erro_provedor");
+  });
+
+  it("recusa chamada sem o segredo interno", async () => {
+    const responder = criarManipuladorAlerta({
+      segredo: "segredo-de-teste",
+      emailDe: "repply food. <nao-responda@exemplo.com>",
+      emailPara: "equipe@exemplo.com",
+      buscarAlerta: async () => alerta,
+      enviarEmail: async () => ({ ok: true }),
+    });
+
+    const resposta = await responder(
+      new Request("https://exemplo.com", {
+        method: "POST",
+        body: JSON.stringify({ alerta_id: alerta.id }),
+      })
+    );
+
+    expect(resposta.status).toBe(401);
+    await expect(resposta.json()).resolves.toEqual({
+      ok: false,
+      codigo: "nao_autorizado",
+    });
+  });
+
+  it("envia somente o alerta buscado pelo identificador e confirma sucesso", async () => {
+    const chamadas: Array<{ de: string; para: string; chave: string }> = [];
+    const responder = criarManipuladorAlerta({
+      segredo: "segredo-de-teste",
+      emailDe: "repply food. <nao-responda@exemplo.com>",
+      emailPara: "equipe@exemplo.com",
+      buscarAlerta: async (id) => (id === alerta.id ? alerta : null),
+      enviarEmail: async (_email, de, para, chave) => {
+        chamadas.push({ de, para, chave });
+        return { ok: true };
+      },
+    });
+
+    const resposta = await responder(
+      new Request("https://exemplo.com", {
+        method: "POST",
+        headers: { "x-rf-alerta-secret": "segredo-de-teste" },
+        body: JSON.stringify({ alerta_id: alerta.id }),
+      })
+    );
+
+    expect(resposta.status).toBe(200);
+    await expect(resposta.json()).resolves.toEqual({ ok: true });
+    expect(chamadas).toEqual([
+      {
+        de: "repply food. <nao-responda@exemplo.com>",
+        para: "equipe@exemplo.com",
+        chave: "rf-alerta-11111111-1111-4111-8111-111111111111",
+      },
+    ]);
   });
 });

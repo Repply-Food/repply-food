@@ -15,6 +15,29 @@ type EmailAlerta = {
   html: string;
 };
 
+type DependenciasManipuladorAlerta = {
+  segredo: string;
+  emailDe: string;
+  emailPara: string;
+  buscarAlerta: (id: string) => Promise<AlertaParaEmail | null>;
+  enviarEmail: (
+    email: EmailAlerta,
+    de: string,
+    para: string,
+    chave: string
+  ) => Promise<{ ok: boolean }>;
+};
+
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function responder(corpo: unknown, status: number): Response {
+  return new Response(JSON.stringify(corpo), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
+}
+
 function escaparHtml(valor: string): string {
   return valor.replace(/[&<>'"]/g, (caractere) => {
     const entidades: Record<string, string> = {
@@ -80,5 +103,48 @@ export function montarEmailAlerta(alerta: AlertaParaEmail): EmailAlerta {
     </main>
   </body>
 </html>`,
+  };
+}
+
+export function criarManipuladorAlerta(deps: DependenciasManipuladorAlerta) {
+  return async (req: Request): Promise<Response> => {
+    if (req.method !== "POST") {
+      return responder({ ok: false, codigo: "metodo_invalido" }, 405);
+    }
+    if (!deps.segredo || req.headers.get("x-rf-alerta-secret") !== deps.segredo) {
+      return responder({ ok: false, codigo: "nao_autorizado" }, 401);
+    }
+
+    let corpo: unknown;
+    try {
+      corpo = await req.json();
+    } catch {
+      return responder({ ok: false, codigo: "alerta_invalido" }, 422);
+    }
+    const id =
+      corpo !== null && typeof corpo === "object" && !Array.isArray(corpo)
+        ? (corpo as Record<string, unknown>).alerta_id
+        : null;
+    if (typeof id !== "string" || !UUID.test(id)) {
+      return responder({ ok: false, codigo: "alerta_invalido" }, 422);
+    }
+
+    const alerta = await deps.buscarAlerta(id);
+    if (!alerta) return responder({ ok: false, codigo: "alerta_invalido" }, 404);
+
+    try {
+      const enviado = await deps.enviarEmail(
+        montarEmailAlerta(alerta),
+        deps.emailDe,
+        deps.emailPara,
+        chaveIdempotenciaAlerta(alerta.id)
+      );
+      if (!enviado.ok) {
+        return responder({ ok: false, codigo: "erro_provedor" }, 502);
+      }
+      return responder({ ok: true }, 200);
+    } catch {
+      return responder({ ok: false, codigo: "erro_provedor" }, 502);
+    }
   };
 }
