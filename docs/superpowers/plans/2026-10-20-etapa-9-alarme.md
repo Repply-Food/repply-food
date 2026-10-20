@@ -492,7 +492,7 @@ git diff -- types/database.types.ts
 - [ ] **Passo 5: procurar vazamento e conferir diff.**
 
 ```bash
-git grep -nE 'RESEND_API_KEY=|ALERTA_EMAIL_(DE|PARA)=|rf_alerta_segredo[[:space:]]*=' -- docs supabase || true
+git grep -nE 'RESEND_API_KEY=|ALERTA_EMAIL_(DE|PARA)=|rf_alerta_segredo[[:space:]]*=' -- docs supabase ':(exclude)docs/superpowers/plans' || true
 git diff --check
 ```
 
