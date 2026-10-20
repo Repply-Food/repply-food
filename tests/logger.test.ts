@@ -44,4 +44,15 @@ describe("logger", () => {
     ]);
     erro.mockRestore();
   });
+
+  it("aceita os códigos de salvar meta e turnos (etapa 6)", () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logError("falha_salvar_meta");
+    logError("falha_salvar_turnos");
+    expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual([
+      "falha_salvar_meta",
+      "falha_salvar_turnos",
+    ]);
+    erro.mockRestore();
+  });
 });
