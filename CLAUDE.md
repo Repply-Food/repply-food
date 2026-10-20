@@ -33,7 +33,7 @@ SCC (Delphi, no restaurante) ──POST a cada ~5 min──▶ receber-envio (Su
 | E-mail | Resend | Alarme do vigia e e-mails de senha |
 | Testes | Vitest | Unidade e integração com o banco local do Supabase |
 | Lint/formato | Biome | Mesma configuração do Imob |
-| Hospedagem | **Vercel Hobby no piloto**, deploy manual pela CLI | Proíbe uso comercial: sair no gatilho D-09 |
+| Hospedagem | **Vercel Hobby no piloto**, deploy automático a cada push no `main` (repo público, D-62) | Proíbe uso comercial: sair no gatilho D-09 |
 
 **Peças do Repply Imob a reaproveitar** (copiar e adaptar, não reinventar):
 - `app/styles/tokens.css` e `app/styles/brand.css`: tokens de marca em 3 camadas, `signature-dot`, `label-mono`, ilhas `.scheme-ink`/`.scheme-paper`;
@@ -232,9 +232,9 @@ Veja o `AGENTS.md` §4. **Escalar não é falha, é disciplina.** Trabalho ruim 
   - **nunca `git add -A`**: liste os arquivos;
   - a migration vai no mesmo commit da funcionalidade que a usa.
 - **Remoto:**
-  - o repositório é **`github.com/Repply-Food/repply-food`**, privado (D-47);
+  - o repositório é **`github.com/Repply-Food/repply-food`**, público (D-62, que reverteu a D-47 — repo privado de organização não publicava no Vercel Hobby grátis; confirmado que não há segredo no git);
   - antes de commitar, `git fetch` e confira se entrou commit de outra pessoa (o Lucas Duarte também trabalha aqui);
-  - `git push` para o `main` só depois da verificação do §9. **Publicar** (Vercel, Supabase) é outra coisa e pede autorização;
+  - `git push` para o `main` só depois da verificação do §9, e o push **já publica o frontend** (deploy automático da Vercel, D-62). Publicar no **Supabase** (migrations, `config push`) e mexer em contas externas (Vercel, DNS) são passos à parte e pedem autorização na hora;
   - o `github.com/Repply-Food/scc-dashboard` é o **simulador em C++** do Lucas Duarte, um repositório separado. Não misture os dois.
 - **Trailer de coautoria** nos commits feitos com IA: o que a ferramenta indicar.
 

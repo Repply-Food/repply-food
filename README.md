@@ -2,9 +2,9 @@
 
 **Sua casa, de onde você estiver.** O painel do dono de bar e restaurante: os números da casa no celular, quase em tempo real, vindos do sistema de caixa da SCC Software que o restaurante já usa.
 
-> **Estado em 19/10/2026 — no ar.** O repply food. está **publicado e funcionando** em **[https://food.repplyhub.com.br](https://food.repplyhub.com.br)**: as **etapas 1 a 4a**. Até a 3 (fundação; entrar e moldura; admin da Repply) mais a **4a** (endurecimento: trava de tentativas de senha no banco, CSP que bloqueia com nonce, link de senha à prova de antivírus, e-mails com teste). Banco, login e a função que recebe os dados do SCC no **Supabase** (nuvem), o site na **Vercel** e os e-mails com a marca pela **Resend**. No admin: lista das casas com o estado do envio, cadastro e edição (horário com até dois turnos, fuso, CNPJ), token de envio, login do cliente com senha provisória, redefinir senha, pedir reenvio, suspender/reativar, histórico, e "ver o painel do cliente" em só leitura.
+> **Estado em 20/10/2026 — no ar.** O repply food. está **publicado e funcionando** em **[https://food.repplyhub.com.br](https://food.repplyhub.com.br)**: as **etapas 1 a 5**. Até a 3 (fundação; entrar e moldura; admin da Repply) mais a **4a** (endurecimento: trava de tentativas de senha no banco, CSP que bloqueia com nonce, link de senha à prova de antivírus, e-mails com teste). Banco, login e a função que recebe os dados do SCC no **Supabase** (nuvem), o site na **Vercel** e os e-mails com a marca pela **Resend**. No admin: lista das casas com o estado do envio, cadastro e edição (horário com até dois turnos, fuso, CNPJ), token de envio, login do cliente com senha provisória, redefinir senha, pedir reenvio, suspender/reativar, histórico, e "ver o painel do cliente" em só leitura.
 >
-> **A etapa 5 (tela Hoje) está feita no código e testada** — os números do dia do restaurante: faturamento da casa comparado à média do mesmo dia da semana (com a curva "dia típico"), mesas abertas, pessoas na casa, contas abertas há mais de 4h, e a meta do mês com projeção, tudo com atualização automática a cada minuto. **Falta a conferência visual no navegador, enviar ao GitHub e republicar** na nuvem (a etapa 5 tem uma mudança no banco — as funções `metrica_*`). Depois vêm Ajustes (6), Resultados (7), PDF (8) e o alarme (9). A verificação (tipos, lint, testes e build) passa no Windows; ainda falta rodá-la numa máquina Linux (o ramo do teste de tipos que só vale no Linux nunca foi executado).
+> **A etapa 5 (tela Hoje) está no ar** (20/10/2026) — os números do dia do restaurante: faturamento da casa comparado à média do mesmo dia da semana (com a curva "dia típico"), mesas abertas, pessoas na casa, contas abertas há mais de 4h, e a meta do mês com projeção, tudo com atualização automática a cada minuto. Foi enviada ao GitHub e publicada na nuvem (a migration `20261019120000`, com as funções `metrica_*`) e conferida ao vivo em [food.repplyhub.com.br](https://food.repplyhub.com.br). Depois vêm Ajustes (6), Resultados (7), PDF (8) e o alarme (9). A verificação (tipos, lint, testes e build) passa no Windows; ainda falta rodá-la numa máquina Linux (o ramo do teste de tipos que só vale no Linux nunca foi executado).
 
 ## Roteiro das etapas (plano do MVP)
 
@@ -15,7 +15,7 @@
 | 3 | Admin da Repply (casas, token, login, situação, histórico) | ✅ feito |
 | **4b** | **Primeira publicação na nuvem** (Supabase + Vercel + domínio + e-mails) | ✅ **no ar (16/10/2026)** |
 | 4a | Endurecer o código para produção (trava de tentativas, CSP com nonce, link à prova de antivírus) | ✅ **no ar (19/10/2026)** |
-| 5 | Hoje (os números do dia: faturamento × dia típico, mesas, contas esquecidas, meta) | 🟡 código feito e testado — **a conferir no navegador, enviar e republicar** |
+| 5 | Hoje (os números do dia: faturamento × dia típico, mesas, contas esquecidas, meta) | ✅ **no ar (20/10/2026)** |
 | 6 | Ajustes e instalar no celular | ⬜ |
 | 7 | Resultados (vendas, horários, equipe, descontos) | ⬜ |
 | 8 | PDF | ⬜ |

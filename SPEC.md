@@ -94,7 +94,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 
 ## 5. Dados
 
-- Um banco para todos os restaurantes, com chave (restaurante, código original) e RLS (D-01). São 9 tabelas e a visão do admin: [`modelo-de-dados.md`](docs/arquitetura/modelo-de-dados.md).
+- Um banco para todos os restaurantes, com chave (restaurante, código original) e RLS (D-01). São 10 tabelas e a visão do admin: [`modelo-de-dados.md`](docs/arquitetura/modelo-de-dados.md).
 - Histórico: tudo que o SCC tiver (D-21).
 - Dados pessoais de clientes do restaurante (nome, RG, telefone, sexo): **não guardados** (D-29).
 - Métricas: definição exata, com exemplo de conta, em [`metricas.md`](docs/metricas.md).
@@ -113,18 +113,18 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 
 ### MVP (o que precisa existir para a demonstração e o piloto)
 
-- [ ] Banco com as 9 tabelas, RLS e testes de isolamento
-- [ ] `receber-envio` + `processar_envio` (modo A, janela por data) + testes da §4 de `recepcao-de-dados.md`
-- [ ] Gerador de dados fictícios enviando pelo mesmo caminho
-- [ ] Login, troca de senha obrigatória, "esqueci a senha"
-- [ ] Tela Hoje (celular e computador)
-- [ ] Tela Resultados com as 4 abas e as comparações (D-22)
-- [ ] PDF do período (D-20)
-- [ ] Ajustes (meta, turnos, senha, tema)
-- [ ] Guia da tela inicial (regras D-36/D-39) + PWA instalável
-- [ ] Admin (D-32/D-38) + pedido de reenvio
-- [ ] Vigia + e-mail de alarme e de "voltou"
-- [ ] Publicação no piloto (Supabase Free + Vercel Hobby, D-09)
+- [x] Banco com as 10 tabelas, RLS e testes de isolamento
+- [x] `receber-envio` + `processar_envio` (modo A, janela por data) + testes da §4 de `recepcao-de-dados.md`
+- [x] Gerador de dados fictícios enviando pelo mesmo caminho
+- [x] Login, troca de senha obrigatória, "esqueci a senha"
+- [x] Tela Hoje (celular e computador) — etapa 5, no ar
+- [ ] Tela Resultados com as 4 abas e as comparações (D-22) — etapa 7
+- [ ] PDF do período (D-20) — etapa 8
+- [ ] Ajustes (meta, turnos, senha, tema) — etapa 6
+- [ ] Guia da tela inicial (regras D-36/D-39) + PWA instalável — etapa 6
+- [x] Admin (D-32/D-38) + pedido de reenvio
+- [ ] Vigia + e-mail de alarme e de "voltou" — o vigia existe; o e-mail de alarme é a etapa 9 (dívida 8)
+- [x] Publicação no piloto (Supabase Free + Vercel Hobby, D-09)
 
 ### Fase 2 (depois do piloto)
 
