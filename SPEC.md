@@ -120,8 +120,8 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 - [x] Tela Hoje (celular e computador) — etapa 5, no ar
 - [ ] Tela Resultados com as 4 abas e as comparações (D-22) — etapa 7
 - [ ] PDF do período (D-20) — etapa 8
-- [ ] Ajustes (meta, turnos, senha, tema) — etapa 6
-- [ ] Guia da tela inicial (regras D-36/D-39) + PWA instalável — etapa 6
+- [x] Ajustes (meta, turnos, senha, tema) — etapa 6, no ar
+- [x] Guia da tela inicial (regras D-36/D-39) + PWA instalável — etapa 6, no ar
 - [x] Admin (D-32/D-38) + pedido de reenvio
 - [ ] Vigia + e-mail de alarme e de "voltou" — o vigia existe; o e-mail de alarme é a etapa 9 (dívida 8)
 - [x] Publicação no piloto (Supabase Free + Vercel Hobby, D-09)

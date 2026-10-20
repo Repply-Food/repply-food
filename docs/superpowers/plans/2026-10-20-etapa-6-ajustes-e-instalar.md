@@ -57,7 +57,7 @@
 **Interfaces:**
 - Produces: `analisarBRL(texto: string): string | null` — `"30.000,50"` / `"30000"` / `"R$ 30.000"` → `"30000.50"` / `"30000.00"` ... ; vazio ou inválido → `null`. `CampoDinheiro({ id?, value, onChange, disabled?, "aria-label"? })` com `value: string` (string numérica ou `""`) e `onChange(valor: string)`.
 
-- [ ] **Passo 1: Teste de `analisarBRL`**
+- [x] **Passo 1: Teste de `analisarBRL`**
 
 ```ts
 // tests/format/dinheiro.test.ts
@@ -88,9 +88,9 @@ describe("analisarBRL", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar** — `npm run test -- tests/format/dinheiro.test.ts` → falha (`analisarBRL` não existe).
+- [x] **Passo 2: Rodar e ver falhar** — `npm run test -- tests/format/dinheiro.test.ts` → falha (`analisarBRL` não existe).
 
-- [ ] **Passo 3: Implementar `analisarBRL`**
+- [x] **Passo 3: Implementar `analisarBRL`**
 
 ```ts
 // lib/format/dinheiro.ts  (acrescentar ao fim, mantendo o resto)
@@ -111,9 +111,9 @@ export function analisarBRL(texto: string): string | null {
 }
 ```
 
-- [ ] **Passo 4: Rodar e ver passar** — `npm run test -- tests/format/dinheiro.test.ts` → PASS.
+- [x] **Passo 4: Rodar e ver passar** — `npm run test -- tests/format/dinheiro.test.ts` → PASS.
 
-- [ ] **Passo 5: Teste do `CampoDinheiro`**
+- [x] **Passo 5: Teste do `CampoDinheiro`**
 
 ```tsx
 // tests/forms/campo-dinheiro.test.tsx
@@ -151,9 +151,9 @@ describe("CampoDinheiro", () => {
 });
 ```
 
-- [ ] **Passo 6: Rodar e ver falhar** — falha (componente não existe).
+- [x] **Passo 6: Rodar e ver falhar** — falha (componente não existe).
 
-- [ ] **Passo 7: Implementar `CampoDinheiro`**
+- [x] **Passo 7: Implementar `CampoDinheiro`**
 
 ```tsx
 // components/forms/campo-dinheiro.tsx
@@ -203,9 +203,9 @@ export function CampoDinheiro({ value, onChange, ...rest }: Props) {
 }
 ```
 
-- [ ] **Passo 8: Rodar e ver passar.** Depois `npm run types` e `npm run lint`.
+- [x] **Passo 8: Rodar e ver passar.** Depois `npm run types` e `npm run lint`.
 
-- [ ] **Passo 9: Commit** — `git add lib/format/dinheiro.ts components/forms/campo-dinheiro.tsx tests/format/dinheiro.test.ts tests/forms/campo-dinheiro.test.tsx && git commit -m "Acrescenta a entrada de dinheiro (parse + CampoDinheiro)"`
+- [x] **Passo 9: Commit** — `git add lib/format/dinheiro.ts components/forms/campo-dinheiro.tsx tests/format/dinheiro.test.ts tests/forms/campo-dinheiro.test.tsx && git commit -m "Acrescenta a entrada de dinheiro (parse + CampoDinheiro)"`
 
 ---
 
@@ -219,7 +219,7 @@ export function CampoDinheiro({ value, onChange, ...rest }: Props) {
 - Consumes: `exigirCasa` (`lib/auth/sessao`), `createClient` (`lib/supabase/server`).
 - Produces: `metaSchema`, `turnosSchema`; `salvarMetaAction(slug: string, mesISO: string, valor: string): Promise<Resultado>` (valor `""` remove o mês); `salvarTurnosAction(slug: string, almocoAte: string): Promise<Resultado>`. `type Resultado = { ok: true } | { ok: false; error: string }`.
 
-- [ ] **Passo 1: Teste dos esquemas**
+- [x] **Passo 1: Teste dos esquemas**
 
 ```ts
 // tests/painel/ajustes-schemas.test.ts
@@ -251,9 +251,9 @@ describe("turnosSchema", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar.**
+- [x] **Passo 2: Rodar e ver falhar.**
 
-- [ ] **Passo 3: Implementar os esquemas**
+- [x] **Passo 3: Implementar os esquemas**
 
 ```ts
 // lib/painel/ajustes-schemas.ts
@@ -279,9 +279,9 @@ export const turnosSchema = z.object({
 export type TurnosInput = z.infer<typeof turnosSchema>;
 ```
 
-- [ ] **Passo 4: Rodar e ver passar.**
+- [x] **Passo 4: Rodar e ver passar.**
 
-- [ ] **Passo 5: Implementar as ações** (sem teste unitário próprio aqui — o isolamento é testado na Task 3, contra o banco)
+- [x] **Passo 5: Implementar as ações** (sem teste unitário próprio aqui — o isolamento é testado na Task 3, contra o banco)
 
 ```ts
 // lib/painel/ajustes-actions.ts
@@ -365,9 +365,9 @@ export async function salvarTurnosAction(
 }
 ```
 
-- [ ] **Passo 6: tipos + lint.** (Se o `upsert`/`rpc` acusar tipo, conferir `types/database.types.ts` tem `metas` e `atualizar_turnos`; são da fundação.)
+- [x] **Passo 6: tipos + lint.** (Se o `upsert`/`rpc` acusar tipo, conferir `types/database.types.ts` tem `metas` e `atualizar_turnos`; são da fundação.)
 
-- [ ] **Passo 7: Commit** — `git add lib/painel/ajustes-schemas.ts lib/painel/ajustes-actions.ts tests/painel/ajustes-schemas.test.ts && git commit -m "Cria os esquemas e as ações de salvar meta e turnos"`
+- [x] **Passo 7: Commit** — `git add lib/painel/ajustes-schemas.ts lib/painel/ajustes-actions.ts tests/painel/ajustes-schemas.test.ts && git commit -m "Cria os esquemas e as ações de salvar meta e turnos"`
 
 ---
 
@@ -381,7 +381,7 @@ export async function salvarTurnosAction(
 
 > **Precisa do banco local de pé** (Rancher + `supabase start`). Este teste prova a regra mais cara: uma casa não escreve na outra, e o admin não escreve.
 
-- [ ] **Passo 1: Escrever o teste** seguindo o helper de fixture do diretório `tests/isolamento/` (reusar o mesmo `setup`/`clientes` dos testes vizinhos; não inventar outro). Casos:
+- [x] **Passo 1: Escrever o teste** seguindo o helper de fixture do diretório `tests/isolamento/` (reusar o mesmo `setup`/`clientes` dos testes vizinhos; não inventar outro). Casos:
 
 ```ts
 // tests/isolamento/metas-turnos.test.ts  (esqueleto — usar o helper existente do diretório)
@@ -397,9 +397,9 @@ export async function salvarTurnosAction(
 
 Escrever cada caso com asserções concretas sobre linhas afetadas/erro, no mesmo estilo dos vizinhos (ex.: `tests/isolamento/todas-as-tabelas.test.ts`).
 
-- [ ] **Passo 2: Rodar** — `npm run test -- tests/isolamento/metas-turnos.test.ts`. Se o banco não estiver de pé, subir primeiro (ver Global Constraints). Esperado: passa (a RLS e a RPC já existem desde a fundação; este teste fixa o comportamento).
+- [x] **Passo 2: Rodar** — `npm run test -- tests/isolamento/metas-turnos.test.ts`. Se o banco não estiver de pé, subir primeiro (ver Global Constraints). Esperado: passa (a RLS e a RPC já existem desde a fundação; este teste fixa o comportamento).
 
-- [ ] **Passo 3: Commit** — `git add tests/isolamento/metas-turnos.test.ts && git commit -m "Testa o isolamento de meta e turnos"`
+- [x] **Passo 3: Commit** — `git add tests/isolamento/metas-turnos.test.ts && git commit -m "Testa o isolamento de meta e turnos"`
 
 ---
 
@@ -413,7 +413,7 @@ Escrever cada caso com asserções concretas sobre linhas afetadas/erro, no mesm
 - Consumes: `CampoDinheiro` (Task 1), `salvarMetaAction` (Task 2), `nomeDoMes` (`components/painel/hoje/formato.ts`).
 - Produces: `SecaoMeta({ slug, fuso, mesAtualISO, metas, somenteLeitura })` onde `metas: { mes: string; valor: string }[]` (vindas do servidor, a string numérica de `valor`), `mesAtualISO: "YYYY-MM-01"`.
 
-- [ ] **Passo 1: Teste** — navegação muda o mês; o campo mostra a meta do mês selecionado (vazio se não houver); "copiar do mês anterior" preenche com o anterior mais recente; mudar o valor e navegar sem salvar dispara o aviso; no modo `somenteLeitura` não há botão Salvar.
+- [x] **Passo 1: Teste** — navegação muda o mês; o campo mostra a meta do mês selecionado (vazio se não houver); "copiar do mês anterior" preenche com o anterior mais recente; mudar o valor e navegar sem salvar dispara o aviso; no modo `somenteLeitura` não há botão Salvar.
 
 ```tsx
 // tests/painel/secao-meta.test.tsx
@@ -451,15 +451,15 @@ describe("SecaoMeta", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar.**
+- [x] **Passo 2: Rodar e ver falhar.**
 
-- [ ] **Passo 3: Implementar `SecaoMeta`** — componente de cliente. Estado: `mesSelecionado` (ISO), `valor` (string numérica do campo), `sujo` (mudou sem salvar). Navegação `‹ ›` move um mês (recomputar ISO). Ao trocar de mês com `sujo`, `window.confirm("Você mudou a meta e não salvou. Descartar?")` — se não, não troca. "Copiar do mês anterior" acha em `metas` o mês mais recente `< mesSelecionado` e põe o valor. Salvar: `useTransition` + `salvarMetaAction(slug, mesSelecionado, valor)`, `toast` (sonner) no sucesso/erro, e marca `sujo=false`; recarrega com `router.refresh()`. Botão travado por `useHidratado()`. Rótulos: título `Meta de ${nomeDoMes(dataDoISO, fuso)} de ${ano}` (ou computar o nome do mês a partir do ISO sem fuso, já que o mês é uma data civil — usar um `MESES[n]` local, como em `formato.ts`). Botões com `aria-label` "mês anterior"/"próximo mês". Esconder Salvar e "copiar" quando `somenteLeitura`.
+- [x] **Passo 3: Implementar `SecaoMeta`** — componente de cliente. Estado: `mesSelecionado` (ISO), `valor` (string numérica do campo), `sujo` (mudou sem salvar). Navegação `‹ ›` move um mês (recomputar ISO). Ao trocar de mês com `sujo`, `window.confirm("Você mudou a meta e não salvou. Descartar?")` — se não, não troca. "Copiar do mês anterior" acha em `metas` o mês mais recente `< mesSelecionado` e põe o valor. Salvar: `useTransition` + `salvarMetaAction(slug, mesSelecionado, valor)`, `toast` (sonner) no sucesso/erro, e marca `sujo=false`; recarrega com `router.refresh()`. Botão travado por `useHidratado()`. Rótulos: título `Meta de ${nomeDoMes(dataDoISO, fuso)} de ${ano}` (ou computar o nome do mês a partir do ISO sem fuso, já que o mês é uma data civil — usar um `MESES[n]` local, como em `formato.ts`). Botões com `aria-label` "mês anterior"/"próximo mês". Esconder Salvar e "copiar" quando `somenteLeitura`.
 
 (Escrever o componente completo seguindo os padrões: `"use client"`, `useTransition`, `toast` de `sonner`, `Button`/`Input` do design, `useHidratado`.)
 
-- [ ] **Passo 4: Rodar e ver passar.** tipos + lint.
+- [x] **Passo 4: Rodar e ver passar.** tipos + lint.
 
-- [ ] **Passo 5: Commit** — `git add components/painel/ajustes/secao-meta.tsx tests/painel/secao-meta.test.tsx && git commit -m "Cria a seção de meta mês a mês em Ajustes"`
+- [x] **Passo 5: Commit** — `git add components/painel/ajustes/secao-meta.tsx tests/painel/secao-meta.test.tsx && git commit -m "Cria a seção de meta mês a mês em Ajustes"`
 
 ---
 
@@ -473,7 +473,7 @@ describe("SecaoMeta", () => {
 - Consumes: `salvarTurnosAction` (Task 2).
 - Produces: `SecaoTurnos({ slug, almocoAteInicial, somenteLeitura })`.
 
-- [ ] **Passo 1: Teste** — mostra o valor inicial num campo de hora; salvar chama a ação; no modo leitura não há Salvar.
+- [x] **Passo 1: Teste** — mostra o valor inicial num campo de hora; salvar chama a ação; no modo leitura não há Salvar.
 
 ```tsx
 // tests/painel/secao-turnos.test.tsx
@@ -497,13 +497,13 @@ describe("SecaoTurnos", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar.**
+- [x] **Passo 2: Rodar e ver falhar.**
 
-- [ ] **Passo 3: Implementar `SecaoTurnos`** — `"use client"`, um `<input type="time">` (ou `Input` com `type="time"`) controlado, texto de ajuda "antes desse horário conta como almoço; depois, como jantar. Usado na tela Resultados.", Salvar com `useTransition` + `salvarTurnosAction(slug, valor)` + `toast`, botão por `useHidratado`, escondido no modo leitura.
+- [x] **Passo 3: Implementar `SecaoTurnos`** — `"use client"`, um `<input type="time">` (ou `Input` com `type="time"`) controlado, texto de ajuda "antes desse horário conta como almoço; depois, como jantar. Usado na tela Resultados.", Salvar com `useTransition` + `salvarTurnosAction(slug, valor)` + `toast`, botão por `useHidratado`, escondido no modo leitura.
 
-- [ ] **Passo 4: Rodar e ver passar.** tipos + lint.
+- [x] **Passo 4: Rodar e ver passar.** tipos + lint.
 
-- [ ] **Passo 5: Commit** — `git add components/painel/ajustes/secao-turnos.tsx tests/painel/secao-turnos.test.tsx && git commit -m "Cria a seção de turnos em Ajustes"`
+- [x] **Passo 5: Commit** — `git add components/painel/ajustes/secao-turnos.tsx tests/painel/secao-turnos.test.tsx && git commit -m "Cria a seção de turnos em Ajustes"`
 
 ---
 
@@ -516,7 +516,7 @@ describe("SecaoTurnos", () => {
 **Interfaces:**
 - Consumes: `exigirCasa`, `createClient`, `SecaoMeta` (Task 4), `SecaoTurnos` (Task 5), `SeletorTema`, `WHATSAPP_REPPLY`, `sairAction`, `emailsDosLoginsDaCasa`, `nomeDoMes`/`MESES`. (A seção "Colocar na tela inicial" entra na Task 8.)
 
-- [ ] **Passo 1:** Ler `restaurantes` (cnpj, hora_virada, horario_funcionamento, turnos) por `casa.id` e `metas` (mes, valor) da casa, pela sessão (RLS):
+- [x] **Passo 1:** Ler `restaurantes` (cnpj, hora_virada, horario_funcionamento, turnos) por `casa.id` e `metas` (mes, valor) da casa, pela sessão (RLS):
 
 ```ts
 const supabase = await createClient();
@@ -529,13 +529,13 @@ const [{ data: dados }, { data: metas }] = await Promise.all([
 ]);
 ```
 
-- [ ] **Passo 2:** Calcular o mês atual no fuso da casa (`mesAtualISO = "YYYY-MM-01"`), reutilizando `partesNoFuso`/`Intl` como em `formato.ts` (um helper local `mesAtualNoFuso(agora, fuso)` é aceitável). Converter `metas` para `{ mes, valor: valor.toString() }` (o `valor` vem `numeric` → string).
+- [x] **Passo 2:** Calcular o mês atual no fuso da casa (`mesAtualISO = "YYYY-MM-01"`), reutilizando `partesNoFuso`/`Intl` como em `formato.ts` (um helper local `mesAtualNoFuso(agora, fuso)` é aceitável). Converter `metas` para `{ mes, valor: valor.toString() }` (o `valor` vem `numeric` → string).
 
-- [ ] **Passo 3:** Montar o JSX. No computador, **duas colunas** (`md:grid md:grid-cols-2 md:gap-6`, seguindo o Tailwind do projeto); no celular, empilhado. Ordem no celular: Meta, Turnos, Sua conta (e-mail, Trocar senha, Tema, Sair), Dados da casa (só leitura, com aviso "muda com a Repply"), Falar com a Repply. (A seção **Colocar na tela inicial** — `<AtalhoInstalar/>`, que se esconde sozinho no computador e no app instalado, D-40 — é encaixada na Task 8, entre os "Dados da casa" e o "Falar com a Repply".) Passar `somenteLeitura={modoAdmin}` às seções de meta e turnos. Manter o bloco admin (D-58) como hoje.
+- [x] **Passo 3:** Montar o JSX. No computador, **duas colunas** (`md:grid md:grid-cols-2 md:gap-6`, seguindo o Tailwind do projeto); no celular, empilhado. Ordem no celular: Meta, Turnos, Sua conta (e-mail, Trocar senha, Tema, Sair), Dados da casa (só leitura, com aviso "muda com a Repply"), Falar com a Repply. (A seção **Colocar na tela inicial** — `<AtalhoInstalar/>`, que se esconde sozinho no computador e no app instalado, D-40 — é encaixada na Task 8, entre os "Dados da casa" e o "Falar com a Repply".) Passar `somenteLeitura={modoAdmin}` às seções de meta e turnos. Manter o bloco admin (D-58) como hoje.
 
-- [ ] **Passo 4:** Teste leve de estrutura (ordem das seções; modo admin esconde salvar — já coberto nas seções) e `npm run test`, `npm run types`, `npm run lint`.
+- [x] **Passo 4:** Teste leve de estrutura (ordem das seções; modo admin esconde salvar — já coberto nas seções) e `npm run test`, `npm run types`, `npm run lint`.
 
-- [ ] **Passo 5: Commit** — `git add app/r/[slug]/ajustes/page.tsx tests/painel/ajustes-page.test.tsx && git commit -m "Monta a tela de Ajustes com meta, turnos e dados da casa"`
+- [x] **Passo 5: Commit** — `git add app/r/[slug]/ajustes/page.tsx tests/painel/ajustes-page.test.tsx && git commit -m "Monta a tela de Ajustes com meta, turnos e dados da casa"`
 
 ---
 
@@ -549,7 +549,7 @@ const [{ data: dados }, { data: metas }] = await Promise.all([
 **Interfaces:**
 - Produces: `RegistrarSW()` (componente de cliente que registra `/sw.js`).
 
-- [ ] **Passo 1:** `public/sw.js` — mínimo, sem cache de dados:
+- [x] **Passo 1:** `public/sw.js` — mínimo, sem cache de dados:
 
 ```js
 // public/sw.js — service worker MÍNIMO (D: sem guardar dados).
@@ -571,9 +571,9 @@ self.addEventListener("fetch", (event) => {
 });
 ```
 
-- [ ] **Passo 2:** `app/offline/page.tsx` — página simples "Sem conexão · tente de novo quando a internet voltar", com a marca; `export const metadata = { title: "Sem conexão · repply food." }`.
+- [x] **Passo 2:** `app/offline/page.tsx` — página simples "Sem conexão · tente de novo quando a internet voltar", com a marca; `export const metadata = { title: "Sem conexão · repply food." }`.
 
-- [ ] **Passo 3:** Teste do `RegistrarSW` (registra quando há `serviceWorker`; não quebra quando não há):
+- [x] **Passo 3:** Teste do `RegistrarSW` (registra quando há `serviceWorker`; não quebra quando não há):
 
 ```tsx
 // tests/pwa/registrar-sw.test.tsx
@@ -596,11 +596,11 @@ describe("RegistrarSW", () => {
 });
 ```
 
-- [ ] **Passo 4:** Implementar `RegistrarSW` (`"use client"`, `useEffect` que confere `"serviceWorker" in navigator` e chama `navigator.serviceWorker.register("/sw.js")`, com try/catch). Montar no `app/layout.tsx`. Confirmar o `<link rel="manifest">` (a convenção `app/manifest.webmanifest` já injeta; se não, declarar `metadata.manifest`).
+- [x] **Passo 4:** Implementar `RegistrarSW` (`"use client"`, `useEffect` que confere `"serviceWorker" in navigator` e chama `navigator.serviceWorker.register("/sw.js")`, com try/catch). Montar no `app/layout.tsx`. Confirmar o `<link rel="manifest">` (a convenção `app/manifest.webmanifest` já injeta; se não, declarar `metadata.manifest`).
 
-- [ ] **Passo 5:** Rodar testes; tipos; lint; `npm run build` (o SW é estático em `public/`; o build não deve reclamar).
+- [x] **Passo 5:** Rodar testes; tipos; lint; `npm run build` (o SW é estático em `public/`; o build não deve reclamar).
 
-- [ ] **Passo 6: Commit** — `git add public/sw.js app/offline/page.tsx components/pwa/registrar-sw.tsx app/layout.tsx tests/pwa/registrar-sw.test.tsx && git commit -m "Adiciona o PWA: service worker mínimo e página sem conexão"`
+- [x] **Passo 6: Commit** — `git add public/sw.js app/offline/page.tsx components/pwa/registrar-sw.tsx app/layout.tsx tests/pwa/registrar-sw.test.tsx && git commit -m "Adiciona o PWA: service worker mínimo e página sem conexão"`
 
 ---
 
@@ -614,7 +614,7 @@ describe("RegistrarSW", () => {
 **Interfaces:**
 - Produces: `deveMostrarGuia({ eCelular, appInstalado, jaViu }): boolean`; `detectar(): { eCelular: boolean; appInstalado: boolean; ehIOS: boolean }` (lê `matchMedia`/`navigator`, com guardas); `MARCA_GUIA_VISTO` (chave do localStorage); `AtalhoInstalar({ })` (o atalho permanente em Ajustes — só celular).
 
-- [ ] **Passo 1: Teste da função pura**
+- [x] **Passo 1: Teste da função pura**
 
 ```ts
 // tests/painel/guia-instalar.test.ts
@@ -637,9 +637,9 @@ describe("deveMostrarGuia", () => {
 });
 ```
 
-- [ ] **Passo 2: Rodar e ver falhar.**
+- [x] **Passo 2: Rodar e ver falhar.**
 
-- [ ] **Passo 3: Implementar `guia-instalar.ts`**
+- [x] **Passo 3: Implementar `guia-instalar.ts`**
 
 ```ts
 // lib/painel/guia-instalar.ts
@@ -680,13 +680,13 @@ export function marcarGuiaVisto(): void {
 }
 ```
 
-- [ ] **Passo 4: Rodar e ver passar.**
+- [x] **Passo 4: Rodar e ver passar.**
 
-- [ ] **Passo 5:** Implementar `AtalhoInstalar` — `"use client"`; usa `detectar()`; se não for celular, **não renderiza nada** (D-40: some no computador); se for celular, mostra um botão "Colocar na tela inicial" que abre o mesmo conteúdo do guia (iPhone pelo Compartilhar / Android pelo "Instalar"). Pode compartilhar o corpo com o `GuiaInstalar` da Task 9 (extrair um `ConteudoInstalar` reutilizável). Teste leve: no computador não renderiza (mock de `matchMedia`).
+- [x] **Passo 5:** Implementar `AtalhoInstalar` — `"use client"`; usa `detectar()`; se não for celular, **não renderiza nada** (D-40: some no computador); se for celular, mostra um botão "Colocar na tela inicial" que abre o mesmo conteúdo do guia (iPhone pelo Compartilhar / Android pelo "Instalar"). Pode compartilhar o corpo com o `GuiaInstalar` da Task 9 (extrair um `ConteudoInstalar` reutilizável). Teste leve: no computador não renderiza (mock de `matchMedia`).
 
-- [ ] **Passo 6:** Encaixar `<AtalhoInstalar/>` na página de Ajustes (`app/r/[slug]/ajustes/page.tsx`), entre os "Dados da casa" e o "Falar com a Repply". Como o `AtalhoInstalar` já se esconde sozinho no computador e no app instalado, a própria regra D-40 fica garantida por ele. Rodar testes/tipos/lint.
+- [x] **Passo 6:** Encaixar `<AtalhoInstalar/>` na página de Ajustes (`app/r/[slug]/ajustes/page.tsx`), entre os "Dados da casa" e o "Falar com a Repply". Como o `AtalhoInstalar` já se esconde sozinho no computador e no app instalado, a própria regra D-40 fica garantida por ele. Rodar testes/tipos/lint.
 
-- [ ] **Passo 7: Commit** — `git add lib/painel/guia-instalar.ts components/painel/instalar/atalho-instalar.tsx app/r/[slug]/ajustes/page.tsx tests/painel/guia-instalar.test.ts && git commit -m "Cria a lógica do guia de instalar e o atalho de Ajustes"`
+- [x] **Passo 7: Commit** — `git add lib/painel/guia-instalar.ts components/painel/instalar/atalho-instalar.tsx app/r/[slug]/ajustes/page.tsx tests/painel/guia-instalar.test.ts && git commit -m "Cria a lógica do guia de instalar e o atalho de Ajustes"`
 
 ---
 
@@ -701,15 +701,15 @@ export function marcarGuiaVisto(): void {
 - Consumes: `deveMostrarGuia`, `detectar`, `jaViuGuia`, `marcarGuiaVisto` (Task 8).
 - Produces: `GuiaInstalar()` — cartão dispensável; some conforme as regras.
 
-- [ ] **Passo 1: Teste** — monta e, com `matchMedia` de celular + sem marca, aparece o cartão; "Dispensar"/instalar grava a marca e some; com a marca já posta, não aparece. (Mockar `matchMedia`/`localStorage`.)
+- [x] **Passo 1: Teste** — monta e, com `matchMedia` de celular + sem marca, aparece o cartão; "Dispensar"/instalar grava a marca e some; com a marca já posta, não aparece. (Mockar `matchMedia`/`localStorage`.)
 
-- [ ] **Passo 2: Rodar e ver falhar.**
+- [x] **Passo 2: Rodar e ver falhar.**
 
-- [ ] **Passo 3: Implementar `GuiaInstalar`** — `"use client"`; no `useEffect` (cliente), calcula `detectar()` + `jaViuGuia()` e decide por `deveMostrarGuia`; guarda num estado `visivel`. Renderiza `null` até decidir (evita piscar no SSR/computador). Conteúdo reconhece iPhone (passo a passo pelo Compartilhar → "Adicionar à Tela de Início") × Android (botão "Instalar" via `beforeinstallprompt`; se o evento não veio, passo manual ⋮ → "Adicionar à tela inicial"). Botões "Instalar/Entendi" e "Agora não" chamam `marcarGuiaVisto()` e escondem. Cartão dispensável com a marca do app.
+- [x] **Passo 3: Implementar `GuiaInstalar`** — `"use client"`; no `useEffect` (cliente), calcula `detectar()` + `jaViuGuia()` e decide por `deveMostrarGuia`; guarda num estado `visivel`. Renderiza `null` até decidir (evita piscar no SSR/computador). Conteúdo reconhece iPhone (passo a passo pelo Compartilhar → "Adicionar à Tela de Início") × Android (botão "Instalar" via `beforeinstallprompt`; se o evento não veio, passo manual ⋮ → "Adicionar à tela inicial"). Botões "Instalar/Entendi" e "Agora não" chamam `marcarGuiaVisto()` e escondem. Cartão dispensável com a marca do app.
 
-- [ ] **Passo 4:** Encaixar `<GuiaInstalar/>` no topo de `app/r/[slug]/hoje/page.tsx` (ele próprio se esconde no computador/app/visto). Rodar testes; tipos; lint.
+- [x] **Passo 4:** Encaixar `<GuiaInstalar/>` no topo de `app/r/[slug]/hoje/page.tsx` (ele próprio se esconde no computador/app/visto). Rodar testes; tipos; lint.
 
-- [ ] **Passo 5: Commit** — `git add components/painel/instalar/guia-instalar.tsx app/r/[slug]/hoje/page.tsx tests/painel/guia-instalar-cartao.test.tsx && git commit -m "Mostra o guia de instalar uma vez por aparelho na tela Hoje"`
+- [x] **Passo 5: Commit** — `git add components/painel/instalar/guia-instalar.tsx app/r/[slug]/hoje/page.tsx tests/painel/guia-instalar-cartao.test.tsx && git commit -m "Mostra o guia de instalar uma vez por aparelho na tela Hoje"`
 
 ---
 
@@ -718,26 +718,62 @@ export function marcarGuiaVisto(): void {
 **Files:**
 - Modify: `README.md` (roteiro: etapa 6), `SPEC.md` (checklist), `docs/decisoes.md` (se surgir decisão nova), `docs/divida-tecnica.md` (itens novos), o plano (registro da execução).
 
-- [ ] **Passo 1:** Suíte completa (`npm run test`), `npm run types`, `npm run lint`, `npm run build` — tudo verde.
-- [ ] **Passo 2:** Revisão final do conjunto (opus), via `repositorio:requesting-code-review` / o revisor final do subagent-driven. Consertar Crítico/Importante.
-- [ ] **Passo 3:** Atualizar `README.md` (etapa 6 feita/no estado certo) e o checklist do `SPEC.md`; registrar dívidas novas em `docs/divida-tecnica.md`; marcar as caixas deste plano e escrever o "Registro da execução".
-- [ ] **Passo 4:** Conferência no navegador (celular e computador, claro e escuro) — pode ir para a nuvem, como combinado.
-- [ ] **Passo 5:** Commit da documentação + **pedir o ok do Lucas Ferreira** para enviar ao GitHub (um `git push` por vez). Nada publica na nuvem sem autorização. (Esta etapa provavelmente **não tem migration nova**; se tiver, republicar na nuvem é passo à parte, com autorização e reconciliação, como na etapa 5.)
+- [x] **Passo 1:** Suíte completa (`npm run test`), `npm run types`, `npm run lint`, `npm run build` — tudo verde.
+- [x] **Passo 2:** Revisão final do conjunto (opus), via `repositorio:requesting-code-review` / o revisor final do subagent-driven. Consertar Crítico/Importante.
+- [x] **Passo 3:** Atualizar `README.md` (etapa 6 feita/no estado certo) e o checklist do `SPEC.md`; registrar dívidas novas em `docs/divida-tecnica.md`; marcar as caixas deste plano e escrever o "Registro da execução".
+- [x] **Passo 4:** Conferência no navegador (celular e computador, claro e escuro) — pode ir para a nuvem, como combinado.
+- [ ] **Passo 5:** Commit da documentação + **pedir o ok do Lucas Ferreira** para enviar ao GitHub (um `git push` por vez). Nada publica na nuvem sem autorização. — *documentação commitada; aguardando o ok do Lucas Ferreira para o push. Confirmado: a etapa 6 **não tem migration nova** (só frontend), então a publicação é o deploy automático da Vercel no push, sem passo de Supabase.*
 
 ---
 
 ## Critérios de aceite da etapa 6
 
-- [ ] A meta é editável mês a mês (setas ‹ ›), com "copiar do mês anterior", salvar explícito e aviso de não salvo; grava pelo servidor, com isolamento por RLS e conferência da linha afetada; valor vazio remove o mês.
-- [ ] Os turnos (`almoco_ate`) são editáveis pelo dono via `atualizar_turnos`; o horário de funcionamento continua só leitura (D-56).
-- [ ] Senha (link que já existe) e tema (`SeletorTema`) reaproveitados; dados da casa só leitura com aviso.
-- [ ] Modo admin (D-58) esconde os salvares e as ações recusam o admin.
-- [ ] PWA: service worker mínimo (só "sem conexão", sem guardar dados); instalável.
-- [ ] Guia "tela inicial": uma vez por aparelho, logo após o 1º login, só no celular, nunca no app instalado nem no computador (D-36/D-39/D-40); sempre disponível em Ajustes (celular); no computador, Ajustes em duas colunas e sem a seção.
-- [ ] Testes de isolamento e de comportamento passam; tipos, lint, build limpos; conferência em celular e computador, claro e escuro.
+- [x] A meta é editável mês a mês (setas ‹ ›), com "copiar do mês anterior", salvar explícito e aviso de não salvo; grava pelo servidor, com isolamento por RLS e conferência da linha afetada; valor vazio remove o mês.
+- [x] Os turnos (`almoco_ate`) são editáveis pelo dono via `atualizar_turnos`; o horário de funcionamento continua só leitura (D-56).
+- [x] Senha (link que já existe) e tema (`SeletorTema`) reaproveitados; dados da casa só leitura com aviso.
+- [x] Modo admin (D-58) esconde os salvares e as ações recusam o admin.
+- [x] PWA: service worker mínimo (só "sem conexão", sem guardar dados); instalável.
+- [x] Guia "tela inicial": uma vez por aparelho, logo após o 1º login, só no celular, nunca no app instalado nem no computador (D-36/D-39/D-40); sempre disponível em Ajustes (celular); no computador, Ajustes em duas colunas e sem a seção.
+- [ ] Testes de isolamento e de comportamento passam; tipos, lint, build limpos; conferência em celular e computador, claro e escuro. — *suíte sem banco verde (827); os 28 testes de banco falharam só por o Docker estar desligado (reconfirmados com o banco de pé); tipos, lint e build limpos. A conferência visual (celular/computador, claro/escuro) foi adiada para a nuvem (pós-deploy), como nas etapas 4a e 5.*
 
 ---
 
 ## Registro da execução
 
-*(preencher na execução: commits por tarefa, consertos, desvios aceitos, decisões do controlador, conferência no navegador)*
+Executada em 20/10/2026 por desenvolvimento guiado por subagentes (um implementador + um revisor por tarefa, revisão final do conjunto no modelo mais capaz). **Etapa só frontend — nenhuma migration nem função SQL nova.** Revisão final (opus): **pronto para merge**, sem achado Crítico ou Importante.
+
+**Commits por tarefa (base `f6f0970`, o plano):**
+
+| Tarefa | O que entrou | Commit final |
+|---|---|---|
+| 1 | Entrada de dinheiro (`analisarBRL` + `CampoDinheiro`) | `6ac44e5` |
+| 2 | Esquemas e ações de salvar meta e turnos (pelo servidor, RLS) | `d51767a` |
+| 3 | Teste de isolamento do `atualizar_turnos` | `914029e` |
+| 4 | Seção de meta mês a mês (navegação, copiar do anterior, salvar) | `ac1a45c` |
+| 5 | Seção de turnos | `aa370c8` |
+| 6 | Montagem da página de Ajustes (+ util `mesAtualNoFuso`) | `b0426a6` |
+| 7 | PWA: service worker mínimo e página "sem conexão" | `6c764d3` |
+| 8 | Lógica do guia, conteúdo (chave iPhone/Android) e atalho | `3def54d` |
+| 9 | Cartão do guia na tela Hoje (uma vez por aparelho) | `e168f96` |
+| 10 | Fechamento: documentação e este registro | *(este commit)* |
+
+**Consertos de revisão (destaques):**
+- T1: `analisarBRL` endurecido para não ler ponto solto errado (teclado de celular só com "."; "30.5" vira 30,50, "30.000.50"→null) — evita meta 10×/100× errada.
+- T2: teto de valor no esquema (numeric(12,2)), códigos de log `falha_salvar_meta`/`falha_salvar_turnos`, e testes das ações (mock de `exigirCasa`+`createClient`, estilo `acoes-recusam`).
+- T4: cobertura do salvar/confirm, trava das setas enquanto salva, "Meta removida." quando esvazia.
+- T6: **trata erro de leitura do Supabase** (lança para a tela de erro, como a Hoje; pendência 27) — numa tela de escrita, mostrar padrões poderia sobrescrever o turno real; CNPJ formatado; mês atual com a virada do dia; "Falar com a Repply" virou seção própria; duas colunas só no computador (`lg:`).
+- T7: a página `/offline` tornada pública no porteiro (senão o SW guardava um redirect e o offline não funcionava); SW recusa guardar redirect; registra o SW só em produção.
+- T8: **chave iPhone/Android** (D-36, estava na tela aprovada e faltou no brief), captura global do `beforeinstallprompt` (botão "Instalar" do Android), detecção endurecida (ponteiro grosso + iPad-como-Mac), textos iguais à tela aprovada.
+
+**Decisões do controlador (rulings):**
+- **D-68 não se aplica aqui.** (Etapa 5.)
+- Meta mês a mês inspirada no "plano de vendas" do Repply CRM (valor por mês, "copiar do anterior", salvar explícito), enxuta para uma casa só — **escolha do Lucas Ferreira**.
+- Turnos = só o corte almoço/jantar (`almoco_ate`) — **escolha do Lucas Ferreira**.
+- `/offline` pública no porteiro: necessário para o fallback do PWA; página de texto fixo, sem dado, link interno `/`. **A SINALIZAR ao Lucas no envio** (mexe no porteiro, AGENTS §4) — ele veta antes da produção se quiser.
+- Verificação completa: a suíte sem banco está verde (827); os 28 arquivos que falharam na rodada completa são exatamente os 28 que usam o banco local, porque o Docker estava desligado — não é regressão (reconfirmados com o banco de pé).
+
+**Dívidas registradas:** itens 62–66 em [`docs/divida-tecnica.md`](../../divida-tecnica.md), todas de prioridade Baixa, nenhuma bloqueia o merge.
+
+**Pendências para publicar (dependem do ok do Lucas Ferreira):**
+1. `git push` dos commits da etapa 6 para o `main` (dispara o deploy automático da Vercel — **não há passo de Supabase**, é só frontend).
+2. Conferir a tela de Ajustes e o guia ao vivo depois do deploy (celular e computador), como nas etapas 4a e 5.
