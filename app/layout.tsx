@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { RegistrarSW } from "@/components/pwa/registrar-sw";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
@@ -60,6 +61,7 @@ const jetBrainsMono = localFont({
 export const metadata: Metadata = {
   title: "repply food.",
   description: "Painel do dono de bar e restaurante",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
@@ -104,6 +106,7 @@ export default async function RootLayout({
           {children}
           <Toaster />
         </ThemeProvider>
+        <RegistrarSW />
       </body>
     </html>
   );

@@ -74,6 +74,14 @@ describe("porteiro: para onde cada endereço leva", () => {
     expect(ehArquivoEstatico(pathname)).toBe(esperado);
   });
 
+  it("/offline é pública em qualquer estado (fallback do PWA)", () => {
+    for (const estado of [semUsuario, logado, primeiroAcesso]) {
+      expect(
+        decidirRota({ pathname: "/offline", search: "", ...estado })
+      ).toEqual({ tipo: "segue" });
+    }
+  });
+
   it("arquivo estático segue mesmo sem login", () => {
     expect(
       decidirRota({ pathname: "/icon-192.png", search: "", ...semUsuario })

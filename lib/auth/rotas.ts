@@ -67,6 +67,11 @@ export function decidirRota(e: {
 }): Decisao {
   if (ehArquivoEstatico(e.pathname)) return { tipo: "segue" };
 
+  // A página "sem conexão" do PWA é pública: só texto fixo, sem dado. Precisa
+  // abrir sem login e sem a trava de troca de senha, para o service worker
+  // guardar e servir o fallback offline (etapa 6).
+  if (e.pathname === "/offline") return { tipo: "segue" };
+
   if (!e.temUsuario) {
     if (ehPublica(e.pathname)) return { tipo: "segue" };
     if (e.pathname === "/") return { tipo: "redireciona", para: ROTA_ENTRAR };
