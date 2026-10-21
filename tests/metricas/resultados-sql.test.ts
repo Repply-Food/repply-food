@@ -329,6 +329,59 @@ describe("Métricas de Resultados no PostgreSQL", () => {
     expect(tresOcorrencias.rows[0].referencia_faturamento).toBe("966.67");
   });
 
+  it("usa somente as quatro ocorrências semanais mais recentes", async () => {
+    await banco.query("select public.processar_envio($1, $2::jsonb)", [
+      fixture.restauranteA,
+      JSON.stringify(
+        envelope([
+          entrada(351, {
+            DataEntrada: "2026-11-03",
+            DataSaida: "2026-11-03",
+            ValorConsumido: 500,
+            TaxaServico: 0,
+          }),
+          entrada(352, {
+            DataEntrada: "2026-10-27",
+            DataSaida: "2026-10-27",
+            ValorConsumido: 400,
+            TaxaServico: 0,
+          }),
+          entrada(353, {
+            DataEntrada: "2026-10-20",
+            DataSaida: "2026-10-20",
+            ValorConsumido: 300,
+            TaxaServico: 0,
+          }),
+          entrada(354, {
+            DataEntrada: "2026-10-13",
+            DataSaida: "2026-10-13",
+            ValorConsumido: 200,
+            TaxaServico: 0,
+          }),
+          entrada(355, {
+            DataEntrada: "2026-10-06",
+            DataSaida: "2026-10-06",
+            ValorConsumido: 100,
+            TaxaServico: 0,
+          }),
+          entrada(356, {
+            DataEntrada: "2026-09-29",
+            DataSaida: "2026-09-29",
+            ValorConsumido: 9999,
+            TaxaServico: 0,
+          }),
+        ])
+      ),
+    ]);
+
+    const { rows } = await banco.query(
+      "select * from public.metrica_resultados_resumo($1, '2026-11-03', '2026-11-03', 'semana')",
+      [fixture.restauranteA]
+    );
+
+    expect(rows[0].referencia_faturamento).toBe("250.00");
+  });
+
   it("aplica período anterior, virada, turnos e permanência válidos", async () => {
     await banco.query(
       'update public.restaurantes set turnos = \'{"almoco_ate": "13:00"}\'::jsonb where id = $1',
