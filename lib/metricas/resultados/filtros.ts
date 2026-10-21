@@ -33,7 +33,7 @@ export type FiltrosResultados = {
   fim: string;
   quantidadeDias: number;
   rotuloPeriodo: string;
-  query: URLSearchParams;
+  query: string;
 };
 
 export type EntradaFiltrosResultados =
@@ -101,14 +101,14 @@ function queryCanonica(
   inicio: string,
   fim: string,
   comparacao: ComparacaoResultados
-): URLSearchParams {
+): string {
   const query = new URLSearchParams({ aba, periodo: atalho });
   if (atalho === "escolher") {
     query.set("inicio", inicio);
     query.set("fim", fim);
   }
   query.set("comparacao", comparacao);
-  return query;
+  return query.toString();
 }
 
 export function parseFiltrosResultados(

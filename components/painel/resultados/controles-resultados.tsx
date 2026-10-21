@@ -118,7 +118,7 @@ export function ControlesResultados({
         </div>
         <a
           className={buttonVariants({ size: "sm" })}
-          href={`/r/${slug}/resultados/pdf?${filtros.query.toString()}`}
+          href={`/r/${slug}/resultados/pdf?${filtros.query}`}
         >
           Baixar PDF
         </a>

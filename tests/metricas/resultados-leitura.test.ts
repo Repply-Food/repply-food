@@ -25,7 +25,7 @@ const filtros: FiltrosResultados = {
   fim: "2026-10-07",
   quantidadeDias: 7,
   rotuloPeriodo: "1 de outubro a 7 de outubro de 2026",
-  query: new URLSearchParams(),
+  query: "",
 };
 
 const linhasPorMetrica: Record<string, unknown[]> = {

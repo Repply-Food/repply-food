@@ -53,7 +53,7 @@ describe("parseFiltrosResultados", () => {
       fim: "2026-10-23",
       quantidadeDias: 90,
     });
-    expect(filtros.query.toString()).toBe(
+    expect(filtros.query).toBe(
       "aba=equipe&periodo=escolher&inicio=2026-07-26&fim=2026-10-23&comparacao=semana"
     );
   });
@@ -77,8 +77,6 @@ describe("parseFiltrosResultados", () => {
       inicio: "2026-10-17",
       fim: "2026-10-23",
     });
-    expect(filtros.query.toString()).toBe(
-      "aba=vendas&periodo=7d&comparacao=anterior"
-    );
+    expect(filtros.query).toBe("aba=vendas&periodo=7d&comparacao=anterior");
   });
 });

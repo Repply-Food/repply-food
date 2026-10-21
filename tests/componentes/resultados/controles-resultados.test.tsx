@@ -18,7 +18,7 @@ const filtros: FiltrosResultados = {
   fim: "2026-10-20",
   quantidadeDias: 7,
   rotuloPeriodo: "14 de outubro a 20 de outubro de 2026",
-  query: new URLSearchParams("aba=vendas&periodo=7d&comparacao=anterior"),
+  query: "aba=horarios&periodo=mes&comparacao=semana",
 };
 
 afterEach(() => {
@@ -52,7 +52,7 @@ describe("controles e navegação de Resultados", () => {
     expect(
       screen.getByRole("link", { name: "Baixar PDF" }).getAttribute("href")
     ).toBe(
-      "/r/casa-a/resultados/pdf?aba=vendas&periodo=7d&comparacao=anterior"
+      "/r/casa-a/resultados/pdf?aba=horarios&periodo=mes&comparacao=semana"
     );
   });
 
@@ -63,9 +63,11 @@ describe("controles e navegação de Resultados", () => {
       screen.getByRole("navigation", { name: "Abas de resultados" })
     ).toBeTruthy();
     expect(screen.queryByRole("tab")).toBeNull();
-    expect(
-      screen.getByRole("link", { name: "Vendas" }).getAttribute("aria-current")
-    ).toBe("page");
+    const vendas = screen.getByRole("link", { name: "Vendas" });
+    expect(vendas.getAttribute("aria-current")).toBe("page");
+    expect(vendas.getAttribute("href")).toBe(
+      "/r/casa-a/resultados?aba=vendas&periodo=mes&comparacao=semana"
+    );
     expect(
       screen.getByRole("link", { name: "Equipe" }).getAttribute("aria-current")
     ).toBeNull();

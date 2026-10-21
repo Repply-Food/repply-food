@@ -14,7 +14,7 @@ const filtros: FiltrosResultados = {
   fim: "2026-10-20",
   quantidadeDias: 7,
   rotuloPeriodo: "14 de outubro a 20 de outubro de 2026",
-  query: new URLSearchParams("aba=vendas&periodo=7d&comparacao=anterior"),
+  query: "aba=vendas&periodo=7d&comparacao=anterior",
 };
 
 const dados: DadosDeResultados = {
