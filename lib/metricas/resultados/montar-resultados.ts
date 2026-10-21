@@ -18,8 +18,12 @@ export type LinhasDeResultados = {
     | "variacao_faturamento"
     | "referencia_contas"
     | "variacao_contas"
+    | "referencia_pessoas"
+    | "variacao_pessoas"
     | "referencia_ticket_conta"
     | "variacao_ticket_conta"
+    | "referencia_ticket_pessoa"
+    | "variacao_ticket_pessoa"
   >[];
   vendasDiarias: readonly Linha<"metrica_resultados_vendas_diarias">[];
   ocupacao: readonly ComNulos<
@@ -71,12 +75,16 @@ export function montarDadosDeResultados(
       referencia: {
         faturamento: resumo.referencia_faturamento,
         contas: resumo.referencia_contas,
+        pessoas: resumo.referencia_pessoas,
         ticketConta: resumo.referencia_ticket_conta,
+        ticketPessoa: resumo.referencia_ticket_pessoa,
       },
       variacao: {
         faturamento: resumo.variacao_faturamento,
         contas: resumo.variacao_contas,
+        pessoas: resumo.variacao_pessoas,
         ticketConta: resumo.variacao_ticket_conta,
+        ticketPessoa: resumo.variacao_ticket_pessoa,
       },
     },
     vendasDiarias: linhas.vendasDiarias.map((venda) => ({

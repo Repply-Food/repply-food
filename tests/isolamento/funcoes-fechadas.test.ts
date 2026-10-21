@@ -108,6 +108,11 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  {
+    funcao: "validar_intervalo_resultados(date, date)",
+    anon: false,
+    authenticated: true,
+  },
 ];
 
 describe("funções do banco fechadas por padrão", () => {

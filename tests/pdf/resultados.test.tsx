@@ -16,7 +16,7 @@ const diretorios: string[] = [];
 const filtros: FiltrosResultados = {
   aba: "vendas",
   comparacao: "anterior",
-  atalho: "7d",
+  atalho: "mes",
   inicio: "2026-10-01",
   fim: "2026-10-07",
   quantidadeDias: 7,
@@ -33,9 +33,21 @@ const dados: DadosDeResultados = {
     ticketConta: "66.67",
     ticketPessoa: "28.57",
     descontosTotal: "35.00",
-    percentualDescontos: 2.9,
-    referencia: { faturamento: "1000.00", contas: 15, ticketConta: "66.67" },
-    variacao: { faturamento: 20, contas: 20, ticketConta: 0 },
+    percentualDescontos: 0.029,
+    referencia: {
+      faturamento: "1000.00",
+      contas: 15,
+      pessoas: 35,
+      ticketConta: "66.67",
+      ticketPessoa: "28.57",
+    },
+    variacao: {
+      faturamento: 20,
+      contas: 20,
+      pessoas: 20,
+      ticketConta: 0,
+      ticketPessoa: 0,
+    },
   },
   vendasDiarias: [
     {
@@ -44,10 +56,17 @@ const dados: DadosDeResultados = {
       taxaServico: "120.00",
     },
   ],
-  ocupacao: [],
+  ocupacao: [{ tipo: "Mesa", faturamento: "900.00", participacao: 0.75 }],
   horas: [{ hora: 12, faturamento: "600.00" }],
-  mapa: [],
-  turnos: [],
+  mapa: [{ diaSemana: 5, hora: 12, mediaContas: 3.5 }],
+  turnos: [
+    {
+      turno: "Almoço",
+      faturamento: "600.00",
+      contas: 9,
+      permanenciaMedia: "01:15:00",
+    },
+  ],
   equipe: [
     {
       codGarcom: 27,
@@ -60,7 +79,13 @@ const dados: DadosDeResultados = {
     },
   ],
   descontos: [{ codOperadorFechamento: 8, descontos: "35.00" }],
-  meta: null,
+  meta: {
+    faturamentoMes: "1200.00",
+    meta: "2000.00",
+    andamento: 0.6,
+    projecao: "1800.00",
+    projecaoDisponivel: true,
+  },
 };
 
 const dadosComSentinelas = {
@@ -83,7 +108,7 @@ afterEach(async () => {
 });
 
 describe("DocumentoResultadosPdf", () => {
-  it("renderiza o cabeçalho, as quatro seções e não expõe sentinelas", async () => {
+  it("exporta valores representativos de todas as análises e não expõe sentinelas", async () => {
     const buffer = await renderToBuffer(
       <DocumentoResultadosPdf
         casa={{ nome: "Casa Exemplo" }}
@@ -112,6 +137,17 @@ describe("DocumentoResultadosPdf", () => {
     expect(stdout).toContain("Equipe");
     expect(stdout).toContain("Descontos");
     expect(stdout).toContain("Taxa de serviço");
+    expect(stdout).toContain("R$ 1.200,00");
+    expect(stdout).toContain("01/10/2026");
+    expect(stdout).toContain("Mesa");
+    expect(stdout).toContain("12:00");
+    expect(stdout).toContain("Sexta, 12h");
+    expect(stdout).toContain("Almoço");
+    expect(stdout).toContain("01:15:00");
+    expect(stdout).toContain("Garçom 27");
+    expect(stdout).toContain("Operador 8");
+    expect(stdout).toContain("2,9%");
+    expect(stdout).toContain("Meta do mês");
     expect(stdout).not.toContain(dadosComSentinelas.nomeCliente);
     expect(stdout).not.toContain(dadosComSentinelas.telefone);
     expect(stdout).not.toContain(dadosComSentinelas.token);

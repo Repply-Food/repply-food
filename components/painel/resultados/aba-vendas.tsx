@@ -52,7 +52,7 @@ export function AbaVendas({
         <CartaoComparativo
           titulo="Pessoas"
           valor={resumo.pessoas}
-          variacao={null}
+          variacao={resumo.variacao.pessoas}
         />
         <CartaoComparativo
           titulo="Por conta"
@@ -63,7 +63,7 @@ export function AbaVendas({
         <CartaoComparativo
           titulo="Por pessoa"
           valor={resumo.ticketPessoa}
-          variacao={null}
+          variacao={resumo.variacao.ticketPessoa}
           dinheiro
         />
         <Card size="sm" className="col-span-2">

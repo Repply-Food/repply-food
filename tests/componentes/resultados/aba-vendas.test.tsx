@@ -27,8 +27,20 @@ const dados: DadosDeResultados = {
     ticketPessoa: "69.95",
     descontosTotal: "0.00",
     percentualDescontos: null,
-    referencia: { faturamento: "38500.00", contas: 180, ticketConta: "213.89" },
-    variacao: { faturamento: 0.09, contas: 0.06, ticketConta: 0.03 },
+    referencia: {
+      faturamento: "38500.00",
+      contas: 180,
+      pessoas: 570,
+      ticketConta: "213.89",
+      ticketPessoa: "67.54",
+    },
+    variacao: {
+      faturamento: 0.09,
+      contas: 0.06,
+      pessoas: 0.058,
+      ticketConta: 0.03,
+      ticketPessoa: 0.035,
+    },
   },
   vendasDiarias: [
     {
@@ -58,5 +70,12 @@ describe("AbaVendas", () => {
     expect(
       screen.getByRole("img", { name: /faturamento por dia/i })
     ).toBeTruthy();
+  });
+
+  it("mostra as variações de pessoas e por pessoa quando há referência", () => {
+    render(<AbaVendas dados={dados} filtros={filtros} />);
+
+    expect(screen.getAllByText("6%")).toHaveLength(2);
+    expect(screen.getByText("4%")).toBeTruthy();
   });
 });

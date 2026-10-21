@@ -22,8 +22,12 @@ function linhas(
         variacao_faturamento: 0.13,
         referencia_contas: 28,
         variacao_contas: 0.1071,
+        referencia_pessoas: 68,
+        variacao_pessoas: 0.0882,
         referencia_ticket_conta: "266.12",
         variacao_ticket_conta: 0.0206,
+        referencia_ticket_pessoa: "109.58",
+        variacao_ticket_pessoa: 0.0383,
       },
     ],
     vendasDiarias: [
@@ -82,8 +86,12 @@ describe("montarDadosDeResultados", () => {
             variacao_faturamento: null,
             referencia_contas: null,
             variacao_contas: null,
+            referencia_pessoas: null,
+            variacao_pessoas: null,
             referencia_ticket_conta: null,
             variacao_ticket_conta: null,
+            referencia_ticket_pessoa: null,
+            variacao_ticket_pessoa: null,
             ticket_pessoa: null,
             percentual_descontos: null,
           },
@@ -96,6 +104,8 @@ describe("montarDadosDeResultados", () => {
     expect(dados.resumo.referencia.faturamento).toBeNull();
     expect(dados.resumo.ticketPessoa).toBeNull();
     expect(dados.resumo.percentualDescontos).toBeNull();
+    expect(dados.resumo.referencia.pessoas).toBeNull();
+    expect(dados.resumo.variacao.ticketPessoa).toBeNull();
   });
 
   it("mapeia todas as listas sem recalcular valores nem remover nulos", () => {
@@ -143,6 +153,9 @@ describe("montarDadosDeResultados", () => {
     ]);
     expect(dados.equipe[0]?.ticketPessoa).toBeNull();
     expect(dados.resumo.referencia.ticketConta).toBe("266.12");
+    expect(dados.resumo.referencia.pessoas).toBe(68);
+    expect(dados.resumo.variacao.pessoas).toBe(0.0882);
+    expect(dados.resumo.referencia.ticketPessoa).toBe("109.58");
     expect(dados.descontos).toEqual([
       { codOperadorFechamento: 99, descontos: "120.00" },
     ]);

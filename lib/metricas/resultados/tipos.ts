@@ -13,12 +13,16 @@ export type DadosDeResultados = {
     referencia: {
       faturamento: string | null;
       contas: number | null;
+      pessoas: number | null;
       ticketConta: string | null;
+      ticketPessoa: string | null;
     };
     variacao: {
       faturamento: number | null;
       contas: number | null;
+      pessoas: number | null;
       ticketConta: number | null;
+      ticketPessoa: number | null;
     };
   };
   vendasDiarias: {

@@ -357,7 +357,7 @@ isOneToOne: false
                            },
 "metrica_resultados_resumo":
 { Args: { "p_comparacao": string,"p_fim": string,"p_inicio": string,"p_restaurante_id": string }; Returns: {
-              "contas": number,"descontos_total": string,"faturamento": string,"percentual_descontos": number,"pessoas": number,"referencia_contas": number,"referencia_faturamento": string,"referencia_ticket_conta": string,"taxa_servico": string,"ticket_conta": string,"ticket_pessoa": string,"variacao_contas": number,"variacao_faturamento": number,"variacao_ticket_conta": number
+              "contas": number,"descontos_total": string,"faturamento": string,"percentual_descontos": number,"pessoas": number,"referencia_contas": number,"referencia_faturamento": string,"referencia_pessoas": number,"referencia_ticket_conta": string,"referencia_ticket_pessoa": string,"taxa_servico": string,"ticket_conta": string,"ticket_pessoa": string,"variacao_contas": number,"variacao_faturamento": number,"variacao_pessoas": number,"variacao_ticket_conta": number,"variacao_ticket_pessoa": number
             }[]
                            },
 "metrica_resultados_turnos":
@@ -393,6 +393,9 @@ isOneToOne: false
                            },
 "trocar_token_envio":
 { Args: { "p_antigo": string,"p_hash": string,"p_prefixo": string,"p_restaurante": string }; Returns: Json
+                           },
+"validar_intervalo_resultados":
+{ Args: { "p_fim": string,"p_inicio": string }; Returns: undefined
                            }
           }
           Enums: {

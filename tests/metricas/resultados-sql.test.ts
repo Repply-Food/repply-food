@@ -170,6 +170,49 @@ describe("Métricas de Resultados no PostgreSQL", () => {
       [fixture.restauranteA]
     );
     expect(rows[0].referencia_faturamento).toBe("3000.00");
+    expect(rows[0]).toMatchObject({
+      referencia_pessoas: "10.00",
+      referencia_ticket_pessoa: "300.00",
+    });
+  });
+
+  it("rejeita intervalos invertidos ou maiores que 90 dias em todas as RPCs", async () => {
+    const rpcs = [
+      "metrica_resultados_resumo",
+      "metrica_resultados_vendas_diarias",
+      "metrica_resultados_ocupacao",
+      "metrica_resultados_horas",
+      "metrica_resultados_mapa_calor",
+      "metrica_resultados_turnos",
+      "metrica_resultados_equipe",
+      "metrica_resultados_descontos",
+    ];
+
+    for (const [inicio, fim] of [
+      ["2026-01-01", "2026-04-01"],
+      ["2026-10-20", "2026-10-19"],
+    ]) {
+      for (const rpc of rpcs) {
+        const chamada =
+          rpc === "metrica_resultados_resumo"
+            ? `select * from public.${rpc}($1, $2, $3, 'anterior')`
+            : `select * from public.${rpc}($1, $2, $3)`;
+        await expect(
+          comoAutenticado(banco, fixture.usuarioA, () =>
+            banco.query(chamada, [fixture.restauranteA, inicio, fim])
+          )
+        ).rejects.toMatchObject({ code: "22023" });
+      }
+    }
+  });
+
+  it("aceita os 90 dias inclusivos nas RPCs", async () => {
+    const { rows } = await banco.query(
+      "select * from public.metrica_resultados_resumo($1, '2026-07-21', '2026-10-18', 'anterior')",
+      [fixture.restauranteA]
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].faturamento).toBe("14400.00");
   });
 
   it("retorna as quebras atuais ordenadas, incluindo descontos sem operador", async () => {

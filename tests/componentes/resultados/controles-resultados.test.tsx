@@ -27,6 +27,27 @@ afterEach(() => {
 });
 
 describe("ControlesResultados", () => {
+  it("aceita 90 dias históricos e forma a URL canônica", () => {
+    render(<ControlesResultados filtros={filtros} slug="casa-a" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Escolher período" }));
+    fireEvent.change(screen.getByLabelText("Data inicial"), {
+      target: { value: "2024-01-01" },
+    });
+
+    expect(screen.getByLabelText("Data final").getAttribute("max")).toBe(
+      "2024-03-30"
+    );
+
+    fireEvent.change(screen.getByLabelText("Data final"), {
+      target: { value: "2024-03-30" },
+    });
+
+    expect(push).toHaveBeenLastCalledWith(
+      "/r/casa-a/resultados?aba=horarios&periodo=escolher&comparacao=semana&inicio=2024-01-01&fim=2024-03-30"
+    );
+  });
+
   it("troca para escolher e não navega com mais de 90 dias", async () => {
     render(<ControlesResultados filtros={filtros} slug="casa-a" />);
 

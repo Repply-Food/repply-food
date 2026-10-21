@@ -31,6 +31,12 @@ function dataMinima(fim: string): string {
   return data.toISOString().slice(0, 10);
 }
 
+function dataMaxima(inicio: string): string {
+  const data = new Date(`${inicio}T00:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + (MAXIMO_DIAS_ESCOLHIDOS - 1));
+  return data.toISOString().slice(0, 10);
+}
+
 export function ControlesResultados({
   filtros,
   slug,
@@ -134,8 +140,8 @@ export function ControlesResultados({
             <Input
               id="inicio-resultados"
               type="date"
-              min={dataMinima(fim || filtros.fim)}
-              max={fim || filtros.fim}
+              min={fim ? dataMinima(fim) : undefined}
+              max={fim || undefined}
               value={inicio}
               aria-invalid={erro ? true : undefined}
               onChange={(evento) => atualizarEscolha(evento.target.value, fim)}
@@ -149,8 +155,8 @@ export function ControlesResultados({
             <Input
               id="fim-resultados"
               type="date"
-              min={inicio}
-              max={filtros.fim}
+              min={inicio || undefined}
+              max={inicio ? dataMaxima(inicio) : undefined}
               value={fim}
               aria-invalid={erro ? true : undefined}
               onChange={(evento) =>
