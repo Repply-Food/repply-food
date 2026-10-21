@@ -88,9 +88,21 @@ As fórmulas usam só contas válidas do restaurante, dentro do período e do di
 | Equipe | M25 | Taxa de serviço por garçom | Soma de `taxa_servico` das pagas por garçom. É a base para dividir os 10% |
 | Descontos | M12 | Descontos | Total, % do faturamento e por `cod_operador_fechamento` |
 
+- **Período:** Hoje, 7 dias, Mês ou intervalo escolhido. O intervalo escolhido
+  usa `dia_operacao`, inclui as duas datas e aceita no máximo **90 dias**.
+- **PDF:** `GET /r/[slug]/resultados/pdf` é uma leitura autenticada do painel.
+  A rota confere o acesso à casa, valida os mesmos filtros da URL e lê as mesmas
+  métricas da tela; não aceita identificador de restaurante como parâmetro.
+
 ## 4. Comparações (D-22)
 
 - **Período anterior.** É o período de mesmo tamanho imediatamente antes: hoje contra ontem, 7 dias contra os 7 anteriores, mês contra o mês anterior até o mesmo dia.
+- **Mesmo dia da semana (Resultados).** Para cada dia do período que teve ao
+  menos uma conta paga, busca até as quatro ocorrências anteriores com movimento
+  do mesmo dia da semana, calcula a média de cada métrica e soma essas médias.
+  Se algum dia necessário tiver menos de duas ocorrências, a comparação não
+  aparece. Assim, um período de vários dias é comparado com a referência de
+  cada um dos seus dias, e não com uma média única do intervalo.
 - **Mesmo dia da semana até o mesmo horário** (usado no "Hoje"):
   1. `decorrido = agora − (início do dia de operação atual)`.
   2. Para cada uma das **últimas 4 ocorrências** do mesmo dia da semana **em que a casa teve movimento** (pelo menos 1 conta paga no dia inteiro), some o faturamento da casa das contas pagas com `fechada_em ≤ início daquele dia + decorrido`.

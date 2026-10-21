@@ -45,6 +45,15 @@ describe("logger", () => {
     erro.mockRestore();
   });
 
+  it("aceita o código da leitura das métricas de Resultados", () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    logError("falha_metricas_resultados");
+    expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual([
+      "falha_metricas_resultados",
+    ]);
+    erro.mockRestore();
+  });
+
   it("aceita os códigos de salvar meta e turnos (etapa 6)", () => {
     const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
     logError("falha_salvar_meta");
