@@ -60,6 +60,46 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  {
+    funcao: "metrica_resultados_descontos(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_equipe(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_horas(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_mapa_calor(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_ocupacao(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_resumo(uuid, date, date, text)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_turnos(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "metrica_resultados_vendas_diarias(uuid, date, date)",
+    anon: false,
+    authenticated: true,
+  },
   // Conferem eh_admin_repply() por dentro (D-38).
   { funcao: "revogar_tokens_envio(uuid)", anon: false, authenticated: true },
   { funcao: "tem_acesso(uuid)", anon: true, authenticated: true },
