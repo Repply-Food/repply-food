@@ -38,7 +38,7 @@ recalcular valores no navegador.
 
 - comparação com ano anterior (D-22);
 - cadastro/nome de garçons ou operadores: a tela usa “Garçom N” e “Operador
-  N”; 
+  N”;
 - dados de itens, meios de pagamento, clientes, custos ou qualquer dado fora
   de `entradas`;
 - compartilhar, enviar por e-mail ou agendar o PDF;
