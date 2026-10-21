@@ -10,6 +10,7 @@ const codigosErro = [
   "cota_email_estourada",
   "falha_limitador_login",
   "falha_metricas_hoje",
+  "falha_metricas_resultados",
   "falha_salvar_meta",
   "falha_salvar_turnos",
   "falha_leitura_ajustes",

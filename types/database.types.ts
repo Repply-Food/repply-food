@@ -357,7 +357,7 @@ isOneToOne: false
                            },
 "metrica_resultados_resumo":
 { Args: { "p_comparacao": string,"p_fim": string,"p_inicio": string,"p_restaurante_id": string }; Returns: {
-              "contas": number,"descontos_total": string,"faturamento": string,"percentual_descontos": number,"pessoas": number,"referencia_contas": number,"referencia_faturamento": string,"referencia_ticket_conta": number,"taxa_servico": string,"ticket_conta": string,"ticket_pessoa": string,"variacao_contas": number,"variacao_faturamento": number,"variacao_ticket_conta": number
+              "contas": number,"descontos_total": string,"faturamento": string,"percentual_descontos": number,"pessoas": number,"referencia_contas": number,"referencia_faturamento": string,"referencia_ticket_conta": string,"taxa_servico": string,"ticket_conta": string,"ticket_pessoa": string,"variacao_contas": number,"variacao_faturamento": number,"variacao_ticket_conta": number
             }[]
                            },
 "metrica_resultados_turnos":

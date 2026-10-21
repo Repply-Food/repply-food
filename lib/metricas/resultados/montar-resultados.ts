@@ -71,7 +71,7 @@ export function montarDadosDeResultados(
       referencia: {
         faturamento: resumo.referencia_faturamento,
         contas: resumo.referencia_contas,
-        ticketConta: resumo.referencia_ticket_conta?.toString() ?? null,
+        ticketConta: resumo.referencia_ticket_conta,
       },
       variacao: {
         faturamento: resumo.variacao_faturamento,

@@ -22,7 +22,7 @@ function linhas(
         variacao_faturamento: 0.13,
         referencia_contas: 28,
         variacao_contas: 0.1071,
-        referencia_ticket_conta: 266.12,
+        referencia_ticket_conta: "266.12",
         variacao_ticket_conta: 0.0206,
       },
     ],
@@ -142,6 +142,7 @@ describe("montarDadosDeResultados", () => {
       },
     ]);
     expect(dados.equipe[0]?.ticketPessoa).toBeNull();
+    expect(dados.resumo.referencia.ticketConta).toBe("266.12");
     expect(dados.descontos).toEqual([
       { codOperadorFechamento: 99, descontos: "120.00" },
     ]);
