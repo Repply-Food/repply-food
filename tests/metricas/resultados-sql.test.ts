@@ -206,6 +206,36 @@ describe("Métricas de Resultados no PostgreSQL", () => {
     }
   });
 
+  it("rejeita datas nulas em todas as RPCs", async () => {
+    const rpcs = [
+      "metrica_resultados_resumo",
+      "metrica_resultados_vendas_diarias",
+      "metrica_resultados_ocupacao",
+      "metrica_resultados_horas",
+      "metrica_resultados_mapa_calor",
+      "metrica_resultados_turnos",
+      "metrica_resultados_equipe",
+      "metrica_resultados_descontos",
+    ];
+
+    for (const [inicio, fim] of [
+      [null, "2026-10-18"],
+      ["2026-10-18", null],
+    ]) {
+      for (const rpc of rpcs) {
+        const chamada =
+          rpc === "metrica_resultados_resumo"
+            ? `select * from public.${rpc}($1, $2::date, $3::date, 'anterior')`
+            : `select * from public.${rpc}($1, $2::date, $3::date)`;
+        await expect(
+          comoAutenticado(banco, fixture.usuarioA, () =>
+            banco.query(chamada, [fixture.restauranteA, inicio, fim])
+          )
+        ).rejects.toMatchObject({ code: "22023" });
+      }
+    }
+  });
+
   it("aceita os 90 dias inclusivos nas RPCs", async () => {
     const { rows } = await banco.query(
       "select * from public.metrica_resultados_resumo($1, '2026-07-21', '2026-10-18', 'anterior')",

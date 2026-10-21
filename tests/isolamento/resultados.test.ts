@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { exigirCasa, criarCliente, logError, obterResultados } = vi.hoisted(
   () => ({
@@ -47,6 +47,8 @@ function requisicao(query = "periodo=7d&comparacao=anterior"): NextRequest {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-10-20T15:00:00.000Z"));
   vi.clearAllMocks();
   exigirCasa.mockResolvedValue({ casa: { id: "casa-a-id", nome: "Casa A" } });
   criarCliente.mockResolvedValue({
@@ -62,6 +64,10 @@ beforeEach(() => {
     }),
   });
   obterResultados.mockResolvedValue(dados);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("PDF de resultados", () => {
