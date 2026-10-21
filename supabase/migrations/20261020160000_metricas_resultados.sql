@@ -7,7 +7,7 @@ create or replace function public.metrica_resultados_resumo(
   ticket_conta text, ticket_pessoa text, descontos_total text,
   percentual_descontos numeric, referencia_faturamento text,
   variacao_faturamento numeric, referencia_contas numeric,
-  variacao_contas numeric, referencia_ticket_conta text,
+  variacao_contas numeric, referencia_ticket_conta numeric,
   variacao_ticket_conta numeric
 ) language plpgsql stable security invoker set search_path = public as $$
 declare
@@ -88,7 +88,7 @@ begin
     case when v_referencia_faturamento > 0 then round((v_atual.faturamento - v_referencia_faturamento) / v_referencia_faturamento, 4) end,
     v_referencia_contas,
     case when v_referencia_contas > 0 then round((v_atual.contas - v_referencia_contas) / v_referencia_contas, 4) end,
-    case when v_referencia_contas > 0 then round(v_referencia_faturamento / v_referencia_contas, 2)::text end,
+    case when v_referencia_contas > 0 then round(v_referencia_faturamento / v_referencia_contas, 2) end,
     case when v_referencia_faturamento > 0 and v_referencia_contas > 0 and v_atual.contas > 0
       then round(((v_atual.faturamento / v_atual.contas) - (v_referencia_faturamento / v_referencia_contas)) /
         (v_referencia_faturamento / v_referencia_contas), 4) end;
@@ -116,7 +116,7 @@ language sql stable security invoker set search_path = public as $$
       from public.entradas e where e.restaurante_id = p_restaurante_id and e.removida_em is null and e.pago
        and e.dia_operacao between p_inicio and p_fim group by 1
   ), total as (select sum(faturamento) as valor from por_tipo)
-  select p.tipo, p.faturamento::text, round(p.faturamento / nullif(t.valor, 0), 4)
+  select p.tipo, p.faturamento::text, round(p.faturamento / t.valor, 4)
     from por_tipo p cross join total t order by p.faturamento desc, p.tipo;
 $$;
 

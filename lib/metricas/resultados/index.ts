@@ -5,11 +5,6 @@ import type { FiltrosResultados } from "./filtros";
 import { montarDadosDeResultados } from "./montar-resultados";
 import type { DadosDeResultados } from "./tipos";
 
-function falhou(): never {
-  logError("falha_metricas_resultados");
-  throw new Error("falha_leitura_resultados");
-}
-
 export async function obterResultados(
   restauranteId: string,
   filtros: FiltrosResultados
@@ -63,7 +58,7 @@ export async function obterResultados(
       descontos.error ||
       meta?.error
     ) {
-      falhou();
+      throw new Error("falha_leitura_resultados");
     }
 
     return montarDadosDeResultados({
@@ -78,6 +73,7 @@ export async function obterResultados(
       meta: meta?.data ?? [],
     });
   } catch {
-    falhou();
+    logError("falha_metricas_resultados");
+    throw new Error("falha_leitura_resultados");
   }
 }

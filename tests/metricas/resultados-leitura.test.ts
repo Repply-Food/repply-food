@@ -99,6 +99,31 @@ describe("obterResultados", () => {
     expect(logError).toHaveBeenCalledWith("falha_metricas_resultados");
   });
 
+  it("registra uma única vez quando uma RPC devolve erro", async () => {
+    criarCliente.mockResolvedValue({ rpc });
+    rpc.mockResolvedValue({ data: [], error: { code: "PGRST001" } });
+
+    await expect(obterResultados(restauranteId, filtros)).rejects.toThrow(
+      "falha_leitura_resultados"
+    );
+    expect(logError).toHaveBeenCalledOnce();
+    expect(logError).toHaveBeenCalledWith("falha_metricas_resultados");
+  });
+
+  it("registra uma única vez quando o resumo não tem linha agregada", async () => {
+    preparaLeitura();
+    rpc.mockImplementation(async (nome: string) => ({
+      data: nome === "metrica_resultados_resumo" ? [] : linhasPorMetrica[nome],
+      error: null,
+    }));
+
+    await expect(obterResultados(restauranteId, filtros)).rejects.toThrow(
+      "falha_leitura_resultados"
+    );
+    expect(logError).toHaveBeenCalledOnce();
+    expect(logError).toHaveBeenCalledWith("falha_metricas_resultados");
+  });
+
   it("consulta as oito RPCs em paralelo sem a meta fora do mês", async () => {
     preparaLeitura();
 
