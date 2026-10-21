@@ -63,6 +63,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"alertas_sinal": {
+                  Row: {
+                    "atualizado_em": string,"criado_em": string,"enviado_em": string | null,"erro_codigo": string | null,"estado": string,"id": string,"incidente_id": string,"proxima_tentativa_em": string,"request_id": number | null,"restaurante_id": string,"solicitado_em": string | null,"tentativas": number,"tipo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atualizado_em"?: string,"criado_em"?: string,"enviado_em"?: string | null,"erro_codigo"?: string | null,"estado"?: string,"id"?: string,"incidente_id": string,"proxima_tentativa_em"?: string,"request_id"?: number | null,"restaurante_id": string,"solicitado_em"?: string | null,"tentativas"?: number,"tipo": string
+                  }
+                  Update: {
+                    "atualizado_em"?: string,"criado_em"?: string,"enviado_em"?: string | null,"erro_codigo"?: string | null,"estado"?: string,"id"?: string,"incidente_id"?: string,"proxima_tentativa_em"?: string,"request_id"?: number | null,"restaurante_id"?: string,"solicitado_em"?: string | null,"tentativas"?: number,"tipo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "alertas_sinal_incidente_id_restaurante_id_fkey"
+      columns: ["incidente_id","restaurante_id"]
+isOneToOne: false
+      referencedRelation: "incidentes_sinal"
+      referencedColumns: ["id","restaurante_id"]
+    },{
+      foreignKeyName: "alertas_sinal_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "alertas_sinal_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"entradas": {
                   Row: {
                     "aberta_em": string,"atualizada_em": string,"cod_cartao_mesa": number | null,"cod_cliente": number | null,"cod_entrada": number,"cod_garcom": number | null,"cod_operador_abertura": number | null,"cod_operador_fechamento": number | null,"complemento": number,"dia_operacao": string,"extras": NonNullable<Json>,"fechada_em": string | null,"hash_origem": string,"numero_ocupantes": number | null,"pago": boolean,"recebida_em": string,"removida_em": string | null,"restaurante_id": string,"taxa_servico": number,"tipo_cartao": string | null,"tipo_ocupacao": string | null,"valor_acrescimos": number,"valor_consumido": number,"valor_descontos": number,"valor_itens": number
@@ -109,6 +141,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     },{
       foreignKeyName: "envios_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"incidentes_sinal": {
+                  Row: {
+                    "alerta_parado_enviado_em": string | null,"alerta_voltou_enviado_em": string | null,"criado_em": string,"encerrado_em": string | null,"id": string,"parado_em": string,"restaurante_id": string,"voltou_em": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alerta_parado_enviado_em"?: string | null,"alerta_voltou_enviado_em"?: string | null,"criado_em"?: string,"encerrado_em"?: string | null,"id"?: string,"parado_em": string,"restaurante_id": string,"voltou_em"?: string | null
+                  }
+                  Update: {
+                    "alerta_parado_enviado_em"?: string | null,"alerta_voltou_enviado_em"?: string | null,"criado_em"?: string,"encerrado_em"?: string | null,"id"?: string,"parado_em"?: string,"restaurante_id"?: string,"voltou_em"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "incidentes_sinal_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "incidentes_sinal_restaurante_id_fkey"
       columns: ["restaurante_id"]
 isOneToOne: false
       referencedRelation: "restaurantes_no_admin"
@@ -279,6 +337,9 @@ isOneToOne: false
 "cnpj_valido":
 { Args: { "p_cnpj": string }; Returns: boolean
                            },
+"confirmar_alerta_sinal":
+{ Args: { "p_alerta_id": string,"p_corpo": Json,"p_erro": string,"p_status": number }; Returns: undefined
+                           },
 "dia_operacao_de":
 { Args: { "p_fuso": string,"p_momento": string,"p_virada": string }; Returns: string
                            },
@@ -373,11 +434,20 @@ isOneToOne: false
 "normaliza_numeric":
 { Args: { "p_valor": string }; Returns: number
                            },
+"processar_alertas_sinal":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "processar_envio":
 { Args: { "p_campos_desconhecidos"?: (string)[],"p_envelope": Json,"p_restaurante_id": string }; Returns: Json
                            },
 "recalcular_dia_operacao":
 { Args: { "p_restaurante_id": string }; Returns: undefined
+                           },
+"registrar_parada_sinal":
+{ Args: { "p_momento": string,"p_restaurante_id": string }; Returns: undefined
+                           },
+"registrar_retorno_sinal":
+{ Args: { "p_momento": string,"p_restaurante_id": string }; Returns: undefined
                            },
 "registrar_tentativa_errada":
 { Args: { "p_email": string }; Returns: string
