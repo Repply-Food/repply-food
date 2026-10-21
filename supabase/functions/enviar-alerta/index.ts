@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import type { Database } from "../../../types/database.types.ts";
 import {
-  criarManipuladorAlerta,
   type AlertaParaEmail,
+  criarManipuladorAlerta,
 } from "../_shared/alerta.ts";
 
 const url = Deno.env.get("SUPABASE_URL") ?? "";
@@ -33,21 +33,24 @@ async function buscarAlerta(id: string): Promise<AlertaParaEmail | null> {
     .maybeSingle();
   if (erroAlerta || !alerta || alerta.estado !== "em_transito") return null;
 
-  const [{ data: restaurante, error: erroRestaurante }, { data: sinal, error: erroSinal }] =
-    await Promise.all([
-      db
-        .from("restaurantes")
-        .select("nome, fuso")
-        .eq("id", alerta.restaurante_id)
-        .maybeSingle(),
-      db
-        .from("sinal_de_vida")
-        .select("ultimo_envio_ok_em")
-        .eq("restaurante_id", alerta.restaurante_id)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: restaurante, error: erroRestaurante },
+    { data: sinal, error: erroSinal },
+  ] = await Promise.all([
+    db
+      .from("restaurantes")
+      .select("nome, fuso")
+      .eq("id", alerta.restaurante_id)
+      .maybeSingle(),
+    db
+      .from("sinal_de_vida")
+      .select("ultimo_envio_ok_em")
+      .eq("restaurante_id", alerta.restaurante_id)
+      .maybeSingle(),
+  ]);
   const admin = urlDoAdmin(alerta.restaurante_id);
-  if (erroRestaurante || erroSinal || !restaurante || !sinal || !admin) return null;
+  if (erroRestaurante || erroSinal || !restaurante || !sinal || !admin)
+    return null;
 
   return {
     id: alerta.id,

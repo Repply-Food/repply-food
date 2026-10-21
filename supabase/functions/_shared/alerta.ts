@@ -111,7 +111,10 @@ export function criarManipuladorAlerta(deps: DependenciasManipuladorAlerta) {
     if (req.method !== "POST") {
       return responder({ ok: false, codigo: "metodo_invalido" }, 405);
     }
-    if (!deps.segredo || req.headers.get("x-rf-alerta-secret") !== deps.segredo) {
+    if (
+      !deps.segredo ||
+      req.headers.get("x-rf-alerta-secret") !== deps.segredo
+    ) {
       return responder({ ok: false, codigo: "nao_autorizado" }, 401);
     }
 
@@ -130,7 +133,8 @@ export function criarManipuladorAlerta(deps: DependenciasManipuladorAlerta) {
     }
 
     const alerta = await deps.buscarAlerta(id);
-    if (!alerta) return responder({ ok: false, codigo: "alerta_invalido" }, 404);
+    if (!alerta)
+      return responder({ ok: false, codigo: "alerta_invalido" }, 404);
 
     try {
       const enviado = await deps.enviarEmail(
