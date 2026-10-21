@@ -6,8 +6,8 @@ import {
   startOfMonth,
   subDays,
 } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
+import { ptBR } from "date-fns/locale";
 
 export const ABAS_RESULTADOS = [
   "vendas",
@@ -40,7 +40,10 @@ export type EntradaFiltrosResultados =
   | URLSearchParams
   | Record<string, ValorDeFiltro>;
 
-function valor(entrada: EntradaFiltrosResultados, nome: string): string | undefined {
+function valor(
+  entrada: EntradaFiltrosResultados,
+  nome: string
+): string | undefined {
   if (entrada instanceof URLSearchParams) {
     const valores = entrada.getAll(nome);
     return valores.length === 1 ? valores[0] : undefined;
@@ -120,11 +123,7 @@ export function parseFiltrosResultados(
     COMPARACOES_RESULTADOS,
     "anterior"
   );
-  let atalho = pertence(
-    valor(entrada, "periodo"),
-    ATALHOS_RESULTADOS,
-    "7d"
-  );
+  let atalho = pertence(valor(entrada, "periodo"), ATALHOS_RESULTADOS, "7d");
   const hoje = diaDeOperacao(agora, fuso, horaVirada);
   let inicio: Date;
   let fim: Date;
