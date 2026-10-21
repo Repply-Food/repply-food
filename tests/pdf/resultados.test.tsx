@@ -123,11 +123,17 @@ describe("DocumentoResultadosPdf", () => {
     const arquivo = join(diretorio, "resultados.pdf");
     await writeFile(arquivo, buffer);
 
-    await executar("pdftotext", [arquivo, "-"]);
     const texto = await readFile(arquivo);
     expect(texto.subarray(0, 4).toString()).toBe("%PDF");
 
-    const { stdout } = await executar("pdftotext", [arquivo, "-"]);
+    // -enc UTF-8: sem isso, o pdftotext de alguns sistemas (ex.: Windows)
+    // devolve os acentos truncados e as buscas por texto acentuado falham.
+    const { stdout } = await executar("pdftotext", [
+      "-enc",
+      "UTF-8",
+      arquivo,
+      "-",
+    ]);
     expect(stdout).toContain("Casa Exemplo");
     expect(stdout).toContain("1 de outubro a 7 de outubro de 2026");
     expect(stdout).toContain("Comparação: Período anterior");

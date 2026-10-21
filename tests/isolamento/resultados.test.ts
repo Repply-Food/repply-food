@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { exigirCasa, criarCliente, logError, obterResultados } = vi.hoisted(
   () => ({
@@ -48,6 +48,11 @@ function requisicao(query = "periodo=7d&comparacao=anterior"): NextRequest {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Congela o relógio: com fuso America/Sao_Paulo e virada às 05h, este
+  // instante cai no dia de operação 2026-10-20, então "7d" = 14 a 20/10.
+  // Sem isso, o período (e o nome do arquivo) mudaria a cada dia.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-20T15:00:00Z"));
   exigirCasa.mockResolvedValue({ casa: { id: "casa-a-id", nome: "Casa A" } });
   criarCliente.mockResolvedValue({
     from: () => ({
@@ -62,6 +67,10 @@ beforeEach(() => {
     }),
   });
   obterResultados.mockResolvedValue(dados);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("PDF de resultados", () => {
