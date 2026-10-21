@@ -1,3 +1,6 @@
+import { AbaDescontos } from "@/components/painel/resultados/aba-descontos";
+import { AbaEquipe } from "@/components/painel/resultados/aba-equipe";
+import { AbaHorarios } from "@/components/painel/resultados/aba-horarios";
 import { AbaVendas } from "@/components/painel/resultados/aba-vendas";
 import { AbasResultados } from "@/components/painel/resultados/abas-resultados";
 import { ControlesResultados } from "@/components/painel/resultados/controles-resultados";
@@ -51,6 +54,9 @@ export default async function PaginaResultados({
       {filtros.aba === "vendas" ? (
         <AbaVendas dados={dados} filtros={filtros} />
       ) : null}
+      {filtros.aba === "horarios" ? <AbaHorarios dados={dados} /> : null}
+      {filtros.aba === "equipe" ? <AbaEquipe dados={dados} /> : null}
+      {filtros.aba === "descontos" ? <AbaDescontos dados={dados} /> : null}
     </div>
   );
 }

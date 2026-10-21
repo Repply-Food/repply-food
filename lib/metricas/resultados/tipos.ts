@@ -40,7 +40,7 @@ export type DadosDeResultados = {
     permanenciaMedia: string | null;
   }[];
   equipe: {
-    codGarcom: number;
+    codGarcom: number | null;
     faturamento: string;
     contas: number;
     pessoas: number;
@@ -48,6 +48,6 @@ export type DadosDeResultados = {
     ticketPessoa: string | null;
     taxaServico: string;
   }[];
-  descontos: { codOperadorFechamento: number; descontos: string }[];
+  descontos: { codOperadorFechamento: number | null; descontos: string }[];
   meta: Meta | null;
 };
