@@ -133,9 +133,23 @@ create table public.sinal_de_vida (
   estado             text not null default 'aguardando'
                      check (estado in ('aguardando','em_dia','atrasado','parado','fechado')),
   estado_desde       timestamptz not null default now(),
-  alarme_enviado_em  timestamptz                 -- um e-mail por incidente
+  alarme_enviado_em  timestamptz                 -- parada confirmada; limpa após a volta confirmada
 );
 ```
+
+### `incidentes_sinal` e `alertas_sinal`
+
+O alarme é uma caixa de saída interna: clientes e admin não têm política nem
+privilégio para ler ou escrever essas tabelas. `incidentes_sinal` representa
+um ciclo de parada de uma casa e há, pelo índice parcial, no máximo um aberto
+por restaurante. `alertas_sinal` guarda uma linha para `parado` e outra para
+`voltou` (`unique (incidente_id, tipo)`), com os estados `pendente`,
+`em_transito`, `enviado` ou `cancelado`.
+
+O alerta só fica `enviado` depois de a rotina ler a resposta HTTP real do
+pg_net. A tabela guarda somente IDs, instantes, tentativas e código curto de
+erro — nunca conteúdo do SCC, destinatário, token, senha, segredo ou resposta
+do provedor.
 
 ### `entradas`
 

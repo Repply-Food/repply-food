@@ -339,8 +339,12 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
   {
     acessos: SO_RLS,
     admins_repply: SO_RLS,
+    // Caixa interna do alarme: só as funções privilegiadas e a Edge Function
+    // (service_role) operam. Nem dono nem admin Repply a expõem pela API.
+    alertas_sinal: { anon: [], authenticated: [] },
     entradas: SO_RLS,
     envios: SO_RLS,
+    incidentes_sinal: { anon: [], authenticated: [] },
     metas: SO_RLS,
     // INSERT só em quatro colunas (privilégio de coluna, conferido abaixo):
     // no nível da tabela, só SELECT.
@@ -436,6 +440,46 @@ describe("privilégios explícitos (pendência 14)", () => {
       await banco.query("rollback");
     }
   });
+});
+
+describe("caixa interna do alarme", () => {
+  let banco: Client;
+  let fixture: Fixture;
+
+  beforeAll(async () => {
+    banco = await conectarBanco();
+    fixture = await criarFixture(banco);
+    await banco.query(
+      `with novos_incidentes as (
+         insert into public.incidentes_sinal (restaurante_id, parado_em)
+         values ($1, now()), ($2, now())
+         returning id, restaurante_id
+       )
+       insert into public.alertas_sinal (incidente_id, restaurante_id, tipo)
+       select id, restaurante_id, 'parado' from novos_incidentes`,
+      [fixture.restauranteA, fixture.restauranteB]
+    );
+  });
+
+  afterAll(async () => {
+    try {
+      if (fixture) await limparFixture(banco, fixture);
+    } finally {
+      await banco?.end();
+    }
+  });
+
+  for (const tabela of ["incidentes_sinal", "alertas_sinal"] as const) {
+    it(`recusa leitura da ${tabela} para dono e admin`, async () => {
+      for (const usuario of [fixture.usuarioA, fixture.admin]) {
+        await expect(
+          comoAutenticado(banco, usuario, () =>
+            banco.query(`select * from public.${tabela}`)
+          )
+        ).rejects.toMatchObject({ code: "42501" });
+      }
+    });
+  }
 });
 
 describe("isolamento nas 8 tabelas", () => {

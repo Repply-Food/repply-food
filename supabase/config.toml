@@ -407,6 +407,10 @@ deno_version = 2
 [functions.receber-envio]
 verify_jwt = false
 
+[functions.enviar-alerta]
+# O pg_net não tem JWT; a função exige x-rf-alerta-secret igual ao segredo no Vault.
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

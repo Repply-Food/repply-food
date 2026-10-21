@@ -47,6 +47,21 @@ git checkout -- supabase/config.toml
 - O **pg_cron** (`rf-vigia`, `rf-retencao`, `rf-limpa-tentativas`) é criado pelas migrations; confira no painel. O **pg_net** e o **Vault** só entram no alarme do vigia (etapa 9).
 - O **primeiro admin** é criado à mão: no painel do Supabase, **Authentication → Add user** (com "Auto Confirm User"), e depois `insert into public.admins_repply (user_id) values ('<uid>');` no editor de SQL.
 
+### Etapa 9 — alarme do vigia (operação autorizada separada)
+
+Antes de mudar a nuvem, fazer backup autorizado e confirmar que o projeto é o
+Food correto. Depois, sem imprimir valores: conferir `pg_cron`, `pg_net` e
+Vault; criar no Vault `rf_alerta_url` e `rf_alerta_segredo`; configurar na
+função `RESEND_API_KEY`, `ALERTA_EMAIL_DE`, `ALERTA_EMAIL_PARA`,
+`ALERTA_CHAVE_INTERNA` e `APP_URL`; publicar `enviar-alerta`; aplicar a
+migration; e conferir o comando de `rf-vigia`.
+
+O teste real usa uma casa de demonstração controlada: criar a parada, conferir
+o `net._http_response` (não basta `cron.job_run_details.succeeded`), receber o
+e-mail e então enviar dado válido para confirmar “voltou”. Configurar segredo,
+disparar e-mail real, aplicar migration na nuvem ou mudar contas exige
+consentimento na hora.
+
 **Atenção ao plano Free:**
 - sem backup automático. O banco é cópia do SCC, então dá para pedir reenvio do zero;
 - o projeto pausa depois de 7 dias sem uso. Com um restaurante enviando, não pausa. Na fase de desenvolvimento, despause pelo painel.
