@@ -6,6 +6,7 @@ const push = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
+import { AbasResultados } from "@/components/painel/resultados/abas-resultados";
 import { ControlesResultados } from "@/components/painel/resultados/controles-resultados";
 import type { FiltrosResultados } from "@/lib/metricas/resultados/filtros";
 
@@ -41,5 +42,30 @@ describe("ControlesResultados", () => {
       expect.stringContaining("inicio=2026-10-01")
     );
     expect(screen.getByRole("alert").textContent).toContain("até 90 dias");
+  });
+});
+
+describe("controles e navegação de Resultados", () => {
+  it("mantém o PDF indisponível sem apontar para uma rota futura", () => {
+    render(<ControlesResultados filtros={filtros} slug="casa-a" />);
+
+    const pdf = screen.getByRole("button", { name: /pdf em breve/i });
+    expect(pdf.getAttribute("disabled")).not.toBeNull();
+    expect(screen.queryByRole("link", { name: /pdf/i })).toBeNull();
+  });
+
+  it("navega pelas abas com link e marca a página atual", () => {
+    render(<AbasResultados filtros={filtros} slug="casa-a" />);
+
+    expect(
+      screen.getByRole("navigation", { name: "Abas de resultados" })
+    ).toBeTruthy();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Vendas" }).getAttribute("aria-current")
+    ).toBe("page");
+    expect(
+      screen.getByRole("link", { name: "Equipe" }).getAttribute("aria-current")
+    ).toBeNull();
   });
 });

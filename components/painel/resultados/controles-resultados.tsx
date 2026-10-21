@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import type { FiltrosResultados } from "@/lib/metricas/resultados/filtros";
 import { MAXIMO_DIAS_ESCOLHIDOS } from "@/lib/metricas/resultados/filtros";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -117,12 +116,17 @@ export function ControlesResultados({
             Escolher período
           </Button>
         </div>
-        <Link
-          href={`/r/${slug}/resultados/pdf?${filtros.query.toString()}`}
-          className="inline-flex h-8 items-center rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary-hover"
+        <Button
+          type="button"
+          size="sm"
+          disabled
+          aria-describedby="pdf-em-breve"
         >
-          Exportar PDF
-        </Link>
+          PDF em breve
+        </Button>
+        <span id="pdf-em-breve" className="sr-only">
+          A exportação em PDF estará disponível em breve.
+        </span>
       </div>
 
       {escolhendo ? (
