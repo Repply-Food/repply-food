@@ -45,11 +45,13 @@ export function DocumentoResultadosPdf({
   casa,
   filtros,
   dados,
+  fuso,
   geradoEm,
 }: {
   casa: { nome: string };
   filtros: FiltrosResultados;
   dados: DadosDeResultados;
+  fuso: string;
   geradoEm: Date;
 }): ReactElement<DocumentProps> {
   return (
@@ -63,7 +65,7 @@ export function DocumentoResultadosPdf({
             Comparação: {comparacao(filtros)}
           </Text>
           <Text style={estilos.sutileza}>
-            Gerado em {geradoEm.toLocaleString("pt-BR", { timeZone: "UTC" })}
+            Gerado em {geradoEm.toLocaleString("pt-BR", { timeZone: fuso })}
           </Text>
         </View>
 

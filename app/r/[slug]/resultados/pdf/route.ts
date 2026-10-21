@@ -41,6 +41,7 @@ export async function GET(
         casa,
         filtros,
         dados,
+        fuso: config.fuso,
         geradoEm: new Date(),
       })
     );

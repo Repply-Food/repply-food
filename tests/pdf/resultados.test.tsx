@@ -63,6 +63,19 @@ const dados: DadosDeResultados = {
   meta: null,
 };
 
+const dadosComSentinelas = {
+  ...dados,
+  nomeCliente: "Cliente Sentinela",
+  telefone: "11999998888",
+  token: "token-sentinela-secreto",
+  payload: "payload-sentinela-secreto",
+} as DadosDeResultados & {
+  nomeCliente: string;
+  telefone: string;
+  token: string;
+  payload: string;
+};
+
 afterEach(async () => {
   await Promise.all(
     diretorios.splice(0).map((diretorio) => rm(diretorio, { recursive: true }))
@@ -70,13 +83,14 @@ afterEach(async () => {
 });
 
 describe("DocumentoResultadosPdf", () => {
-  it("renderiza as quatro seções e não expõe conteúdo pessoal ou segredo", async () => {
+  it("renderiza o cabeçalho, as quatro seções e não expõe sentinelas", async () => {
     const buffer = await renderToBuffer(
       <DocumentoResultadosPdf
         casa={{ nome: "Casa Exemplo" }}
         filtros={filtros}
-        dados={dados}
+        dados={dadosComSentinelas}
         geradoEm={new Date("2026-10-08T15:30:00Z")}
+        fuso="America/Sao_Paulo"
       />
     );
     const diretorio = await mkdtemp(join(tmpdir(), "resultados-pdf-"));
@@ -89,12 +103,18 @@ describe("DocumentoResultadosPdf", () => {
     expect(texto.subarray(0, 4).toString()).toBe("%PDF");
 
     const { stdout } = await executar("pdftotext", [arquivo, "-"]);
+    expect(stdout).toContain("Casa Exemplo");
+    expect(stdout).toContain("1 de outubro a 7 de outubro de 2026");
+    expect(stdout).toContain("Comparação: Período anterior");
+    expect(stdout).toContain("Gerado em 08/10/2026, 12:30:00");
     expect(stdout).toContain("Vendas");
     expect(stdout).toContain("Horários");
     expect(stdout).toContain("Equipe");
     expect(stdout).toContain("Descontos");
     expect(stdout).toContain("Taxa de serviço");
-    expect(stdout).not.toContain("cliente@exemplo.com");
-    expect(stdout).not.toContain("senha-super-secreta");
+    expect(stdout).not.toContain(dadosComSentinelas.nomeCliente);
+    expect(stdout).not.toContain(dadosComSentinelas.telefone);
+    expect(stdout).not.toContain(dadosComSentinelas.token);
+    expect(stdout).not.toContain(dadosComSentinelas.payload);
   });
 });
