@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { FiltrosResultados } from "@/lib/metricas/resultados/filtros";
 import { MAXIMO_DIAS_ESCOLHIDOS } from "@/lib/metricas/resultados/filtros";
@@ -116,17 +116,12 @@ export function ControlesResultados({
             Escolher período
           </Button>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          disabled
-          aria-describedby="pdf-em-breve"
+        <a
+          className={buttonVariants({ size: "sm" })}
+          href={`/r/${slug}/resultados/pdf?${filtros.query.toString()}`}
         >
-          PDF em breve
-        </Button>
-        <span id="pdf-em-breve" className="sr-only">
-          A exportação em PDF estará disponível em breve.
-        </span>
+          Baixar PDF
+        </a>
       </div>
 
       {escolhendo ? (

@@ -46,12 +46,14 @@ describe("ControlesResultados", () => {
 });
 
 describe("controles e navegação de Resultados", () => {
-  it("mantém o PDF indisponível sem apontar para uma rota futura", () => {
+  it("oferece o PDF para os filtros canônicos da tela", () => {
     render(<ControlesResultados filtros={filtros} slug="casa-a" />);
 
-    const pdf = screen.getByRole("button", { name: /pdf em breve/i });
-    expect(pdf.getAttribute("disabled")).not.toBeNull();
-    expect(screen.queryByRole("link", { name: /pdf/i })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Baixar PDF" }).getAttribute("href")
+    ).toBe(
+      "/r/casa-a/resultados/pdf?aba=vendas&periodo=7d&comparacao=anterior"
+    );
   });
 
   it("navega pelas abas com link e marca a página atual", () => {
