@@ -265,6 +265,169 @@ describe("Métricas de Resultados no PostgreSQL", () => {
     });
   });
 
+  it("mantém o mínimo de duas ocorrências e soma as médias dos dias com movimento", async () => {
+    const gravar = async (entradas: ReturnType<typeof entrada>[]) => {
+      await banco.query("select public.processar_envio($1, $2::jsonb)", [
+        fixture.restauranteA,
+        JSON.stringify(envelope(entradas)),
+      ]);
+    };
+    await gravar([
+      entrada(301, {
+        DataEntrada: "2026-10-20",
+        DataSaida: "2026-10-20",
+        ValorConsumido: 500,
+        TaxaServico: 0,
+      }),
+      entrada(302, {
+        DataEntrada: "2026-10-13",
+        DataSaida: "2026-10-13",
+        ValorConsumido: 500,
+        TaxaServico: 0,
+      }),
+      entrada(303, {
+        DataEntrada: "2026-10-19",
+        DataSaida: "2026-10-19",
+        ValorConsumido: 1000,
+        TaxaServico: 0,
+      }),
+      entrada(304, {
+        DataEntrada: "2026-10-12",
+        DataSaida: "2026-10-12",
+        ValorConsumido: 1000,
+        TaxaServico: 0,
+      }),
+      entrada(305, {
+        DataEntrada: "2026-10-05",
+        DataSaida: "2026-10-05",
+        ValorConsumido: 1000,
+        TaxaServico: 0,
+      }),
+    ]);
+    const insuficiente = await banco.query(
+      "select * from public.metrica_resultados_resumo($1, '2026-10-20', '2026-10-20', 'semana')",
+      [fixture.restauranteA]
+    );
+    expect(insuficiente.rows[0].referencia_faturamento).toBeNull();
+    const doisDias = await banco.query(
+      "select * from public.metrica_resultados_resumo($1, '2026-10-18', '2026-10-19', 'semana')",
+      [fixture.restauranteA]
+    );
+    expect(doisDias.rows[0].referencia_faturamento).toBe("4000.00");
+    await gravar([
+      entrada(306, {
+        DataEntrada: "2026-09-28",
+        DataSaida: "2026-09-28",
+        ValorConsumido: 900,
+        TaxaServico: 0,
+      }),
+    ]);
+    const tresOcorrencias = await banco.query(
+      "select * from public.metrica_resultados_resumo($1, '2026-10-19', '2026-10-19', 'semana')",
+      [fixture.restauranteA]
+    );
+    expect(tresOcorrencias.rows[0].referencia_faturamento).toBe("966.67");
+  });
+
+  it("aplica período anterior, virada, turnos e permanência válidos", async () => {
+    await banco.query(
+      'update public.restaurantes set turnos = \'{"almoco_ate": "13:00"}\'::jsonb where id = $1',
+      [fixture.restauranteA]
+    );
+    await banco.query("select public.processar_envio($1, $2::jsonb)", [
+      fixture.restauranteA,
+      JSON.stringify(
+        envelope([
+          entrada(401, {
+            DataEntrada: "2026-10-17",
+            DataSaida: "2026-10-17",
+            ValorConsumido: 400,
+            TaxaServico: 0,
+          }),
+          entrada(402, {
+            DataEntrada: "2026-10-18",
+            HoraEntrada: "04:59:00",
+            DataSaida: "2026-10-18",
+            HoraSaida: "05:30:00",
+            ValorConsumido: 100,
+            TaxaServico: 0,
+          }),
+          entrada(403, {
+            DataEntrada: "2026-10-18",
+            HoraEntrada: "13:30:00",
+            DataSaida: "2026-10-18",
+            HoraSaida: "12:30:00",
+            ValorConsumido: 200,
+            TaxaServico: 0,
+            TipoOcupacao: "Entrega",
+          }),
+        ])
+      ),
+    ]);
+    const anterior = await banco.query(
+      "select * from public.metrica_resultados_resumo($1, '2026-10-18', '2026-10-19', 'anterior')",
+      [fixture.restauranteA]
+    );
+    expect(anterior.rows[0].referencia_faturamento).toBe("500.00");
+    const vendas = await banco.query(
+      "select * from public.metrica_resultados_vendas_diarias($1, '2026-10-17', '2026-10-18')",
+      [fixture.restauranteA]
+    );
+    expect(
+      vendas.rows.find((linha) =>
+        linha.dia_operacao.toISOString().startsWith("2026-10-17")
+      )?.faturamento
+    ).toBe("500.00");
+    const ocupacao = await banco.query(
+      "select * from public.metrica_resultados_ocupacao($1, '2026-10-18', '2026-10-18')",
+      [fixture.restauranteA]
+    );
+    expect(ocupacao.rows).toContainEqual({
+      tipo: "Outros",
+      faturamento: "200.00",
+      participacao: "0.0769",
+    });
+    const turnos = await banco.query(
+      "select * from public.metrica_resultados_turnos($1, '2026-10-18', '2026-10-18')",
+      [fixture.restauranteA]
+    );
+    expect(turnos.rows.find((linha) => linha.turno === "Jantar")).toMatchObject(
+      { contas: 2, permanencia_media: { hours: 1 } }
+    );
+  });
+
+  it("deixa participação nula quando o faturamento líquido total é zero", async () => {
+    await banco.query("select public.processar_envio($1, $2::jsonb)", [
+      fixture.restauranteA,
+      JSON.stringify(
+        envelope([
+          entrada(501, {
+            DataEntrada: "2026-10-24",
+            DataSaida: "2026-10-24",
+            ValorConsumido: 100,
+            TaxaServico: 100,
+            TipoOcupacao: "Mesa",
+          }),
+          entrada(502, {
+            DataEntrada: "2026-10-24",
+            DataSaida: "2026-10-24",
+            ValorConsumido: 50,
+            TaxaServico: 50,
+            TipoOcupacao: "Entrega",
+          }),
+        ])
+      ),
+    ]);
+    const { rows } = await banco.query(
+      "select * from public.metrica_resultados_ocupacao($1, '2026-10-24', '2026-10-24')",
+      [fixture.restauranteA]
+    );
+    expect(rows).toEqual([
+      { tipo: "Mesa", faturamento: "0.00", participacao: null },
+      { tipo: "Outros", faturamento: "0.00", participacao: null },
+    ]);
+  });
+
   it("admin só lê B pelo mesmo ID selecionado no painel", async () => {
     const resultado = await comoAutenticado(banco, fixture.admin, () =>
       banco.query(
