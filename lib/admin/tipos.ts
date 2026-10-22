@@ -44,6 +44,7 @@ export type DetalheDoRestaurante = {
     situacao: "ativo" | "suspenso";
     pedidoReenvioDesde: string | null;
     intervaloEnvioSegundos: number;
+    demonstracao: boolean;
   };
   sinal: { estado: EstadoSinal | null; ultimoEnvioOkEm: string | null };
   /** Válidos, o mais novo primeiro. Nunca o hash. */

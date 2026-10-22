@@ -18,6 +18,7 @@ const linha = (
   estado,
   ultimoEnvioOkEm: null,
   versaoScc: null,
+  demonstracao: false,
 });
 
 const linhas = [

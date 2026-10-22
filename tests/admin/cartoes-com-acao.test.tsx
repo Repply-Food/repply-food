@@ -59,6 +59,7 @@ function detalhe(
       situacao: "ativo",
       pedidoReenvioDesde: null,
       intervaloEnvioSegundos: 300,
+      demonstracao: false,
     },
     sinal: { estado: null, ultimoEnvioOkEm: null },
     tokens: [],

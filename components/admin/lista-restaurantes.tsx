@@ -19,6 +19,15 @@ export function EtiquetaSuspenso() {
   );
 }
 
+/** Marca de casa de demonstração, no mesmo estilo de `EtiquetaSuspenso`. */
+export function EtiquetaDemonstracao() {
+  return (
+    <span className="number-mono inline-flex w-fit items-center rounded-full border border-current px-2 py-0.5 text-xs">
+      demonstração
+    </span>
+  );
+}
+
 type Props = {
   linhas: readonly LinhaDaLista[];
   /** Momento da leitura, para "há X min" e "hoje 21:38" (no fuso de cada casa). */
@@ -101,6 +110,7 @@ export function ListaRestaurantes({
                   <span className="flex shrink-0 flex-col items-end gap-1">
                     <SeloDados selo={selo(l)} compacto />
                     {l.situacao === "suspenso" ? <EtiquetaSuspenso /> : null}
+                    {l.demonstracao ? <EtiquetaDemonstracao /> : null}
                   </span>
                 </Link>
               </li>
@@ -157,6 +167,7 @@ export function ListaRestaurantes({
                         {l.situacao === "suspenso" ? (
                           <EtiquetaSuspenso />
                         ) : null}
+                        {l.demonstracao ? <EtiquetaDemonstracao /> : null}
                       </span>
                     </td>
                     <td className="border-b px-3 py-2">

@@ -7,6 +7,7 @@ import { CartaoSituacao } from "@/components/admin/cartoes/cartao-situacao";
 import { CartaoToken } from "@/components/admin/cartoes/cartao-token";
 import { DetalheFechavel } from "@/components/admin/detalhe-fechavel";
 import {
+  EtiquetaDemonstracao,
   EtiquetaSuspenso,
   ListaRestaurantes,
 } from "@/components/admin/lista-restaurantes";
@@ -81,6 +82,7 @@ async function DetalhePane({ id }: { id: string }) {
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold">{restaurante.nome}</h1>
           {restaurante.situacao === "suspenso" ? <EtiquetaSuspenso /> : null}
+          {restaurante.demonstracao ? <EtiquetaDemonstracao /> : null}
         </div>
         <SeloDados selo={selo} />
       </header>

@@ -10,6 +10,7 @@ export type LinhaDaLista = {
   estado: EstadoSinal | null;
   ultimoEnvioOkEm: string | null;
   versaoScc: string | null;
+  demonstracao: boolean;
 };
 
 export type GrupoDaLista = EstadoSinal | "suspenso";

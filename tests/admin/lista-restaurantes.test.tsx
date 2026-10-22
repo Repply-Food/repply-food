@@ -19,6 +19,7 @@ const linha = (
   estado: "em_dia",
   ultimoEnvioOkEm: "2026-10-15T00:38:00Z",
   versaoScc: "5.2.1",
+  demonstracao: false,
   ...parcial,
 });
 
@@ -171,5 +172,28 @@ describe("lista de restaurantes do admin", () => {
     expect(
       container.querySelectorAll("a[data-linha-restaurante]").length
     ).toBeGreaterThan(0);
+  });
+
+  it("mostra a pílula 'demonstração' só na casa marcada, nas duas telas", () => {
+    render(
+      <ListaRestaurantes
+        linhas={[
+          linha({
+            id: "demo",
+            nome: "Casa de Demonstração",
+            demonstracao: true,
+          }),
+          linha({ id: "real", nome: "Casa Real" }),
+        ]}
+        agoraIso={agoraIso}
+      />
+    );
+    // Texto exato "demonstração" (não casa com o nome "Casa de Demonstração"):
+    // a pílula sai só na casa marcada, no celular (lista de cartões) e no
+    // computador (tabela), nunca na casa real.
+    const cartoes = screen.getByRole("list", { name: "Restaurantes" });
+    expect(within(cartoes).getAllByText("demonstração")).toHaveLength(1);
+    const tabela = screen.getByRole("table");
+    expect(within(tabela).getAllByText("demonstração")).toHaveLength(1);
   });
 });

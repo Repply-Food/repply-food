@@ -48,6 +48,7 @@ function linhaDaVisao(l: LinhaDaVisao): LinhaDaLista | null {
     estado: estadoDoSinal(l.estado),
     ultimoEnvioOkEm: l.ultimo_envio_ok_em,
     versaoScc: l.versao_scc,
+    demonstracao: l.demonstracao ?? false,
   };
 }
 
@@ -58,7 +59,7 @@ export async function listarRestaurantes(): Promise<LinhaDaLista[]> {
   const { data, error } = await supabase
     .from("restaurantes_no_admin")
     .select(
-      "id, slug, nome, situacao, fuso, estado, ultimo_envio_ok_em, versao_scc"
+      "id, slug, nome, situacao, fuso, estado, ultimo_envio_ok_em, versao_scc, demonstracao"
     );
   if (error) falhou();
   return (data ?? []).flatMap((linha) => {
@@ -128,7 +129,7 @@ export async function detalheDoRestaurante(
       supabase
         .from("restaurantes")
         .select(
-          "id, slug, nome, cnpj, fuso, hora_virada, horario_funcionamento, situacao, pedido_reenvio_desde, intervalo_envio_segundos"
+          "id, slug, nome, cnpj, fuso, hora_virada, horario_funcionamento, situacao, pedido_reenvio_desde, intervalo_envio_segundos, demonstracao"
         )
         .eq("id", id)
         .maybeSingle(),
@@ -255,6 +256,7 @@ export async function detalheDoRestaurante(
       situacao: r.situacao === "suspenso" ? "suspenso" : "ativo",
       pedidoReenvioDesde: r.pedido_reenvio_desde,
       intervaloEnvioSegundos: r.intervalo_envio_segundos,
+      demonstracao: r.demonstracao,
     },
     sinal: {
       estado: estadoDoSinal(sinal.data?.estado),
