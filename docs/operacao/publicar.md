@@ -47,7 +47,9 @@ git checkout -- supabase/config.toml
 - O **pg_cron** (`rf-vigia`, `rf-retencao`, `rf-limpa-tentativas`) é criado pelas migrations; confira no painel. O **pg_net** e o **Vault** só entram no alarme do vigia (etapa 9).
 - O **primeiro admin** é criado à mão: no painel do Supabase, **Authentication → Add user** (com "Auto Confirm User"), e depois `insert into public.admins_repply (user_id) values ('<uid>');` no editor de SQL.
 
-### Etapa 9 — alarme do vigia (operação autorizada separada)
+### Etapa 9 — alarme do vigia ✅ publicado em 22/10/2026
+
+> **Feito e testado ao vivo em 22/10/2026** (com autorização do Lucas Ferreira). A migration do alarme foi aplicada na nuvem junto com as de Resultados; a função `enviar-alerta` foi publicada (`functions deploy --use-api`, `verify_jwt=false` confirmado); o Lucas pôs os segredos (os `ALERTA_*` nos *Edge Functions → Secrets*; `rf_alerta_url` e `rf_alerta_segredo` no Vault, com `rf_alerta_segredo` = `ALERTA_CHAVE_INTERNA`). O teste de ponta a ponta rodou numa casa de teste — parado → e-mail "SCC parado" → confirmação pelo `net._http_response` → dado válido → e-mail "SCC voltou a enviar" → incidente encerrado — e a casa foi devolvida ao estado zerado. O passo a passo abaixo fica como registro de como foi.
 
 Antes de mudar a nuvem, fazer backup autorizado e confirmar que o projeto é o
 Food correto. Depois, sem imprimir valores: conferir `pg_cron`, `pg_net` e

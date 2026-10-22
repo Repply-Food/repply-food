@@ -8,7 +8,9 @@
 >
 > **A etapa 6 (Ajustes e instalar no celular) está no ar** (20/10/2026) — o dono muda sozinho a meta do mês (mês a mês, inspirada no "plano de vendas" do Repply CRM), o corte almoço/jantar, a senha e o tema; nome, CNPJ, horário de funcionamento e hora da virada são só leitura (muda a Repply). E o painel virou **instalável no celular** (PWA): o guia "coloque na tela inicial" (uma vez por aparelho, com a chave iPhone/Android, nunca no computador nem no app já instalado) e uma página "sem conexão". Só frontend — nenhuma mudança de banco.
 >
-> **As etapas 7 (Resultados) e 9 (alarme) foram ao ar em 21/10/2026.** Resultados: os números de um período (Hoje · 7 dias · Mês · Escolher) em quatro abas (Vendas · Horários · Equipe · Descontos), com comparação justa e **exportação em PDF** — e com isso a **etapa 8 (PDF) foi entregue dentro da 7** (o PDF das quatro abas é a única exportação do MVP, D-20/D-34). O alarme por e-mail do vigia (etapa 9) está com o código e a mudança de banco no ar, porém **dormente**: só começa a enviar depois de configurar o segredo e publicar a função `enviar-alerta` (passo à parte, a combinar). As duas etapas foram feitas pelo Lucas Duarte em branches próprias e integradas ao `main`. Próxima: **etapa 10 (ensaio geral)**.
+> **As etapas 7 (Resultados) e 9 (alarme) foram ao ar em 21/10/2026.** Resultados: os números de um período (Hoje · 7 dias · Mês · Escolher) em quatro abas (Vendas · Horários · Equipe · Descontos), com comparação justa e **exportação em PDF** — e com isso a **etapa 8 (PDF) foi entregue dentro da 7** (o PDF das quatro abas é a única exportação do MVP, D-20/D-34). As duas etapas foram feitas pelo Lucas Duarte em branches próprias e integradas ao `main`.
+>
+> **A etapa 9 (alarme por e-mail do vigia) está ligada e testada ao vivo em 22/10/2026.** Quando o SCC de uma casa fica parado durante o expediente, a equipe Repply recebe um e-mail; e outro quando volta a enviar. A função `enviar-alerta`, o segredo no Vault e o `pg_net` estão configurados na nuvem; o teste de ponta a ponta (parado → e-mail → voltou) rodou numa casa de teste e o ciclo fechou certinho. **Com isso, todo o conjunto de funcionalidades do MVP (etapas 1–9) está no ar.** Próxima: **etapa 10 (ensaio geral)**.
 
 ## Roteiro das etapas (plano do MVP)
 
@@ -23,7 +25,7 @@
 | 6 | Ajustes e instalar no celular (meta, turnos, senha, tema; PWA + guia) | ✅ **no ar (20/10/2026)** |
 | 7 | Resultados (vendas, horários, equipe, descontos) **+ PDF** | ✅ **no ar (21/10/2026)** |
 | 8 | ~~PDF~~ — **entregue dentro da etapa 7** (única exportação do MVP, D-20/D-34) | ✅ feito (na 7) |
-| 9 | Alarme por e-mail (vigia) | 🟡 código no ar (21/10), **falta ligar** (segredo + função `enviar-alerta`) |
+| 9 | Alarme por e-mail (vigia) | ✅ **no ar e testado (22/10/2026)** |
 | 10 | Ensaio geral (pronto para demonstração) | ⬜ **próxima** |
 | 11 | Piloto com a SCC | ⬜ |
 
