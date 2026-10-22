@@ -193,4 +193,32 @@ describe("alarme de sinal de vida", () => {
     expect(alertasA.rows).toHaveLength(1);
     expect(alertasB.rows).toHaveLength(0);
   });
+
+  it("não gera parada para a casa de demonstração, mas gera para uma casa normal", async () => {
+    await banco.query(
+      "update public.restaurantes set demonstracao = true where id = $1",
+      [fixture.restauranteA]
+    );
+
+    await deixarParado(banco, fixture.restauranteA);
+    await deixarParado(banco, fixture.restauranteB);
+
+    // o selo das duas vira "parado"
+    const estados = await banco.query<{
+      restaurante_id: string;
+      estado: string;
+    }>(
+      "select restaurante_id, estado from public.sinal_de_vida where restaurante_id = any($1)",
+      [[fixture.restauranteA, fixture.restauranteB]]
+    );
+    for (const linha of estados.rows) expect(linha.estado).toBe("parado");
+
+    // mas só a casa normal gera alerta de parada
+    expect((await alertasDaCasa(banco, fixture.restauranteA)).rows.length).toBe(
+      0
+    );
+    expect(
+      (await alertasDaCasa(banco, fixture.restauranteB)).rows.length
+    ).toBeGreaterThan(0);
+  });
 });

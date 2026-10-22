@@ -227,14 +227,14 @@ isOneToOne: false
                   ]
                 },"restaurantes": {
                   Row: {
-                    "atualizado_em": string,"cnpj": string | null,"criado_em": string,"fuso": string,"hora_virada": string,"horario_funcionamento": NonNullable<Json>,"id": string,"intervalo_envio_segundos": number,"limite_conta_esquecida": string,"nome": string,"pedido_reenvio_desde": string | null,"situacao": string,"slug": string,"turnos": NonNullable<Json>
+                    "atualizado_em": string,"cnpj": string | null,"criado_em": string,"demonstracao": boolean,"fuso": string,"hora_virada": string,"horario_funcionamento": NonNullable<Json>,"id": string,"intervalo_envio_segundos": number,"limite_conta_esquecida": string,"nome": string,"pedido_reenvio_desde": string | null,"situacao": string,"slug": string,"turnos": NonNullable<Json>
                   }
                   ComputedFields: never
                   Insert: {
-                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"nome": string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug": string,"turnos"?: NonNullable<Json>
+                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"demonstracao"?: boolean,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"nome": string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug": string,"turnos"?: NonNullable<Json>
                   }
                   Update: {
-                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"nome"?: string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug"?: string,"turnos"?: NonNullable<Json>
+                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"demonstracao"?: boolean,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"nome"?: string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug"?: string,"turnos"?: NonNullable<Json>
                   }
                   Relationships: [
                     
@@ -310,7 +310,7 @@ isOneToOne: false
           Views: {
             "restaurantes_no_admin": {
                   Row: {
-                    "estado": string | null,"fuso": string | null,"id": string | null,"nome": string | null,"situacao": string | null,"slug": string | null,"ultimo_envio_ok_em": string | null,"versao_scc": string | null
+                    "demonstracao": boolean | null,"estado": string | null,"fuso": string | null,"id": string | null,"nome": string | null,"situacao": string | null,"slug": string | null,"ultimo_envio_ok_em": string | null,"versao_scc": string | null
                   }
                   ComputedFields: never
                   Relationships: [
