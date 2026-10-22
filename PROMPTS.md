@@ -28,7 +28,7 @@ Telas, admin, vigia, PWA e PDF ficam para planos seguintes. Me mostre o plano an
 
 ```
 Leia repositorio/AGENTS.md e repositorio/CLAUDE.md. Use a skill brainstorming (SEMPRE primeiro)
-para desenhar <TEMA: Resultados (7) | PDF (8) | alarme por e-mail do vigia (9)> e, com o
+para desenhar <TEMA: ensaio geral / pronto para demonstração (10) | piloto com a SCC (11)> e, com o
 desenho aprovado, a skill writing-plans para o plano. Siga o desenho do MVP, docs/telas/ e
 docs/metricas.md. Celular e computador (D-39). Me mostre o desenho e o plano antes de executar.
 ```

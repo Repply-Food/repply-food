@@ -7,6 +7,8 @@
 > **A etapa 5 (tela Hoje) está no ar** (20/10/2026) — os números do dia do restaurante: faturamento da casa comparado à média do mesmo dia da semana (com a curva "dia típico"), mesas abertas, pessoas na casa, contas abertas há mais de 4h, e a meta do mês com projeção, tudo com atualização automática a cada minuto. Foi enviada ao GitHub e publicada na nuvem (a migration `20261019120000`, com as funções `metrica_*`) e conferida ao vivo em [food.repplyhub.com.br](https://food.repplyhub.com.br). Depois vêm Resultados (7), PDF (8) e o alarme (9). A verificação (tipos, lint, testes e build) passa no Windows; ainda falta rodá-la numa máquina Linux (o ramo do teste de tipos que só vale no Linux nunca foi executado).
 >
 > **A etapa 6 (Ajustes e instalar no celular) está no ar** (20/10/2026) — o dono muda sozinho a meta do mês (mês a mês, inspirada no "plano de vendas" do Repply CRM), o corte almoço/jantar, a senha e o tema; nome, CNPJ, horário de funcionamento e hora da virada são só leitura (muda a Repply). E o painel virou **instalável no celular** (PWA): o guia "coloque na tela inicial" (uma vez por aparelho, com a chave iPhone/Android, nunca no computador nem no app já instalado) e uma página "sem conexão". Só frontend — nenhuma mudança de banco.
+>
+> **As etapas 7 (Resultados) e 9 (alarme) foram ao ar em 21/10/2026.** Resultados: os números de um período (Hoje · 7 dias · Mês · Escolher) em quatro abas (Vendas · Horários · Equipe · Descontos), com comparação justa e **exportação em PDF** — e com isso a **etapa 8 (PDF) foi entregue dentro da 7** (o PDF das quatro abas é a única exportação do MVP, D-20/D-34). O alarme por e-mail do vigia (etapa 9) está com o código e a mudança de banco no ar, porém **dormente**: só começa a enviar depois de configurar o segredo e publicar a função `enviar-alerta` (passo à parte, a combinar). As duas etapas foram feitas pelo Lucas Duarte em branches próprias e integradas ao `main`. Próxima: **etapa 10 (ensaio geral)**.
 
 ## Roteiro das etapas (plano do MVP)
 
@@ -19,10 +21,10 @@
 | 4a | Endurecer o código para produção (trava de tentativas, CSP com nonce, link à prova de antivírus) | ✅ **no ar (19/10/2026)** |
 | 5 | Hoje (os números do dia: faturamento × dia típico, mesas, contas esquecidas, meta) | ✅ **no ar (20/10/2026)** |
 | 6 | Ajustes e instalar no celular (meta, turnos, senha, tema; PWA + guia) | ✅ **no ar (20/10/2026)** |
-| 7 | Resultados (vendas, horários, equipe, descontos) | ⬜ |
-| 8 | PDF | ⬜ |
-| 9 | Alarme por e-mail (vigia) | ⬜ |
-| 10 | Ensaio geral (pronto para demonstração) | ⬜ |
+| 7 | Resultados (vendas, horários, equipe, descontos) **+ PDF** | ✅ **no ar (21/10/2026)** |
+| 8 | ~~PDF~~ — **entregue dentro da etapa 7** (única exportação do MVP, D-20/D-34) | ✅ feito (na 7) |
+| 9 | Alarme por e-mail (vigia) | 🟡 código no ar (21/10), **falta ligar** (segredo + função `enviar-alerta`) |
+| 10 | Ensaio geral (pronto para demonstração) | ⬜ **próxima** |
 | 11 | Piloto com a SCC | ⬜ |
 
 > **O que falta, em detalhe:** [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/). **Como foi publicado:** [`docs/operacao/publicar.md`](docs/operacao/publicar.md).
