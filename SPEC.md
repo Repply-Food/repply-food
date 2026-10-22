@@ -118,8 +118,8 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 - [x] Gerador de dados fictícios enviando pelo mesmo caminho
 - [x] Login, troca de senha obrigatória, "esqueci a senha"
 - [x] Tela Hoje (celular e computador) — etapa 5, no ar
-- [ ] Tela Resultados com as 4 abas e as comparações (D-22) — etapa 7
-- [ ] PDF do período (D-20) — etapa 8
+- [x] Tela Resultados com as 4 abas e as comparações (D-22) — etapa 7
+- [x] PDF do período (D-20) — etapa 8, entregue junto à etapa 7
 - [x] Ajustes (meta, turnos, senha, tema) — etapa 6, no ar
 - [x] Guia da tela inicial (regras D-36/D-39) + PWA instalável — etapa 6, no ar
 - [x] Admin (D-32/D-38) + pedido de reenvio
