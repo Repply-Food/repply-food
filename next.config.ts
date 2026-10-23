@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
   // token, etc. a lista se renova — o cache não deixa dado velho.
   experimental: {
     staleTimes: { dynamic: 30 },
+    // Upgrade de segurança (Next 16.4.0 → 16.4.3) aplicado pelo fluxo
+    // `next upgrade --agent=security`: esta marca registra que foi feito e
+    // tira o aviso de vulnerabilidade do build.
+    agentUpgrade: "security",
   },
   async headers() {
     return [
