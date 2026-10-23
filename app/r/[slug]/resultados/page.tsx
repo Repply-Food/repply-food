@@ -50,13 +50,16 @@ export default async function PaginaResultados({
         </div>
       </div>
       <ControlesResultados filtros={filtros} slug={slug} />
-      <AbasResultados filtros={filtros} slug={slug} />
-      {filtros.aba === "vendas" ? (
-        <AbaVendas dados={dados} filtros={filtros} />
-      ) : null}
-      {filtros.aba === "horarios" ? <AbaHorarios dados={dados} /> : null}
-      {filtros.aba === "equipe" ? <AbaEquipe dados={dados} /> : null}
-      {filtros.aba === "descontos" ? <AbaDescontos dados={dados} /> : null}
+      <AbasResultados
+        slug={slug}
+        abaInicial={filtros.aba}
+        paineis={{
+          vendas: <AbaVendas dados={dados} filtros={filtros} />,
+          horarios: <AbaHorarios dados={dados} />,
+          equipe: <AbaEquipe dados={dados} />,
+          descontos: <AbaDescontos dados={dados} />,
+        }}
+      />
     </div>
   );
 }

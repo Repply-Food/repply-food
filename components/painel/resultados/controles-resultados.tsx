@@ -58,8 +58,18 @@ export function ControlesResultados({
     router.push(`/r/${slug}/resultados?${parametros.toString()}`);
   }
 
-  function paraAtalho(periodo: "hoje" | "7d" | "mes") {
+  // Começa da query canônica, mas preserva a aba que o usuário está vendo: a
+  // troca de aba só muda a URL no cliente (sem servidor), então vem de
+  // window.location, não de filtros.query (que é do render do servidor).
+  function parametrosAtuais(): URLSearchParams {
     const parametros = new URLSearchParams(filtros.query);
+    const abaAtual = new URLSearchParams(window.location.search).get("aba");
+    if (abaAtual) parametros.set("aba", abaAtual);
+    return parametros;
+  }
+
+  function paraAtalho(periodo: "hoje" | "7d" | "mes") {
+    const parametros = parametrosAtuais();
     parametros.set("periodo", periodo);
     parametros.delete("inicio");
     parametros.delete("fim");
@@ -69,7 +79,7 @@ export function ControlesResultados({
   }
 
   function paraComparacao(comparacao: "anterior" | "semana") {
-    const parametros = new URLSearchParams(filtros.query);
+    const parametros = parametrosAtuais();
     parametros.set("comparacao", comparacao);
     navegar(parametros);
   }
@@ -83,7 +93,7 @@ export function ControlesResultados({
       return;
     }
 
-    const parametros = new URLSearchParams(filtros.query);
+    const parametros = parametrosAtuais();
     parametros.set("periodo", "escolher");
     parametros.set("inicio", proximoInicio);
     parametros.set("fim", proximoFim);

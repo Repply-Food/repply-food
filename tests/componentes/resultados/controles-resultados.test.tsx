@@ -6,7 +6,6 @@ const push = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
-import { AbasResultados } from "@/components/painel/resultados/abas-resultados";
 import { ControlesResultados } from "@/components/painel/resultados/controles-resultados";
 import type { FiltrosResultados } from "@/lib/metricas/resultados/filtros";
 
@@ -75,22 +74,5 @@ describe("controles e navegação de Resultados", () => {
     ).toBe(
       "/r/casa-a/resultados/pdf?aba=horarios&periodo=mes&comparacao=semana"
     );
-  });
-
-  it("navega pelas abas com link e marca a página atual", () => {
-    render(<AbasResultados filtros={filtros} slug="casa-a" />);
-
-    expect(
-      screen.getByRole("navigation", { name: "Abas de resultados" })
-    ).toBeTruthy();
-    expect(screen.queryByRole("tab")).toBeNull();
-    const vendas = screen.getByRole("link", { name: "Vendas" });
-    expect(vendas.getAttribute("aria-current")).toBe("page");
-    expect(vendas.getAttribute("href")).toBe(
-      "/r/casa-a/resultados?aba=vendas&periodo=mes&comparacao=semana"
-    );
-    expect(
-      screen.getByRole("link", { name: "Equipe" }).getAttribute("aria-current")
-    ).toBeNull();
   });
 });
