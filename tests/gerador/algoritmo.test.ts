@@ -193,6 +193,7 @@ describe("gerador", () => {
       abertura: "2026-10-10T22:30:00",
       esquecida: 100079,
       aberturaEsquecida: "2026-10-10T11:30:00",
+      fechamentoEsquecida: "2026-10-10T17:30:00",
       total: 80,
     },
     {
@@ -204,6 +205,7 @@ describe("gerador", () => {
       abertura: "2026-10-10T22:30:00",
       esquecida: 100071,
       aberturaEsquecida: "2026-10-09T11:30:00",
+      fechamentoEsquecida: "2026-10-09T17:30:00",
       total: 152,
     },
     {
@@ -216,6 +218,7 @@ describe("gerador", () => {
       abertura: "2026-10-10T23:00:00",
       esquecida: 100079,
       aberturaEsquecida: "2026-10-10T11:30:00",
+      fechamentoEsquecida: "2026-10-10T17:30:00",
       total: 80,
     },
     {
@@ -228,6 +231,7 @@ describe("gerador", () => {
       fechamento: "2026-10-11T00:49:00",
       esquecida: 100079,
       aberturaEsquecida: "2026-10-10T11:30:00",
+      fechamentoEsquecida: "2026-10-10T17:30:00",
       total: 80,
     },
   ])("preserva contas específicas: $nome", (caso) => {
@@ -250,7 +254,13 @@ describe("gerador", () => {
       [caso.esquecida, caso.aberturaEsquecida],
     ] as const) {
       const fechamento =
-        cod === caso.cod && "fechamento" in caso ? caso.fechamento : null;
+        cod === caso.cod
+          ? "fechamento" in caso
+            ? caso.fechamento
+            : null
+          : "fechamentoEsquecida" in caso
+            ? caso.fechamentoEsquecida
+            : null;
       expect(
         envelope.entradas.find((entrada) => entrada.codEntrada === cod)
       ).toMatchObject({
@@ -277,6 +287,47 @@ describe("gerador", () => {
       }
     }
     validarGerado(JSON.parse(JSON.stringify(envelope)) as Envelope);
+  });
+
+  it("não deixa conta aberta por dias: a esquecida fecha em horas e não se acumula no histórico", () => {
+    // random=0 força uma conta esquecida todo dia (0 < 0.35), abrindo 11:30.
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const mundo = new Mundo();
+    const hoje = new Date("2026-10-22T14:00:00Z");
+    mundo.gerarHistorico(new Date("2026-10-01T00:00:00Z"), hoje);
+    const abertas = mundo
+      .entradasJanela("2026-10-01", "2026-10-22")
+      .filter((entrada) => entrada.DataSaida === null);
+    // A do próprio dia ainda está aberta (11:30 + 6h = 17:30 > 14:00).
+    expect(abertas.length).toBeGreaterThan(0);
+    for (const entrada of abertas) {
+      const aberturaMs = new Date(
+        `${entrada.DataEntrada}T${entrada.HoraEntrada}Z`
+      ).getTime();
+      const horasAberta = (hoje.getTime() - aberturaMs) / 3_600_000;
+      expect(horasAberta).toBeLessThan(24);
+    }
+  });
+
+  it("semeia contas esquecidas abertas há horas (4 a 11), para a demo ter o que mostrar", () => {
+    const mundo = new Mundo();
+    const hoje = new Date("2026-10-22T20:00:00Z");
+    mundo.semearContasEsquecidasAbertas(hoje, 4);
+    const abertas = mundo
+      .entradasJanela("2026-10-22", "2026-10-22")
+      .filter((entrada) => entrada.DataSaida === null);
+    expect(abertas).toHaveLength(4);
+    for (const entrada of abertas) {
+      const horasAberta =
+        (hoje.getTime() -
+          new Date(
+            `${entrada.DataEntrada}T${entrada.HoraEntrada}Z`
+          ).getTime()) /
+        3_600_000;
+      expect(horasAberta).toBeGreaterThanOrEqual(4);
+      expect(horasAberta).toBeLessThanOrEqual(11);
+      expect(entrada.Pago).toBe("Não");
+    }
   });
 
   it("gera desconto, acréscimo, taxa e complemento não zero no JSON canônico", () => {
@@ -310,7 +361,7 @@ describe("gerador", () => {
     }
   });
 
-  it("amplia a janela pendente, inclui conta antiga fechada no novo dia e só confirma no sucesso", async () => {
+  it("amplia a janela pendente ao virar o dia, inclui a conta fechada no novo dia e só confirma no sucesso", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     const mundo = new Mundo();
     mundo.gerarHistorico(
@@ -338,16 +389,8 @@ describe("gerador", () => {
       ok: true,
       confirmada: "2026-10-11",
     });
-    expect(
-      tentativas[2]?.envelope.entradas.find(
-        (entrada) => entrada.codEntrada === 100049
-      )
-    ).toMatchObject({
-      DataEntrada: "2026-10-01",
-      DataSaida: "2026-10-11",
-      HoraSaida: "11:00:00",
-      Pago: "Sim",
-    });
+    // A conta aberta e fechada já dentro do novo dia (Oct 11) entra na janela
+    // ampliada. (A varredura a abre 11:00 e a fecha 11:31 no ciclo seguinte.)
     expect(
       tentativas[2]?.envelope.entradas.find(
         (entrada) => entrada.codEntrada === 100050

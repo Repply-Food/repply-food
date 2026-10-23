@@ -307,7 +307,12 @@ export class Mundo {
         );
         if (entrada) this.entradas.push(entrada);
       }
-      // ~35% dos dias têm uma conta esquecida aberta.
+      // ~35% dos dias têm uma conta esquecida: o dono esquece de fechar e ela
+      // fica aberta por horas (6 a 18), não por dias. No histórico ela já
+      // fechou algumas horas depois; só as de perto de "agora" seguem abertas
+      // — é o que a aba Hoje mostra como "aberta há mais de 4h". (Antes ficava
+      // sem fechamento e acumulava: numa carga de semanas, a conta do primeiro
+      // dia aparecia "aberta há centenas de horas".)
       if (Math.random() < 0.35) {
         const inicioDoDia = new Date(
           Date.UTC(dia.getUTCFullYear(), dia.getUTCMonth(), dia.getUTCDate())
@@ -316,10 +321,27 @@ export class Mundo {
           inicioDoDia,
           11 * 60 + 30 + Math.random() * 600
         );
-        const entrada = this.criarEntrada(abertura, null, hoje);
+        const duracao = 360 + Math.floor(Math.random() * 720); // 6 h a 18 h
+        const entrada = this.criarEntrada(abertura, duracao, hoje);
         if (entrada) this.entradas.push(entrada);
       }
       dia = somarDias(dia, 1);
+    }
+  }
+
+  /**
+   * Semeia contas esquecidas abertas AGORA (4 a 11 h atrás), para a aba Hoje
+   * sempre ter "contas abertas há mais de 4h" para mostrar na demonstração.
+   * São recentes (horas, não dias) e os ciclos ao vivo acabam fechando, como
+   * uma conta esquecida de verdade. Fica FORA de `gerarHistorico` de propósito:
+   * não entra nos envios do histórico nem mexe nos testes determinísticos dele.
+   */
+  semearContasEsquecidasAbertas(hoje: Date, quantidade = 4): void {
+    for (let i = 0; i < quantidade; i++) {
+      const horasAberta = 4 + Math.random() * 7; // 4 h a 11 h
+      const abertura = somarMinutos(hoje, -Math.round(horasAberta * 60));
+      const entrada = this.criarEntrada(abertura, null, hoje);
+      if (entrada) this.entradas.push(entrada);
     }
   }
 
@@ -879,6 +901,7 @@ async function main(): Promise<void> {
   const mundo = new Mundo();
   const diaInicial = somarDias(hoje, -(config.historicoDias - 1));
   mundo.gerarHistorico(diaInicial, hoje);
+  mundo.semearContasEsquecidasAbertas(hoje);
 
   if (config.dryRun) {
     const hojeS = formatarData(hoje);
