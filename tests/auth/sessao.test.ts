@@ -3,14 +3,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type Filtros = Record<string, unknown>;
 
-const { getUser, ehAdmin, casasDoLogin, casaPeloEndereco, logError } =
-  vi.hoisted(() => ({
-    getUser: vi.fn(),
-    ehAdmin: vi.fn(),
-    casasDoLogin: vi.fn(),
-    casaPeloEndereco: vi.fn(),
-    logError: vi.fn(),
-  }));
+const {
+  getUser,
+  getSession,
+  ehAdmin,
+  casasDoLogin,
+  casaPeloEndereco,
+  logError,
+} = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  getSession: vi.fn(),
+  ehAdmin: vi.fn(),
+  casasDoLogin: vi.fn(),
+  casaPeloEndereco: vi.fn(),
+  logError: vi.fn(),
+}));
 
 vi.mock("server-only", () => ({}));
 // O redirect de verdade interrompe a função lançando um erro; o dublê faz igual.
@@ -24,7 +31,7 @@ vi.mock("@/lib/logger", () => ({ logError }));
 // teste conferir o que foi pedido ao banco.
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
-    auth: { getUser },
+    auth: { getUser, getSession },
     rpc: async () => ehAdmin(),
     from: (tabela: string) => {
       const filtros: Filtros = {};
@@ -62,8 +69,13 @@ function entrou(
   daConta: unknown[] = [CASA],
   peloEndereco: unknown = CASA
 ) {
-  getUser.mockResolvedValue({
-    data: { user: { id: "u1", email: "d@x.com", app_metadata: appMetadata } },
+  // O porteiro já validou no servidor (getUser); a tela só lê a sessão local.
+  getSession.mockResolvedValue({
+    data: {
+      session: {
+        user: { id: "u1", email: "d@x.com", app_metadata: appMetadata },
+      },
+    },
   });
   ehAdmin.mockReturnValue({ data: admin, error: null });
   casasDoLogin.mockReturnValue({ data: daConta, error: null });
@@ -102,7 +114,7 @@ describe("guardas de sessão", () => {
   });
 
   it("sem login, a casa manda para /entrar", async () => {
-    getUser.mockResolvedValue({ data: { user: null } });
+    getSession.mockResolvedValue({ data: { session: null } });
     await expect(exigirCasa("casa-x")).rejects.toThrow("REDIRECT:/entrar");
   });
 
@@ -160,6 +172,18 @@ describe("guardas de sessão", () => {
     await expect(exigirCasa("casa-x")).rejects.toThrow(
       "REDIRECT:/trocar-senha"
     );
+  });
+});
+
+describe("a tela reaproveita a validação do porteiro, sem revalidar no servidor", () => {
+  it("lê a sessão local (getSession) e não chama getUser de novo", async () => {
+    entrou({}, false);
+    const sessao = await obterSessao();
+    expect(sessao?.userId).toBe("u1");
+    expect(getSession).toHaveBeenCalled();
+    // O porteiro (proxy.ts) já validou no servidor neste pedido; repetir o
+    // getUser aqui seria uma ida à rede redundante por navegação.
+    expect(getUser).not.toHaveBeenCalled();
   });
 });
 

@@ -53,12 +53,23 @@ function falhaNaSessao(): never {
   throw new Error("falha_leitura_sessao");
 }
 
-/** Uma ida ao Supabase por requisição, mesmo com layout e página pedindo. */
+/**
+ * Uma leitura de sessão por requisição, mesmo com layout e página pedindo
+ * (React `cache`).
+ *
+ * Lê a sessão LOCALMENTE (`getSession`, sem ir à rede). O porteiro
+ * (`proxy.ts` → `atualizarSessao`) já validou o login no servidor (`getUser`)
+ * nesta mesma requisição; repetir o `getUser` aqui seria uma segunda ida ao
+ * servidor de login a cada navegação. A segurança não muda: o porteiro segue
+ * sendo o ponto de validação, e o acesso aos dados é barrado pela RLS (o JWT
+ * do cookie), não por esta leitura.
+ */
 export const obterSessao = cache(async (): Promise<Sessao | null> => {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) return null;
 
   const [admin, casas] = await Promise.all([
