@@ -124,6 +124,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 - [x] Guia da tela inicial (regras D-36/D-39) + PWA instalável — etapa 6, no ar
 - [x] Admin (D-32/D-38) + pedido de reenvio
 - [x] Vigia + e-mail de alarme e de "voltou" — etapa 9, no ar e testado ao vivo (22/10)
+- [x] Casa de demonstração marcada (não alarma; só para demonstrar, D-69) + kit do vendedor — etapa 10, feito (24/10)
 - [x] Publicação no piloto (Supabase Free + Vercel Hobby, D-09)
 
 ### Fase 2 (depois do piloto)

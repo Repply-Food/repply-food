@@ -10,7 +10,9 @@
 >
 > **As etapas 7 (Resultados) e 9 (alarme) foram ao ar em 21/10/2026.** Resultados: os números de um período (Hoje · 7 dias · Mês · Escolher) em quatro abas (Vendas · Horários · Equipe · Descontos), com comparação justa e **exportação em PDF** — e com isso a **etapa 8 (PDF) foi entregue dentro da 7** (o PDF das quatro abas é a única exportação do MVP, D-20/D-34). As duas etapas foram feitas pelo Lucas Duarte em branches próprias e integradas ao `main`.
 >
-> **A etapa 9 (alarme por e-mail do vigia) está ligada e testada ao vivo em 22/10/2026.** Quando o SCC de uma casa fica parado durante o expediente, a equipe Repply recebe um e-mail; e outro quando volta a enviar. A função `enviar-alerta`, o segredo no Vault e o `pg_net` estão configurados na nuvem; o teste de ponta a ponta (parado → e-mail → voltou) rodou numa casa de teste e o ciclo fechou certinho. **Com isso, todo o conjunto de funcionalidades do MVP (etapas 1–9) está no ar.** Próxima: **etapa 10 (ensaio geral)**.
+> **A etapa 9 (alarme por e-mail do vigia) está ligada e testada ao vivo em 22/10/2026.** Quando o SCC de uma casa fica parado durante o expediente, a equipe Repply recebe um e-mail; e outro quando volta a enviar. A função `enviar-alerta`, o segredo no Vault e o `pg_net` estão configurados na nuvem; o teste de ponta a ponta (parado → e-mail → voltou) rodou numa casa de teste e o ciclo fechou certinho. **Com isso, todo o conjunto de funcionalidades do MVP (etapas 1–9) está no ar.**
+>
+> **A etapa 10 (ensaio geral — pronto para demonstração) foi concluída em 24/10/2026.** O sistema ganhou uma **casa de demonstração** marcada (aparece com a pílula "demonstração" no admin; por ser de demonstração, não dispara o e-mail de alarme para a equipe, mas o selo continua mudando ao vivo — D-69) e um **kit de demonstração** (`docs/operacao/demonstracao.md`, o roteiro para qualquer pessoa da Repply demonstrar sozinha). No ensaio, afinamos os acabamentos: as **contas esquecidas** passam a ficar abertas por horas (não mais "há centenas de horas"), **Mesa × Balcão** mostra o valor certo, a **troca de telas** ficou mais leve (o login é validado uma vez por navegação, não duas) e o **mapa de calor** passou a ser pintado pela intensidade do movimento. Junto, o **Next.js foi atualizado para 16.4.3** (correção de uma vulnerabilidade de segurança). **Com isso, o MVP (etapas 1–10) está no ar e pronto para demonstração.** Próxima: **etapa 11 (piloto com a SCC)**.
 
 ## Roteiro das etapas (plano do MVP)
 
@@ -26,8 +28,8 @@
 | 7 | Resultados (vendas, horários, equipe, descontos) **+ PDF** | ✅ **no ar (21/10/2026)** |
 | 8 | ~~PDF~~ — **entregue dentro da etapa 7** (única exportação do MVP, D-20/D-34) | ✅ feito (na 7) |
 | 9 | Alarme por e-mail (vigia) | ✅ **no ar e testado (22/10/2026)** |
-| 10 | Ensaio geral (pronto para demonstração) | ⬜ **próxima** |
-| 11 | Piloto com a SCC | ⬜ |
+| 10 | Ensaio geral (casa de demonstração, kit do vendedor, acabamentos) | ✅ **feito (24/10/2026)** |
+| 11 | Piloto com a SCC | ⬜ **próxima** |
 
 > **O que falta, em detalhe:** [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/). **Como foi publicado:** [`docs/operacao/publicar.md`](docs/operacao/publicar.md).
 
