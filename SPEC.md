@@ -173,7 +173,7 @@ Lista com mitigação no [desenho do MVP §10](docs/superpowers/specs/2026-10-08
 
 E a verificação obrigatória passa: tipos, lint, testes e build.
 
-**Piloto bem-sucedido** (a fechar com a SCC):
+**Piloto em andamento desde 24/10/2026, com um cliente real.** Será considerado bem-sucedido quando, durante 30 a 60 dias:
 1. O faturamento bate **centavo a centavo** com o fechamento do SCC em todos os dias.
 2. Durante o horário de funcionamento, nenhum buraco de mais de 30 min sem dados (fora queda de internet do restaurante).
 3. O dono abre o painel em pelo menos 4 dias por semana e para de pedir relatório ao Emerson.
