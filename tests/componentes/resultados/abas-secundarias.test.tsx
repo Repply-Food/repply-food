@@ -5,7 +5,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import { AbaDescontos } from "@/components/painel/resultados/aba-descontos";
 import { AbaEquipe } from "@/components/painel/resultados/aba-equipe";
 import { AbaHorarios } from "@/components/painel/resultados/aba-horarios";
+import { MapaCalor } from "@/components/painel/resultados/mapa-calor";
 import type { DadosDeResultados } from "@/lib/metricas/resultados/tipos";
+
+function azulDoFundo(el: HTMLElement): number {
+  const m = el.style.backgroundColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  return m?.[3] ? Number(m[3]) : Number.NaN;
+}
 
 const dados = {
   resumo: {
@@ -75,6 +81,24 @@ describe("abas secundárias de Resultados", () => {
     expect(
       screen.getByLabelText("Sexta, 20h: média de 3,5 contas")
     ).toBeTruthy();
+  });
+
+  it("pinta a célula mais cheia com laranja mais forte (calor), mantendo o número em texto", () => {
+    render(
+      <MapaCalor
+        mapa={[
+          { diaSemana: 1, hora: 12, mediaContas: 1 },
+          { diaSemana: 6, hora: 20, mediaContas: 10 },
+        ]}
+      />
+    );
+
+    const quieta = screen.getByLabelText("Segunda, 12h: média de 1 contas");
+    const cheia = screen.getByLabelText("Sábado, 20h: média de 10 contas");
+    // O número continua escrito (cor nunca é o único canal — regra da marca).
+    expect(cheia.textContent).toContain("10 contas");
+    // Laranja tem pouco azul: a célula cheia é mais laranja que a quieta.
+    expect(azulDoFundo(cheia)).toBeLessThan(azulDoFundo(quieta));
   });
 
   it("mantém códigos nulos separados", () => {
