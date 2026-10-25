@@ -3,39 +3,39 @@
 **Data:** 2026-10-24  
 **Branch:** correcao-rpcs-resultados-nulas  
 **Commit base:** 422eaef (Registra o início do piloto com cliente real)  
-**Status:** CONCLUÍDO (arquivos criados/corrigidos; baseline BLOQUEADO por serviço local indisponível e sem autorização para tocar no DB compartilhado)
+**Status:** INCOMPLETA/BLOQUEADA (sem benchmark funcional, sem medições reais)
 
-## Arquivos criados nesta tarefa (somente T0)
+## Arquivos criados/corrigidos nesta tarefa (somente T0)
 
 ### Scripts
-- `scripts/desempenho/medir-metricas.ts` (CLI ESM-funcional, valida guardas antes de conectar, retorna BLOQUEADO com probe real sem reset/migration)
-- `scripts/desempenho/cenarios.ts` (config determinística, sem RNG não utilizado, sem Date.now)
-- `scripts/desempenho/trava-nuvem.ts` (fail-closed: protocolo + host local-only, sem vazar URL/credenciais)
+- `scripts/desempenho/medir-metricas.ts` (CLI ESM executável com args/env, valida guardas antes de conectar, sanitiza erros sem vazar credenciais; retorna BLOQUEADO quando sem probe bem-sucedido)
+- `scripts/desempenho/cenarios.ts` (determinístico, sem RNG não utilizado, sem Date.now)
+- `scripts/desempenho/trava-nuvem.ts` (fail-closed: APENAS loopback literal 127.0.0.1/localhost/[::1]; http/https e postgres/postgresql; sem *.test/*.localhost)
 
 ### Documentação
-- `docs/desempenho/metodologia.md` (distingue sintético/projetado vs medições reais)
-- `docs/desempenho/baseline.md` (BLOQUEADO com motivo real; sem placeholders falsos)
+- `docs/desempenho/metodologia.md`
+- `docs/desempenho/baseline.md`
 
 ### Testes
-- `tests/desempenho/trava-nuvem-benchmark.test.ts` (validam protocolos, recusa remoto sem flags/exceções, não vazam dados em erros)
+- `tests/desempenho/trava-nuvem-benchmark.test.ts`
 
-## Correções aplicadas (findings)
-1. **Sem vazamento**: mensagens de erro não incluem `dbUrl`/`httpUrl`/credenciais
-2. **Protocolos validados**: HTTP apenas `http:`/`https:` local; Postgres apenas `postgres:`/`postgresql:` local
-3. **Medidor funcional**: CLI com args/env, valida guardas antes de conectar, probe real mantem BLOQUEADO se indisponível (sem reset/migration), sem stub que finge sucesso
-4. **Cenários limpos**: removidos RNG não utilizado e `Date.now`; apenas configuração determinística
-5. **Sem @ts-nocheck**: TypeScript estrito, `npx tsc --noEmit` limpo
-6. **Sem imports test-only em runtime**; reutiliza utilidades válidas
-7. **Docs/relatório**: distinguem cenário sintético vs real; não afirma que não houve commit
+## Correções round 2 (findings)
+1. **Sem vazamento**: erros da CLI e das travas não incluem URL/credenciais
+2. **Somente loopback literal**: removidos `*.test`, `*.localhost` e hosts derivados; apenas 127.0.0.1/localhost/[::1]
+3. **Medidor realista**: valida antes de conectar, probe real mantem BLOQUEADO se indisponível; sem no-op que finge medição
+4. **CLI ESM funcional**: entrypoint por `import.meta.url`, aceita `--http-url`/`--db-url` ou env; sem `require.main`
+5. **Cenários determinísticos**: semente fixa, sem `Date.now`
+6. **TDD**: testes para CLI/ESM, recusa `*.test` e sanitização de erro escritos/ajustados, RED observado, depois GREEN
+7. **Sem inventar benchmark**: T0 não marcada completa
 
-## TDD
-Testes ajustados/criados para as novas regras. Foram executados focados (RED observado nas asserções antes de corrigir mensagens/protocolos; depois GREEN).
+## Saídas literais
 
+### Testes focados (travas + referências)
 ```bash
 $ npx vitest run tests/desempenho/trava-nuvem-benchmark.test.ts
-✓ tests/desempenho/trava-nuvem-benchmark.test.ts (23 tests) 16ms
+✓ tests/desempenho/trava-nuvem-benchmark.test.ts (25 tests) 18ms
 Test Files  1 passed (1)
-Tests  23 passed (23)
+Tests  25 passed (25)
 ```
 
 ```bash
@@ -46,27 +46,37 @@ Test Files  2 passed (2)
 Tests  27 passed (27)
 ```
 
-## Verificações
+### CLI ESM
+```bash
+$ node --experimental-strip-types scripts/desempenho/medir-metricas.ts --http-url http://127.0.0.1:54321 --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
+{ "bloqueado": true, ..., "motivoBloqueio": "Serviço local indisponível ou não autorizado a iniciar/resetar/migrar DB compartilhado. Nenhuma métrica foi inventada." }
+
+$ node --experimental-strip-types scripts/desempenho/medir-metricas.ts --http-url https://evil.com --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
+{"erro":"[Benchmark] Falha na validação ou execução."}
+
+$ node --experimental-strip-types scripts/desempenho/medir-metricas.ts --http-url http://127.0.0.1:54321 --db-url postgresql://user:senha-secreta@db.test:5432/postgres
+{"erro":"[Benchmark] Falha na validação ou execução."}
+```
+
+### Verificações
 ```bash
 $ npx tsc --noEmit
 (no output)
 ```
 ```bash
 $ npm run check
-Checked 295 files in 1044ms. No fixes applied.
+Checked 295 files in 742ms. No fixes applied.
 ```
 
-## Baseline
-**BLOQUEADO** - Serviço local indisponível e usuário não autorizou tocar no DB compartilhado (sem reset/migration). Nenhuma métrica inventada.
+## Dependências / Bloqueios
+- **Sem benchmark funcional**: não há probe bem-sucedido com conexão real; `medirMetricas` valida guardas e retorna BLOQUEADO.
+- **DB compartilhado não autorizado**: sem reset/migration/início; baseline real permanece BLOQUEADO por escolha do usuário.
+- **Sem acesso remoto**: não utilizado.
 
 ## Restrições respeitadas
-- ✅ Não resetou/migrou/iniciou DB nem acessou endpoint remoto
-- ✅ Não usou dado real
-- ✅ Não alterou guards existentes (app/gerador)
 - ✅ Apenas arquivos T0
-- ✅ Sem benchmark fictício/dado de produção
+- ✅ Sem alterar/resetar/migrar DB nem acessar redes remotas
+- ✅ Sem inventar métricas/dados
 - ✅ Sem suíte completa, app/deps/scripts inseguros, subagentes
 - ✅ Commit local sem push
-
-## Commit
-Será feito após este relatório.
+- ✅ TDD observado (RED/GREEN)

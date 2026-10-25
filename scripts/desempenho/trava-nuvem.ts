@@ -6,13 +6,10 @@ export function validarEnderecoLocalBenchmark(url: string): boolean {
       return false;
     }
     const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-    return (
-      host === "127.0.0.1" ||
-      host === "localhost" ||
-      host === "::1" ||
-      host.endsWith(".localhost") ||
-      host.endsWith(".test")
-    );
+    if (host === "127.0.0.1" || host === "localhost" || host === "::1") {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -33,13 +30,10 @@ export function validarPostgresLocalBenchmark(connStr: string): boolean {
 
     const parsed = new URL(urlFormatada);
     const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-    return (
-      host === "127.0.0.1" ||
-      host === "localhost" ||
-      host === "::1" ||
-      host.endsWith(".localhost") ||
-      host.endsWith(".test")
-    );
+    if (host === "127.0.0.1" || host === "localhost" || host === "::1") {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -57,13 +51,13 @@ export function validarAmbienteBenchmark(
 
   if (!httpUrl || !validarEnderecoLocalBenchmark(httpUrl)) {
     throw new Error(
-      "[Benchmark Trava Nuvem] Endpoint HTTP remoto ou invalido recusado. O benchmark aceita APENAS endpoints HTTP(S) locais (127.0.0.1, localhost, [::1], *.localhost, *.test). Excecoes sao proibidas."
+      "[Benchmark Trava Nuvem] Endpoint HTTP remoto ou invalido recusado. O benchmark aceita APENAS endpoints HTTP(S) em loopback literal (127.0.0.1, localhost, [::1]). Excecoes sao proibidas."
     );
   }
 
   if (!dbUrl || !validarPostgresLocalBenchmark(dbUrl)) {
     throw new Error(
-      "[Benchmark Trava Nuvem] Conexao Postgres remota ou invalida recusada. O benchmark aceita APENAS conexoes postgres/postgresql locais (127.0.0.1, localhost, [::1], *.localhost, *.test). Excecoes sao proibidas."
+      "[Benchmark Trava Nuvem] Conexao Postgres remota ou invalida recusada. O benchmark aceita APENAS conexoes postgres/postgresql em loopback literal (127.0.0.1, localhost, [::1]). Excecoes sao proibidas."
     );
   }
 }

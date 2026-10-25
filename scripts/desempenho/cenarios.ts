@@ -1,10 +1,11 @@
 /**
  * Cenários determinísticos para baseline reproduzível (Task 0).
- * Sem RNG não utilizado nem Date.now para configuração.
+ * Sem RNG, sem Date.now.
  */
 
 export interface CenarioConfig {
   casas?: number;
+  semente?: string;
 }
 
 export interface Cenario {
@@ -14,10 +15,14 @@ export interface Cenario {
   dias: number;
   entradasPorDia?: number;
   descricao: string;
+  semente: string;
 }
+
+const SEMENTE_FIXA = "repply-food-baseline-2026-10-24";
 
 export function gerarCenarios(config: CenarioConfig = {}): Cenario[] {
   const casas = config.casas ?? 2;
+  const semente = config.semente ?? SEMENTE_FIXA;
 
   const cenarios: Cenario[] = [
     {
@@ -26,6 +31,7 @@ export function gerarCenarios(config: CenarioConfig = {}): Cenario[] {
       casas,
       dias: 0,
       descricao: "Restaurantes recém-cadastrados sem dados (cenário sintético)",
+      semente,
     },
     {
       nome: "90d_x100",
@@ -34,7 +40,8 @@ export function gerarCenarios(config: CenarioConfig = {}): Cenario[] {
       dias: 90,
       entradasPorDia: 100,
       descricao:
-        "90 dias × ~100 contas/dia (cenário sintético, distribuição projetada - não é medição real)",
+        "90 dias × ~100 contas/dia (cenário sintético, parâmetros projetados - não é medição real)",
+      semente,
     },
     {
       nome: "365d_x500",
@@ -43,19 +50,20 @@ export function gerarCenarios(config: CenarioConfig = {}): Cenario[] {
       dias: 365,
       entradasPorDia: 500,
       descricao:
-        "365 dias × ~500 contas/dia (cenário sintético, distribuição projetada - não é medição real)",
+        "365 dias × ~500 contas/dia (cenário sintético, parâmetros projetados - não é medição real)",
+      semente,
+    },
+    {
+      nome: "730d_x1000_estresse",
+      tipo: "estresse",
+      casas,
+      dias: 730,
+      entradasPorDia: 1000,
+      descricao:
+        "730 dias × 1000 contas/dia (cenário sintético ESTRESSE - opcional, reduzir se faltar recurso; não é medição real)",
+      semente,
     },
   ];
-
-  cenarios.push({
-    nome: "730d_x1000_estresse",
-    tipo: "estresse",
-    casas,
-    dias: 730,
-    entradasPorDia: 1000,
-    descricao:
-      "730 dias × 1000 contas/dia (cenário sintético ESTRESSE - opcional, reduzir se faltar recurso; não é medição real)",
-  });
 
   return cenarios;
 }

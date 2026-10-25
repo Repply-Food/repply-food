@@ -1,5 +1,5 @@
-import { gerarCenarios } from "./cenarios";
-import { validarAmbienteBenchmark } from "./trava-nuvem";
+import { gerarCenarios } from "./cenarios.ts";
+import { validarAmbienteBenchmark } from "./trava-nuvem.ts";
 
 export interface OpcoesMedicao {
   httpUrl: string;
@@ -44,7 +44,7 @@ export async function medirMetricas(
 
   const cenarios = gerarCenarios();
 
-  // Sem reset/migration. Apenas probe real - se indisponível, manter BLOQUEADO.
+  // Sem reset/migration. Probe real - se indisponível, manter BLOQUEADO.
   // Não inventar medições.
   const resultado: BaselineResultado = {
     commit: process.env.GIT_COMMIT || "desconhecido",
@@ -64,11 +64,11 @@ export async function medirMetricas(
       erros: 0,
       bloqueado: true,
       motivoBloqueio:
-        "SERVICO_LOCAL_INDISPONIVEL - sem probe bem-sucedido; baseline não medido",
+        "SERVICO_LOCAL_INDISPONIVEL_OU_SEM_PROBE - sem medição real; baseline permanece BLOQUEADO",
     })),
     bloqueado: true,
     motivoBloqueio:
-      "Serviço local indisponível. Não foi possível coletar métricas reais; baseline permanece BLOQUEADO (sem reset/migration).",
+      "Serviço local indisponível ou não autorizado a iniciar/resetar/migrar DB compartilhado. Nenhuma métrica foi inventada.",
   };
 
   return resultado;
@@ -101,21 +101,32 @@ async function main(): Promise<void> {
   try {
     const resultado = await medirMetricas({ httpUrl, dbUrl });
     console.log(JSON.stringify(resultado, null, 2));
-  } catch (erro) {
-    const mensagem = erro instanceof Error ? erro.message : String(erro);
-    console.error(JSON.stringify({ erro: mensagem }, null, 2));
+  } catch {
+    console.error(
+      JSON.stringify(
+        { erro: "[Benchmark] Falha na validação ou execução." },
+        null,
+        2
+      )
+    );
     process.exitCode = 1;
   }
 }
 
-const isMain =
-  typeof require !== "undefined" &&
-  typeof require.main !== "undefined" &&
-  require.main === module;
-if (isMain) {
-  main().catch((erro) => {
-    const mensagem = erro instanceof Error ? erro.message : String(erro);
-    console.error(JSON.stringify({ erro: mensagem }, null, 2));
+const isESMMain =
+  typeof import.meta !== "undefined" &&
+  typeof import.meta.url === "string" &&
+  typeof process !== "undefined" &&
+  typeof process.argv?.[1] === "string" &&
+  import.meta.url === `file://${process.argv[1]}`;
+
+if (isESMMain) {
+  main().catch(() => {
+    console.error(
+      JSON.stringify({ erro: "[Benchmark] Falha na execução." }, null, 2)
+    );
     process.exitCode = 1;
   });
 }
+
+export { main };
