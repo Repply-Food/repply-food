@@ -5,11 +5,11 @@
 
 ## Princípios
 
-1. **Reprodutibilidade**: Sementes fixas, relógio controlado quando possível
+1. **Reprodutibilidade**: Configuração determinística
 2. **Fail-closed**: Benchmarks só rodam em ambiente local. Proibido HTTP/Postgres remoto
-3. **Separação clara**: Massa sintética para medição ≠ ingestão real
+3. **Separação clara**: Cenários sintéticos/projetados ≠ ingestão real; medições são reais ou BLOQUEADAS
 4. **Medição realista**: Perfis reais (dono/autenticado), não superusuário como substituto
-5. **Sem dados sensíveis**: Nunca logar JWT, SQL corpo completo com dados, payloads reais
+5. **Sem dados sensíveis**: Nunca logar JWT, SQL corpo completo com dados, payloads reais, nem incluir URLs/credenciais em erros
 
 ## Ambiente
 
@@ -22,10 +22,10 @@
 
 | Cenário | Descrição | Uso |
 |---------|-----------|-----|
-| vazio | Sem dados | Caso base |
-| 90d_x100 | 90 dias × ~100 contas/dia | Típico |
-| 365d_x500 | 365 dias × ~500 contas/dia | Médio-grande |
-| 730d_x1000_estresse | 730 × 1000/dia | Opcional, reduzir se faltar recurso |
+| vazio | Sem dados (sintético) | Caso base projetado |
+| 90d_x100 | 90 dias × ~100 contas/dia (sintético/projetado) | Típico projetado |
+| 365d_x500 | 365 dias × ~500 contas/dia (sintético/projetado) | Médio-grande projetado |
+| 730d_x1000_estresse | 730 × 1000/dia (sintético/projetado, opcional) | Opcional, reduzir se faltar recurso |
 
 Distribuição real observada: abertas/removidas/pagas, códigos, lacunas.
 
@@ -56,7 +56,7 @@ Distribuição real observada: abertas/removidas/pagas, códigos, lacunas.
 - Testar repetição idêntica, alteração parcial, reaparecimento
 
 ## Travas de Segurança
-- **HTTP remoto**: Recusado sempre (sem exceções)
-- **Postgres remoto**: Recusado sempre (sem exceções)
+- **HTTP remoto**: Recusado sempre (sem exceções). Apenas `http:`/`https:` para hosts locais
+- **Postgres remoto**: Recusado sempre (sem exceções). Apenas `postgres:`/`postgresql:` para hosts locais
 - **Flags ignoradas**: `PERMITIR_NUVEM_NO_DEV`, `NODE_ENV=production` não permitem exceção
-- **URLs do app build produção** também validadas
+- **Sem vazamento**: Mensagens de erro não incluem URLs/credenciais

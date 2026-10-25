@@ -2,12 +2,16 @@ export function validarEnderecoLocalBenchmark(url: string): boolean {
   if (!url) return false;
   try {
     const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     return (
       host === "127.0.0.1" ||
       host === "localhost" ||
       host === "::1" ||
-      host === "[::1]"
+      host.endsWith(".localhost") ||
+      host.endsWith(".test")
     );
   } catch {
     return false;
@@ -17,20 +21,24 @@ export function validarEnderecoLocalBenchmark(url: string): boolean {
 export function validarPostgresLocalBenchmark(connStr: string): boolean {
   if (!connStr) return false;
   try {
-    // Normalizar postgresql:// ou postgres:// para URL parser
+    if (
+      !connStr.startsWith("postgres://") &&
+      !connStr.startsWith("postgresql://")
+    ) {
+      return false;
+    }
     const urlFormatada = connStr.startsWith("postgres://")
       ? connStr.replace("postgres://", "http://")
-      : connStr.startsWith("postgresql://")
-        ? connStr.replace("postgresql://", "http://")
-        : connStr;
+      : connStr.replace("postgresql://", "http://");
 
     const parsed = new URL(urlFormatada);
-    const host = parsed.hostname.toLowerCase();
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     return (
       host === "127.0.0.1" ||
       host === "localhost" ||
       host === "::1" ||
-      host === "[::1]"
+      host.endsWith(".localhost") ||
+      host.endsWith(".test")
     );
   } catch {
     return false;
@@ -49,13 +57,13 @@ export function validarAmbienteBenchmark(
 
   if (!httpUrl || !validarEnderecoLocalBenchmark(httpUrl)) {
     throw new Error(
-      `[Benchmark Trava Nuvem] Endpoint HTTP remoto ou invalido recusado ('${httpUrl}'). O benchmark aceita APENAS endpoints locais (127.0.0.1, localhost, [::1]). Excecoes como PERMITIR_NUVEM_NO_DEV sao proibidas.`
+      "[Benchmark Trava Nuvem] Endpoint HTTP remoto ou invalido recusado. O benchmark aceita APENAS endpoints HTTP(S) locais (127.0.0.1, localhost, [::1], *.localhost, *.test). Excecoes sao proibidas."
     );
   }
 
   if (!dbUrl || !validarPostgresLocalBenchmark(dbUrl)) {
     throw new Error(
-      `[Benchmark Trava Nuvem] Conexao Postgres remota ou invalida recusada (remoto: '${dbUrl}'). O benchmark aceita APENAS conexoes locais Postgres (127.0.0.1, localhost, [::1]). Excecoes sao proibidas.`
+      "[Benchmark Trava Nuvem] Conexao Postgres remota ou invalida recusada. O benchmark aceita APENAS conexoes postgres/postgresql locais (127.0.0.1, localhost, [::1], *.localhost, *.test). Excecoes sao proibidas."
     );
   }
 }

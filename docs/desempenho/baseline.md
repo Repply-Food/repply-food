@@ -6,13 +6,9 @@
 
 ## Razão do Bloqueio
 
-**SERVIÇO LOCAL INDISPONÍVEL** - Supabase local não está inicializado/running neste ambiente.
+**SERVIÇO LOCAL INDISPONÍVEL / SEM AUTORIZAÇÃO PARA TOCAR NO DB COMPARTILHADO**
 
-Não é possível:
-- Coletar métricas reais de banco local
-- Executar medições com `EXPLAIN (ANALYZE, BUFFERS)`
-- Rodar app com `npm run build && npm run start` contra banco local funcional
-- Medir performance real de RPCs/consultas
+Não foi autorizada a inicialização/reset/migração do banco local compartilhado. Não há medições reais disponíveis neste ambiente. Nenhuma métrica foi inventada.
 
 ## Ambiente Registrado
 
@@ -21,32 +17,32 @@ Não é possível:
 | SO | Linux |
 | Node | (verificar) |
 | Branch | correcao-rpcs-resultados-nulas |
-| Working Tree | Limpo ou com alterações? Verificar |
-| Migrations aplicadas | Não verificável sem banco local |
+| Working Tree | Alterações nesta tarefa |
+| Migrations aplicadas | Não verificável sem banco local autorizado |
 | Portas | Não verificável sem serviço |
 
-## Cenários Planejados
+## Cenários (sintéticos - não medições)
 
-| Cenário | Status | p50 | p95 | Amostras | Notas |
-|---------|--------|-----|-----|----------|-------|
-| vazio | BLOQUEADO | - | - | 0 | Aguardando banco local |
-| 90d_x100 | BLOQUEADO | - | - | 0 | Aguardando banco local |
-| 365d_x500 | BLOQUEADO | - | - | 0 | Aguardando banco local |
-| 730d_x1000_estresse | BLOQUEADO | - | - | 0 | Opcional - aguardando recursos |
+| Cenário | Tipo | p50 | p95 | Amostras | Notas |
+|---------|------|-----|-----|----------|-------|
+| vazio | sintético/projetado | - | - | 0 | Sem dados; sem medição real |
+| 90d_x100 | sintético/projetado | - | - | 0 | Parâmetros projetados, não medidos |
+| 365d_x500 | sintético/projetado | - | - | 0 | Parâmetros projetados, não medidos |
+| 730d_x1000_estresse | sintético/projetado (opcional) | - | - | 0 | Opcional, reduzir se faltar recurso; sem medição real |
 
 ## Travamento de Nuvem
 
-**Implementado e testado:**
-- `scripts/desempenho/trava-nuvem.ts` - validadores fail-closed
+**Implementado nesta tarefa:**
+- `scripts/desempenho/trava-nuvem.ts` - validadores fail-closed (protocolo + host local-only)
 - `tests/desempenho/trava-nuvem-benchmark.test.ts` - testes de guarda
 - Recusa HTTP/Postgres remoto SEM exceções
-- Ignora `PERMITIR_NUVEM_NO_DEV`, `NODE_ENV=production`
+- Mensagens sem vazar URL/credenciais
+- Aceita apenas `http:`/`https:` locais e `postgres:`/`postgresql:` locais
 
 ## Próximos Passos
 
-1. Inicializar Supabase local: `supabase start` (se Docker disponível)
-2. Aplicar migrations
-3. Rodar medições com ambiente funcional
-4. Atualizar este documento com valores reais
+1. Com autorização explícita, iniciar Supabase local e aplicar migrations
+2. Rodar medições com ambiente funcional
+3. Atualizar este documento com valores reais (p50/p95, amostras, EXPLAIN etc)
 
-**NUNCA** inventar métricas. Baseline permanece BLOQUEADO até que medições reais sejam possíveis.
+**NUNCA** inventar métricas. Baseline permanece BLOQUEADO.
