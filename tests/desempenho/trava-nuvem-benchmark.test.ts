@@ -1,8 +1,11 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  MARCADOR_BANCO_DESCARTAVEL,
   validarAmbienteBenchmark,
+  validarBancoDescartavel,
   validarEnderecoLocalBenchmark,
+  validarJobsCronInativos,
   validarPostgresLocalBenchmark,
 } from "../../scripts/desempenho/trava-nuvem";
 
@@ -11,14 +14,58 @@ afterEach(() => {
 });
 
 describe("trava-nuvem do benchmark (fail-closed)", () => {
-  describe("validarEnderecoLocalBenchmark", () => {
-    it.each([
-      "http://127.0.0.1:54321",
-      "http://localhost:54321",
-      "http://[::1]:54321",
-    ])("aceita endpoint HTTP em loopback literal: %s", (url) => {
-      expect(validarEnderecoLocalBenchmark(url)).toBe(true);
+  describe("validarBancoDescartavel", () => {
+    it("exige marcador explícito da instância de benchmark", async () => {
+      const consulta = vi.fn().mockResolvedValue({
+        rows: [{ marcador: MARCADOR_BANCO_DESCARTAVEL }],
+      });
+
+      await expect(
+        validarBancoDescartavel({ query: consulta })
+      ).resolves.toBeUndefined();
+      expect(consulta).toHaveBeenCalledTimes(1);
     });
+
+    it("bloqueia quando o marcador não existe ou a consulta falha", async () => {
+      const semMarcador = vi.fn().mockResolvedValue({ rows: [] });
+      const falha = vi.fn().mockRejectedValue(new Error("falha"));
+
+      await expect(
+        validarBancoDescartavel({ query: semMarcador })
+      ).rejects.toThrow();
+      await expect(validarBancoDescartavel({ query: falha })).rejects.toThrow();
+    });
+  });
+
+  describe("validarJobsCronInativos", () => {
+    it("permite medição apenas quando nenhum job cron está ativo", async () => {
+      const consulta = vi.fn().mockResolvedValue({ rows: [{ ativos: "0" }] });
+
+      await expect(
+        validarJobsCronInativos({ query: consulta })
+      ).resolves.toBeUndefined();
+    });
+
+    it("bloqueia se houver job cron ativo ou a consulta não puder ser validada", async () => {
+      const jobAtivo = vi.fn().mockResolvedValue({ rows: [{ ativos: "1" }] });
+      const erroConsulta = vi.fn().mockRejectedValue(new Error("falha"));
+
+      await expect(
+        validarJobsCronInativos({ query: jobAtivo })
+      ).rejects.toThrow();
+      await expect(
+        validarJobsCronInativos({ query: erroConsulta })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("validarEnderecoLocalBenchmark", () => {
+    it.each(["http://127.0.0.1:55421", "http://[::1]:55421"])(
+      "aceita endpoint HTTP em loopback literal: %s",
+      (url) => {
+        expect(validarEnderecoLocalBenchmark(url)).toBe(true);
+      }
+    );
 
     it.each([
       "https://abc.supabase.co",
@@ -29,6 +76,9 @@ describe("trava-nuvem do benchmark (fail-closed)", () => {
       "http://localhost.localdomain:3000",
       "not-a-valid-url",
       "ftp://127.0.0.1:21",
+      "http://usuario:segredo@127.0.0.1:54321",
+      "http://127.0.0.1:54321",
+      "http://localhost:55421",
     ])("recusa endpoint HTTP nao local ou protocolo invalido: %s", (url) => {
       expect(validarEnderecoLocalBenchmark(url)).toBe(false);
     });
@@ -36,9 +86,8 @@ describe("trava-nuvem do benchmark (fail-closed)", () => {
 
   describe("validarPostgresLocalBenchmark", () => {
     it.each([
-      "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
-      "postgres://postgres:postgres@localhost:54322/postgres",
-      "postgresql://postgres:postgres@[::1]:54322/postgres",
+      "postgresql://postgres:postgres@127.0.0.1:55422/postgres",
+      "postgresql://postgres:postgres@[::1]:55422/postgres",
     ])("aceita conexao postgres em loopback literal: %s", (connStr) => {
       expect(validarPostgresLocalBenchmark(connStr)).toBe(true);
     });
@@ -50,6 +99,9 @@ describe("trava-nuvem do benchmark (fail-closed)", () => {
       "postgresql://postgres:pass@db.test:5432/postgres",
       "invalid-conn-string",
       "http://127.0.0.1:5432/postgres",
+      "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+      "postgresql://postgres:postgres@localhost:55422/postgres",
+      "postgresql://postgres:postgres@127.0.0.1:55422/postgres?host=db.remote.example",
     ])(
       "recusa conexao postgres nao local ou protocolo invalido: %s",
       (connStr) => {
@@ -62,8 +114,8 @@ describe("trava-nuvem do benchmark (fail-closed)", () => {
     it("passa quando HTTP e DB sao loopback literal", () => {
       expect(() =>
         validarAmbienteBenchmark({
-          httpUrl: "http://127.0.0.1:54321",
-          dbUrl: "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+          httpUrl: "http://127.0.0.1:55421",
+          dbUrl: "postgresql://postgres:postgres@127.0.0.1:55422/postgres",
         })
       ).not.toThrow();
     });

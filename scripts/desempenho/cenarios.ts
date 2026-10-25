@@ -5,7 +5,7 @@
 
 export interface CenarioConfig {
   casas?: number;
-  semente?: string;
+  semente?: number;
 }
 
 export interface Cenario {
@@ -15,14 +15,14 @@ export interface Cenario {
   dias: number;
   entradasPorDia?: number;
   descricao: string;
-  semente: string;
+  semente: number;
 }
 
-const SEMENTE_FIXA = "repply-food-baseline-2026-10-24";
+export const SEMENTE_CENARIO = 20261024;
 
 export function gerarCenarios(config: CenarioConfig = {}): Cenario[] {
   const casas = config.casas ?? 2;
-  const semente = config.semente ?? SEMENTE_FIXA;
+  const semente = config.semente ?? SEMENTE_CENARIO;
 
   const cenarios: Cenario[] = [
     {
