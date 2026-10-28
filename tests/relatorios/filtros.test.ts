@@ -30,6 +30,7 @@ describe("consulta fechada dos relatórios", () => {
     "&pagina=0",
     "&pagina=-1",
     "&pagina=1.5",
+    "&pagina=3000000000",
     "&pagina=9007199254740992",
     "&pdv=P%201",
     "&pdv=O%27",

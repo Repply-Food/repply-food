@@ -10,7 +10,7 @@ import {
 import type { ConsultaRelatorio } from "@/lib/relatorios/tipos";
 import type { Relatorio } from "@/lib/validators/relatorios";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const rotulos: Record<
   Exclude<FiltroAdicional, "mesaDe" | "mesaAte">,
@@ -56,6 +56,17 @@ export function FiltrosRelatorioForm({
   const [inicio, setInicio] = useState(consulta.filtros.inicio);
   const [fim, setFim] = useState(consulta.filtros.fim);
   const [fonte, setFonte] = useState(consulta.filtros.fonte);
+  const [mesaDe, setMesaDe] = useState(String(consulta.filtros.mesaDe ?? ""));
+  const [mesaAte, setMesaAte] = useState(
+    String(consulta.filtros.mesaAte ?? "")
+  );
+  useEffect(() => {
+    setInicio(consulta.filtros.inicio);
+    setFim(consulta.filtros.fim);
+    setFonte(consulta.filtros.fonte);
+    setMesaDe(String(consulta.filtros.mesaDe ?? ""));
+    setMesaAte(String(consulta.filtros.mesaAte ?? ""));
+  }, [consulta.filtros]);
   const hoje = hojeNaCasa(agora, fuso);
   const ontem = somarDias(hoje, -1);
   const primeiroDiaMes = `${hoje.slice(0, 7)}-01`;
@@ -189,7 +200,8 @@ export function FiltrosRelatorioForm({
                 type="number"
                 min="1"
                 disabled={!recursos.includes("mesa")}
-                defaultValue={consulta.filtros.mesaDe ?? ""}
+                value={mesaDe}
+                onChange={(evento) => setMesaDe(evento.currentTarget.value)}
                 className="h-10 rounded-md border bg-background px-3 disabled:opacity-60"
               />
               {!recursos.includes("mesa") ? (
@@ -205,7 +217,8 @@ export function FiltrosRelatorioForm({
                 type="number"
                 min="1"
                 disabled={!recursos.includes("mesa")}
-                defaultValue={consulta.filtros.mesaAte ?? ""}
+                value={mesaAte}
+                onChange={(evento) => setMesaAte(evento.currentTarget.value)}
                 className="h-10 rounded-md border bg-background px-3 disabled:opacity-60"
               />
               {!recursos.includes("mesa") ? (
@@ -261,6 +274,19 @@ function CampoFiltro({
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
+  const [valorSelecionado, setValorSelecionado] = useState(
+    valorAtual === undefined ? "" : String(valorAtual)
+  );
+  useEffect(() => {
+    setValorSelecionado(valorAtual === undefined ? "" : String(valorAtual));
+  }, [valorAtual]);
+  useEffect(() => {
+    setOpcoes(opcoesIniciais?.opcoes ?? []);
+    setMais(opcoesIniciais?.mais ?? false);
+    setPagina(1);
+    setBusca("");
+    setErro("");
+  }, [opcoesIniciais]);
 
   async function buscar(paginaNova: number, substituir: boolean) {
     setCarregando(true);
@@ -301,7 +327,8 @@ function CampoFiltro({
         id={`filtro-${filtro}`}
         name={filtro}
         disabled={!disponivel}
-        defaultValue={valorAtual === undefined ? "" : String(valorAtual)}
+        value={valorSelecionado}
+        onChange={(evento) => setValorSelecionado(evento.currentTarget.value)}
         className="h-10 rounded-md border bg-background px-3 disabled:opacity-60"
       >
         <option value="">Todos</option>

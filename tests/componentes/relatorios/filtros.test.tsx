@@ -130,4 +130,73 @@ describe("filtros do relatório", () => {
     expect(inicio.value).toBe("2026-10-25");
     expect(fim.value).toBe("2026-10-25");
   });
+
+  it("sincroniza datas e seletores quando a consulta muda após navegação", () => {
+    const props = {
+      relatorio: "produtos" as const,
+      slug: "casa-x",
+      fuso: "America/Fortaleza",
+      recursos: ["grupo", "mesa"],
+      consulta: {
+        filtros: {
+          inicio: "2026-10-20",
+          fim: "2026-10-21",
+          fonte: "historico" as const,
+          grupo: "G1",
+          mesaDe: 2,
+        },
+        pagina: 1,
+      },
+      opcoes: {
+        grupo: { opcoes: [{ codigo: "G1", rotulo: "Cervejas" }], mais: false },
+      },
+      agora: new Date("2026-10-28T12:00:00Z"),
+    };
+    const { rerender } = render(<FiltrosRelatorioForm {...props} />);
+    expect(
+      (screen.getByLabelText("Data inicial") as HTMLInputElement).value
+    ).toBe("2026-10-20");
+    expect((screen.getByLabelText("Grupo") as HTMLSelectElement).value).toBe(
+      "G1"
+    );
+
+    rerender(
+      <FiltrosRelatorioForm
+        {...props}
+        consulta={{
+          filtros: {
+            inicio: "2026-10-25",
+            fim: "2026-10-25",
+            fonte: "online",
+            grupo: "G2",
+            mesaDe: 8,
+          },
+          pagina: 3,
+          revisao: "12",
+        }}
+        opcoes={{
+          grupo: {
+            opcoes: [{ codigo: "G2", rotulo: "Petiscos" }],
+            mais: false,
+          },
+        }}
+      />
+    );
+
+    expect(
+      (screen.getByLabelText("Data inicial") as HTMLInputElement).value
+    ).toBe("2026-10-25");
+    expect(
+      (screen.getByLabelText("Data final") as HTMLInputElement).value
+    ).toBe("2026-10-25");
+    expect(
+      (screen.getByLabelText("Origem dos dados") as HTMLSelectElement).value
+    ).toBe("online");
+    expect((screen.getByLabelText("Grupo") as HTMLSelectElement).value).toBe(
+      "G2"
+    );
+    expect(
+      (screen.getByLabelText("Mesa a partir de") as HTMLInputElement).value
+    ).toBe("8");
+  });
 });

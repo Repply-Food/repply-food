@@ -31,9 +31,7 @@ const filtrosSchema = z
   .strict();
 const consultaUrlSchema = filtrosSchema
   .extend({
-    pagina: inteiroUrl(
-      z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
-    ).optional(),
+    pagina: inteiroUrl(z.number().int().min(1).max(2_147_483_647)).optional(),
     revisao: revisaoSchema.optional(),
   })
   .strict();
