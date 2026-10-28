@@ -139,6 +139,11 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  {
+    funcao: "consultar_relatorio(uuid, text, jsonb, integer, integer, text)",
+    anon: false,
+    authenticated: true,
+  },
   // Conferem eh_admin_repply() por dentro (D-38).
   { funcao: "revogar_tokens_envio(uuid)", anon: false, authenticated: true },
   { funcao: "tem_acesso(uuid)", anon: true, authenticated: true },
