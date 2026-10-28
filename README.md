@@ -16,6 +16,8 @@
 >
 > **O MVP foi concluído e a etapa 11 começou em 24/10/2026: piloto com um cliente real.** A partir daqui, o foco deixa de ser acrescentar funcionalidades e passa a ser acompanhar a operação, conferir os números com o fechamento do SCC e medir os critérios de sucesso do piloto por 30 a 60 dias. O piloto está **em andamento**; ainda não está declarado como bem-sucedido.
 
+> **Relatórios SCC (28/10/2026): implementação local em andamento, ainda sem homologação.** O código prevê Financeiro, Produtos, Comissão, Caixa, Auditoria e Notas assinadas, com filtros de período e exportação em PDF. A SCC ainda precisa adaptar/confirmar a origem dos dados; as migrations e consultas SQL novas não foram executadas no PostgreSQL local neste ambiente. A funcionalidade não está declarada como publicada. Veja [uso local e homologação](docs/operacao/relatorios.md).
+
 ## Roteiro das etapas (plano do MVP)
 
 | # | Etapa | Estado |
@@ -32,6 +34,7 @@
 | 9 | Alarme por e-mail (vigia) | ✅ **no ar e testado (22/10/2026)** |
 | 10 | Ensaio geral (casa de demonstração, kit do vendedor, acabamentos) | ✅ **feito (24/10/2026)** |
 | 11 | Piloto com a SCC e um cliente real | 🟡 **em andamento (24/10/2026)** |
+| — | Relatórios SCC — seis consultas, filtros e PDFs | 🟡 **código local; banco, origem SCC e apresentação visual pendentes de homologação** |
 
 > **O que falta, em detalhe:** [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/). **Como foi publicado:** [`docs/operacao/publicar.md`](docs/operacao/publicar.md).
 
@@ -187,6 +190,8 @@ O script Node gera em diretório temporário exclusivo junto ao destino, valida 
 ## Como os dados chegam
 
 O sistema SCC envia as contas para a função `receber-envio` a cada ~5 minutos, com um token por restaurante. Um **gerador de dados fictícios** simula o envio pelo mesmo caminho enquanto a integração não existe.
+
+Os seis novos relatórios têm contrato e recepção separados, em `receber-relatorios`; eles não alteram o envio de contas. O estado de implementação e o procedimento local estão em [`docs/operacao/relatorios.md`](docs/operacao/relatorios.md). A importação da amostra pode ser validada sem banco com `--dry-run`; isso não comprova importação HTTP nem homologação.
 
 ## Gerador de dados fictícios
 

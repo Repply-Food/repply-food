@@ -11,6 +11,7 @@
 | [`arquitetura/recepcao-de-dados.md`](arquitetura/recepcao-de-dados.md) | Como `receber-envio` funciona; testes; gerador de dados fictícios; vigia | Dev |
 | [`arquitetura/seguranca-e-isolamento.md`](arquitetura/seguranca-e-isolamento.md) | RLS, regras absolutas, login, LGPD, checklist de tabela nova | Dev |
 | [`operacao/cadastrar-restaurante.md`](operacao/cadastrar-restaurante.md) | Roteiro para colocar um cliente no ar | Equipe Repply |
+| [`operacao/relatorios.md`](operacao/relatorios.md) | Uso local, importação fictícia e checklist de homologação dos seis relatórios SCC | Dev, Repply, SCC |
 | [`operacao/publicar.md`](operacao/publicar.md) | Como publicar banco, funções e painel no piloto | Dev |
 | [`operacao/migrar-para-pro.md`](operacao/migrar-para-pro.md) | O que fazer no 1º cliente pagante (D-09) | Lucas Ferreira, dev |
 | [`../identidade-visual/`](../identidade-visual/README.md) | Marca: brandbook, logos, ícones do app, fontes, gerador | Todos |
