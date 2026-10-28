@@ -13,7 +13,13 @@ import {
   MAX_LINHAS_PAGINA,
   MAX_PAGINAS,
 } from "../../supabase/functions/_shared/relatorios/limites";
-import { linhasRelatorios, pagina, paginaProdutos } from "./fixtures";
+import {
+  casosLinhasInvalidas,
+  casosLinhasValidas,
+  linhasRelatorios,
+  pagina,
+  paginaProdutos,
+} from "./fixtures";
 
 it("aceita fotografia fictícia e recusa dados pessoais inesperados", () => {
   const pedido = paginaProdutos();
@@ -44,16 +50,9 @@ it("valida fotografia sem campos de paginação para o importador", () => {
   ).toBe(false);
 });
 
-it.each(Object.entries(linhasRelatorios))(
-  "valida o formato %s",
-  (relatorio, linha) => {
-    expect(
-      validarPedidoRelatorios(
-        pagina(relatorio as keyof typeof linhasRelatorios, linha)
-      ).success
-    ).toBe(true);
-  }
-);
+it.each(casosLinhasValidas)("valida o formato %s", (relatorio, linha) => {
+  expect(validarPedidoRelatorios(pagina(relatorio, linha)).success).toBe(true);
+});
 
 it("recusa dias impossíveis, dinheiro impreciso e sequências fora de bigint", () => {
   const pedido = paginaProdutos();
@@ -224,3 +223,12 @@ it("mantém compatibilidade com o schema antigo de entradas", () => {
   };
   expect(envelopeSchema.safeParse(envelope).success).toBe(true);
 });
+
+it.each(casosLinhasInvalidas)(
+  "recusa a linha inválida compartilhada de %s",
+  (relatorio, linha) => {
+    expect(validarPedidoRelatorios(pagina(relatorio, linha)).success).toBe(
+      false
+    );
+  }
+);

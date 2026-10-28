@@ -167,4 +167,12 @@ describe("funções do banco fechadas por padrão", () => {
       await banco.query("rollback");
     }
   });
+
+  it("o validador defensivo dos relatórios permanece privado", async () => {
+    const { rows } = await banco.query(
+      `select has_function_privilege('anon', 'public.validar_linha_relatorio(text,jsonb)', 'execute') as anon,
+              has_function_privilege('authenticated', 'public.validar_linha_relatorio(text,jsonb)', 'execute') as authenticated`
+    );
+    expect(rows[0]).toEqual({ anon: false, authenticated: false });
+  });
 });

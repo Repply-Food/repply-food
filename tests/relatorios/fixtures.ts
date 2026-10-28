@@ -138,3 +138,65 @@ export const linhasRelatorios = {
     publico: [{ sexo: "nao_informado", categoria: "pagante", quantidade: 5 }],
   },
 } satisfies Record<Relatorio, unknown>;
+
+// Os mesmos casos exercitam o validador de entrada e a defesa SQL.
+export const casosLinhasInvalidas: [Relatorio, unknown][] = [
+  ["notas-assinadas", { ...linhasRelatorios["notas-assinadas"], valor: "1e2" }],
+  [
+    "notas-assinadas",
+    { ...linhasRelatorios["notas-assinadas"], valor: "1.1234567" },
+  ],
+  ["notas-assinadas", { ...linhasRelatorios["notas-assinadas"], valor: "-0" }],
+  ["notas-assinadas", { ...linhasRelatorios["notas-assinadas"], valor: 10 }],
+  [
+    "financeiro",
+    {
+      ...linhasRelatorios.financeiro,
+      componentes: {
+        ...linhasRelatorios.financeiro.componentes,
+        telefone: "fictício",
+      },
+    },
+  ],
+  [
+    "financeiro",
+    {
+      ...linhasRelatorios.financeiro,
+      publico: [
+        linhasRelatorios.financeiro.publico[0],
+        linhasRelatorios.financeiro.publico[0],
+      ],
+    },
+  ],
+  [
+    "financeiro",
+    {
+      ...linhasRelatorios.financeiro,
+      entradas: {
+        ...linhasRelatorios.financeiro.entradas,
+        abertos: 2147483648,
+      },
+    },
+  ],
+  ["produtos", { ...linhasRelatorios.produtos, produto: "Produto\ninválido" }],
+  [
+    "produtos",
+    { ...linhasRelatorios.produtos, codigo_produto: "Código com espaço" },
+  ],
+  ["comissao", { ...linhasRelatorios.comissao, funcao: "X".repeat(81) }],
+  ["caixa", { ...linhasRelatorios.caixa, momento: "2026-02-30T12:00:00Z" }],
+  ["caixa", { ...linhasRelatorios.caixa, tipo: "outro" }],
+  ["auditoria", { ...linhasRelatorios.auditoria, tipo: "outro" }],
+];
+
+export const casosLinhasValidas: [Relatorio, unknown][] = [
+  ...Object.entries(linhasRelatorios).map(
+    ([relatorio, linha]) =>
+      [relatorio as Relatorio, linha] as [Relatorio, unknown]
+  ),
+  [
+    "caixa",
+    { ...linhasRelatorios.caixa, momento: "2026-02-14T12:00:00+23:00" },
+  ],
+  ["caixa", { ...linhasRelatorios.caixa, momento: "0000-02-29T12:00:00Z" }],
+];
