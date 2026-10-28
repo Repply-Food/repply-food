@@ -19,7 +19,7 @@ type Manifesto = {
   dia_movimento: string; // AAAA-MM-DD real; não derivado da data civil do evento
   fonte: Fonte;
   sequencia: string; // inteiro 1..9223372036854775807, crescente por escopo
-  capturado_em: string; // ISO8601 com offset ou Z
+  capturado_em: string; // ISO8601, ano 0001..9999, offset entre -15:59 e +15:59 ou Z
   natureza: 'scc'|'simulacao';
   recursos: Recurso[];
   total_paginas: number; // 1..200
@@ -33,6 +33,8 @@ type Pedido =
 `linhas` é validado pela união discriminada por `manifesto.relatorio`; não armazenar `unknown` sem schema. `Manifesto` é idêntico em todas as páginas. Uma carga representa exatamente um dia/fonte/relatório. `sequencia` é mantida pelo emissor para cada escopo; gerações antigas não sobrescrevem novas. Não usar nome do cliente ou ID de restaurante no manifesto.
 
 Publicação vazia: `total_paginas=1`, `total_linhas=0`, página 1 com `[]` e depois publicar. Ausência de envio nunca significa zero. Todas as linhas precisam pertencer ao dia do manifesto, mesmo que o evento civil seja na madrugada seguinte.
+
+`capturado_em` precisa ser representável como `timestamptz`: ano entre 0001 e 9999 e offset entre -15:59 e +15:59. O manifesto preserva o texto original para conferir retries. Essa restrição é específica da captura; `momento` das linhas permanece texto ISO8601 no JSON, sem conversão para timestamp no banco.
 
 ## 2. Linhas normalizadas
 
@@ -137,7 +139,7 @@ type LinhaFinanceiro = {
 };
 ```
 
-Exatamente uma linha por fotografia financeira; fotografia vazia confirma ausência de movimento, sem fornecer componentes desconhecidos. Não aceitar categoria/sexo com identidade de pessoa ou entrada. Contagens de `entradas` são inteiros não negativos ou `null`. Limitar `meios` a 100 e `publico` a 21 células únicas. Fonte oficial de cada total é a SCC; o Food soma valores oficiais de dias recebidos, e apresenta subtotal dos meios por classe sem afirmar uma equação não documentada entre descontos, consumo e recebido.
+Zero ou uma linha por fotografia financeira: uma linha contém o resumo informado pela SCC; fotografia explicitamente vazia confirma ausência de movimento, sem fornecer componentes desconhecidos. Não aceitar categoria/sexo com identidade de pessoa ou entrada. Contagens de `entradas` são inteiros não negativos ou `null`. Limitar `meios` a 100 e `publico` a 21 células únicas. Fonte oficial de cada total é a SCC; o Food soma valores oficiais de dias recebidos, e apresenta subtotal dos meios por classe sem afirmar uma equação não documentada entre descontos, consumo e recebido.
 
 ## 3. Capacidades e privacidade
 

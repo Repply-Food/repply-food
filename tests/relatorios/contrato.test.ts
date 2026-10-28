@@ -168,7 +168,7 @@ it("restringe recursos ao relatório e rejeita recursos duplicados", () => {
   expect(validarPedidoRelatorios(financeiro).success).toBe(false);
 });
 
-it("confere a contagem da página única e a linha financeira única", () => {
+it("confere a contagem da página única e o resumo financeiro com zero ou uma linha", () => {
   const pedidoProdutos = paginaProdutos();
   const financeiros = pagina("financeiro", linhasRelatorios.financeiro);
   expect(
@@ -182,6 +182,39 @@ it("confere a contagem da página única e a linha financeira única", () => {
       ...financeiros,
       linhas: [linhasRelatorios.financeiro, linhasRelatorios.financeiro],
       manifesto: { ...financeiros.manifesto, total_linhas: 2 },
+    }).success
+  ).toBe(false);
+});
+
+it("aceita fotografia financeira explicitamente vazia no pedido e no importador", () => {
+  const pedido = pagina("financeiro", linhasRelatorios.financeiro);
+  expect(
+    validarPedidoRelatorios({
+      ...pedido,
+      manifesto: { ...pedido.manifesto, total_linhas: 0 },
+      linhas: [],
+    }).success
+  ).toBe(true);
+  const {
+    total_linhas: _linhas,
+    total_paginas: _paginas,
+    ...manifesto
+  } = pedido.manifesto;
+  expect(fotografiaSchema.safeParse({ manifesto, linhas: [] }).success).toBe(
+    true
+  );
+});
+
+it.each([
+  "0000-02-29T12:00:00Z",
+  "2026-02-14T12:00:00+16:00",
+  "2026-02-14T12:00:00-23:59",
+])("recusa captura fora do domínio timestamptz: %s", (capturado_em) => {
+  const pedido = paginaProdutos();
+  expect(
+    validarPedidoRelatorios({
+      ...pedido,
+      manifesto: { ...pedido.manifesto, capturado_em },
     }).success
   ).toBe(false);
 });

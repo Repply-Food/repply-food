@@ -245,7 +245,10 @@ const manifestoBaseSchema = z.object({
   dia_movimento: dataCivilSchema,
   fonte: z.enum(["historico", "online"]),
   sequencia: sequenciaSchema,
-  capturado_em: instanteSchema,
+  capturado_em: instanteSchema.refine(
+    (valor) =>
+      !valor.startsWith("0000-") && /(Z|[+-](0\d|1[0-5]):[0-5]\d)$/.test(valor)
+  ),
   natureza: z.enum(["scc", "simulacao"]),
 });
 
@@ -323,12 +326,12 @@ const pedidoPaginaSchemas = RELATORIOS.map((relatorio) =>
       if (
         manifesto.relatorio === "financeiro" &&
         (manifesto.total_paginas !== 1 ||
-          manifesto.total_linhas !== 1 ||
-          pedido.linhas.length !== 1)
+          manifesto.total_linhas > 1 ||
+          pedido.linhas.length > 1)
       ) {
         contexto.addIssue({
           code: "custom",
-          message: "Fotografia financeira exige uma linha única",
+          message: "Fotografia financeira aceita zero ou uma linha",
           path: ["linhas"],
         });
       }
@@ -414,10 +417,10 @@ const fotografiaInterna = z
       });
       return;
     }
-    if (manifesto.relatorio === "financeiro" && linhas.length !== 1) {
+    if (manifesto.relatorio === "financeiro" && linhas.length > 1) {
       contexto.addIssue({
         code: "custom",
-        message: "Fotografia financeira exige uma linha única",
+        message: "Fotografia financeira aceita zero ou uma linha",
         path: ["linhas"],
       });
     }
