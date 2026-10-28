@@ -113,6 +113,12 @@ const abertas = [
     authenticated: true,
   },
   {
+    funcao:
+      "relatorios_privados.dia_civil_caixa(timestamp with time zone, text)",
+    anon: false,
+    authenticated: true,
+  },
+  {
     funcao: "relatorios_privados.comissao(uuid, jsonb, integer, integer)",
     anon: false,
     authenticated: true,
