@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_LINHAS_CARGA, MAX_LINHAS_PAGINA, MAX_PAGINAS } from "./limites";
+import { MAX_LINHAS_CARGA, MAX_LINHAS_PAGINA, MAX_PAGINAS } from "./limites.ts";
 
 export const RELATORIOS = [
   "financeiro",

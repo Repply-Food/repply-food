@@ -407,6 +407,11 @@ deno_version = 2
 [functions.receber-envio]
 verify_jwt = false
 
+# Relatórios usam o token SHA256 da casa, validado dentro do handler.
+# verify_jwt=false é intencional: o Bearer não é uma sessão Supabase.
+[functions.receber-relatorios]
+verify_jwt = false
+
 [functions.enviar-alerta]
 # O pg_net não tem JWT; a função exige x-rf-alerta-secret igual ao segredo no Vault.
 verify_jwt = false
