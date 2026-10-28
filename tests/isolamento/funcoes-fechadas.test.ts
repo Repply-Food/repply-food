@@ -106,6 +106,29 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  // Helpers fora dos schemas da API também têm EXECUTE inventariado.
+  {
+    funcao: "relatorios_privados.cobertura(uuid, text, jsonb)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao:
+      "relatorios_privados.notas_assinadas(uuid, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "relatorios_privados.produtos(uuid, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao:
+      "relatorios_privados.validar_consulta(uuid, text, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
   // Conferem eh_admin_repply() por dentro (D-38).
   { funcao: "revogar_tokens_envio(uuid)", anon: false, authenticated: true },
   { funcao: "tem_acesso(uuid)", anon: true, authenticated: true },
@@ -134,12 +157,13 @@ describe("funções do banco fechadas por padrão", () => {
 
   it("só as funções da lista podem ser executadas por anon ou authenticated", async () => {
     const resultado = await banco.query(
-      `select p.proname || '(' || oidvectortypes(p.proargtypes) || ')' as funcao,
+      `select case when n.nspname = 'public' then '' else n.nspname || '.' end
+                || p.proname || '(' || oidvectortypes(p.proargtypes) || ')' as funcao,
               has_function_privilege('anon', p.oid, 'execute') as anon,
               has_function_privilege('authenticated', p.oid, 'execute') as authenticated
          from pg_proc p
          join pg_namespace n on n.oid = p.pronamespace
-        where n.nspname = 'public'
+        where n.nspname in ('public', 'relatorios_privados')
           and p.prorettype <> 'trigger'::regtype
           and not exists (
             select 1 from pg_depend d
