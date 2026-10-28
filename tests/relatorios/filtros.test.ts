@@ -31,7 +31,6 @@ describe("consulta fechada dos relatórios", () => {
     "&pagina=-1",
     "&pagina=1.5",
     "&pagina=9007199254740992",
-    "&pdv=",
     "&pdv=P%201",
     "&pdv=O%27",
     `&grupo=${"a".repeat(81)}`,
@@ -140,9 +139,16 @@ describe("consulta fechada dos relatórios", () => {
       "&mesaDe=-1",
       "&mesaAte=2147483648",
       "&mesaDe=1.1",
-      "&mesaDe=",
     ])
       expect(() => parse(extra)).toThrow();
+  });
+
+  it("trata campos opcionais vazios como remoção do filtro", () => {
+    expect(parse("&pdv=&mesaDe=&grupo=").filtros).toEqual({
+      inicio: "2026-02-14",
+      fim: "2026-02-14",
+      fonte: "historico",
+    });
   });
 
   it("restringe tipos e categoria à identidade da direção", () => {

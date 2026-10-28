@@ -52,9 +52,16 @@ export function parseConsulta(
     ...REGISTRO_RELATORIOS[relatorio].filtros,
   ]);
   const valores: Record<string, string> = {};
+  const recebidos = new Set<string>();
   for (const [chave, valor] of entrada) {
-    if (!permitidos.has(chave) || Object.hasOwn(valores, chave))
+    if (!permitidos.has(chave) || recebidos.has(chave))
       throw new Error("consulta_invalida");
+    recebidos.add(chave);
+    if (
+      valor === "" &&
+      !["inicio", "fim", "fonte", "pagina", "revisao"].includes(chave)
+    )
+      continue;
     valores[chave] = valor;
   }
   const { pagina = 1, revisao, ...filtros } = consultaUrlSchema.parse(valores);
