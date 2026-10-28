@@ -100,6 +100,12 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  // Invoker, acesso conferido nos helpers e RLS por restaurante.
+  {
+    funcao: "opcoes_relatorio(uuid, text, jsonb, text, text, integer)",
+    anon: false,
+    authenticated: true,
+  },
   // Conferem eh_admin_repply() por dentro (D-38).
   { funcao: "revogar_tokens_envio(uuid)", anon: false, authenticated: true },
   { funcao: "tem_acesso(uuid)", anon: true, authenticated: true },
