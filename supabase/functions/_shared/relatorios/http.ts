@@ -25,19 +25,25 @@ export async function lerJsonLimitado(
   if (!reader) throw new ErroHttp(400, "json inválido");
   let bytes = 0;
   let texto = "";
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: true });
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      bytes += value.byteLength;
-      if (bytes > maxBytes) {
-        await reader.cancel().catch(() => undefined);
-        throw new ErroHttp(413, "envio grande demais");
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > maxBytes) {
+          await reader.cancel().catch(() => undefined);
+          throw new ErroHttp(413, "envio grande demais");
+        }
+        texto += decoder.decode(value, { stream: true });
       }
-      texto += decoder.decode(value, { stream: true });
+      texto += decoder.decode();
+    } catch (erro) {
+      if (erro instanceof ErroHttp) throw erro;
+      if (erro instanceof TypeError) throw new ErroHttp(400, "json inválido");
+      throw erro;
     }
-    texto += decoder.decode();
   } finally {
     reader.releaseLock();
   }

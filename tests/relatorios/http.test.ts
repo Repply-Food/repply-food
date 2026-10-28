@@ -82,6 +82,23 @@ describe("leitura limitada", () => {
       ).rejects.toMatchObject({ status: 400, message: "json inválido" });
     }
   );
+  it("rejeita UTF-8 malformado sem substituir bytes por caractere de reposição", async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controlador) {
+        controlador.enqueue(new Uint8Array([0x22, 0xff, 0x22]));
+        controlador.close();
+      },
+    });
+    const req = new Request("http://localhost", {
+      method: "POST",
+      body,
+      duplex: "half",
+    } as RequestInit);
+    await expect(lerJsonLimitado(req, 10)).rejects.toMatchObject({
+      status: 400,
+      message: "json inválido",
+    });
+  });
 });
 describe("autenticação", () => {
   it("consulta somente o SHA256 do Bearer e devolve a casa do token", async () => {
