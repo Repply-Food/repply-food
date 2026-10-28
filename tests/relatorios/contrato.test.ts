@@ -87,6 +87,30 @@ it("recusa dias impossíveis, dinheiro impreciso e sequências fora de bigint", 
   ).toBe(false);
 });
 
+it("retorna erro de validação para sequência que não é decimal", () => {
+  const pedido = paginaProdutos();
+  expect(
+    validarPedidoRelatorios({
+      ...pedido,
+      manifesto: { ...pedido.manifesto, sequencia: "abc" },
+    }).success
+  ).toBe(false);
+});
+
+it("aceita e preserva a sequência bigint máxima como texto", () => {
+  const pedido = paginaProdutos();
+  const sequencia = "9223372036854775807";
+  const resultado = validarPedidoRelatorios({
+    ...pedido,
+    manifesto: { ...pedido.manifesto, sequencia },
+  });
+
+  expect(resultado.success).toBe(true);
+  if (resultado.success && resultado.data.acao === "pagina") {
+    expect(resultado.data.manifesto.sequencia).toBe(sequencia);
+  }
+});
+
 it("aplica os limites de linhas e páginas por carga", () => {
   const pedido = paginaProdutos();
   expect(

@@ -49,7 +49,11 @@ const instanteSchema = z.string().datetime({ offset: true });
 const sequenciaSchema = z
   .string()
   .regex(/^[1-9]\d{0,18}$/)
-  .refine((valor) => BigInt(valor) <= 9_223_372_036_854_775_807n);
+  .refine(
+    (valor) =>
+      /^[1-9]\d{0,18}$/.test(valor) &&
+      BigInt(valor) <= 9_223_372_036_854_775_807n
+  );
 const inteiroPositivoSchema = z.number().int().min(0).max(2_147_483_647);
 
 const linhaProdutosSchema = z
