@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/r/casa-x/resultados",
+  usePathname: () => "/r/casa-x/relatorios/produtos",
 }));
 
 import { MenuPainel } from "../../components/painel/menu-painel";
@@ -15,23 +15,26 @@ afterEach(cleanup);
 
 describe("moldura do painel", () => {
   it.each(["lateral", "inferior"] as const)(
-    "o menu %s leva às três telas da casa e marca a atual",
+    "o menu %s leva às quatro telas da casa e marca a seção atual",
     (variante) => {
       render(<MenuPainel slug="casa-x" variante={variante} />);
       const links = screen.getAllByRole("link");
       expect(links.map((link) => link.getAttribute("href"))).toEqual([
         "/r/casa-x/hoje",
         "/r/casa-x/resultados",
+        "/r/casa-x/relatorios",
         "/r/casa-x/ajustes",
       ]);
       expect(
         screen
-          .getByRole("link", { name: /resultados/i })
+          .getByRole("link", { name: /relatórios/i })
           .getAttribute("aria-current")
       ).toBe("page");
       expect(
         screen.getByRole("link", { name: /hoje/i }).getAttribute("aria-current")
       ).toBeNull();
+      if (variante === "inferior")
+        expect(screen.getByRole("list").className).toContain("grid-cols-4");
     }
   );
 
