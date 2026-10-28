@@ -13,7 +13,7 @@ export const RELATORIOS = [
 export type Relatorio = (typeof RELATORIOS)[number];
 
 const decimalSchema = z.string().regex(/^-?\d{1,14}(\.\d{1,6})?$/);
-const codigoSchema = z
+export const codigoSchema = z
   .string()
   .min(1)
   .max(80)
@@ -31,7 +31,7 @@ const rotulo = (max = 120) =>
     );
 const codigoNullable = codigoSchema.nullable();
 const rotuloNullable = rotulo().nullable();
-const dataCivilSchema = z
+export const dataCivilSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine((valor) => {
@@ -54,9 +54,9 @@ const sequenciaSchema = z
       /^[1-9]\d{0,18}$/.test(valor) &&
       BigInt(valor) <= 9_223_372_036_854_775_807n
   );
-const inteiroPositivoSchema = z.number().int().min(0).max(2_147_483_647);
+export const inteiroPositivoSchema = z.number().int().min(0).max(2_147_483_647);
 
-const linhaProdutosSchema = z
+export const linhaProdutosSchema = z
   .object({
     codigo_produto: codigoSchema,
     produto: rotulo(),
@@ -73,7 +73,7 @@ const linhaProdutosSchema = z
   })
   .strict();
 
-const linhaComissaoSchema = z
+export const linhaComissaoSchema = z
   .object({
     codigo_operador: codigoSchema,
     operador: rotulo(120).nullable(),
@@ -83,7 +83,7 @@ const linhaComissaoSchema = z
   })
   .strict();
 
-const linhaCaixaSchema = z
+export const linhaCaixaSchema = z
   .object({
     codigo_lancamento: codigoSchema,
     momento: instanteSchema,
@@ -104,7 +104,7 @@ const tiposAuditoria = [
   "transferencia_produtos",
 ] as const;
 
-const linhaAuditoriaSchema = z
+export const linhaAuditoriaSchema = z
   .object({
     tipo: z.enum(tiposAuditoria),
     momento: instanteSchema,
@@ -124,7 +124,7 @@ const linhaAuditoriaSchema = z
   })
   .strict();
 
-const linhaNotaSchema = z
+export const linhaNotaSchema = z
   .object({
     codigo_nota: codigoSchema,
     codigo_entrada: codigoSchema,
@@ -167,7 +167,7 @@ const publicoSchema = z
   .strict();
 
 const componenteSchema = decimalSchema.nullable();
-const linhaFinanceiroSchema = z
+export const linhaFinanceiroSchema = z
   .object({
     componentes: z
       .object({
@@ -230,7 +230,7 @@ export type LinhaRelatorio =
   | LinhaNota
   | LinhaFinanceiro;
 
-const recursosPorRelatorio: Record<Relatorio, readonly string[]> = {
+export const recursosPorRelatorio: Record<Relatorio, readonly string[]> = {
   produtos: ["pdv", "grupo", "garcom", "mesa"],
   comissao: ["operador"],
   caixa: ["operador", "tipo", "categoria"],
@@ -239,7 +239,7 @@ const recursosPorRelatorio: Record<Relatorio, readonly string[]> = {
   financeiro: [],
 } as const;
 
-const manifestoBaseSchema = z.object({
+export const manifestoBaseSchema = z.object({
   versao_formato: z.literal(1),
   carga_id: z.string().uuid(),
   dia_movimento: dataCivilSchema,
