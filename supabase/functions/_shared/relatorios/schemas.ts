@@ -38,7 +38,9 @@ export const dataCivilSchema = z
     const ano = Number(valor.slice(0, 4));
     const mes = Number(valor.slice(5, 7));
     const dia = Number(valor.slice(8, 10));
-    const data = new Date(Date.UTC(ano, mes - 1, dia));
+    if (ano < 1 || ano > 9999) return false;
+    const data = new Date(0);
+    data.setUTCFullYear(ano, mes - 1, dia);
     return (
       data.getUTCFullYear() === ano &&
       data.getUTCMonth() === mes - 1 &&
@@ -53,6 +55,10 @@ const instanteSchema = z
       !valor.startsWith("0000-") && /(Z|[+-](0\d|1[0-5]):[0-5]\d)$/.test(valor),
     "Instante fora do intervalo aceito pelo PostgreSQL"
   );
+const momentoSchema = instanteSchema.refine((valor) => {
+  const ano = Number(valor.slice(0, 4));
+  return ano >= 2 && ano <= 9998;
+}, "Momento fora da faixa segura para calcular o dia civil");
 const sequenciaSchema = z
   .string()
   .regex(/^[1-9]\d{0,18}$/)
@@ -93,7 +99,7 @@ export const linhaComissaoSchema = z
 export const linhaCaixaSchema = z
   .object({
     codigo_lancamento: codigoSchema,
-    momento: instanteSchema,
+    momento: momentoSchema,
     codigo_operador: codigoNullable,
     operador: rotuloNullable,
     tipo: z.enum(["credito", "debito"]),
@@ -114,7 +120,7 @@ const tiposAuditoria = [
 export const linhaAuditoriaSchema = z
   .object({
     tipo: z.enum(tiposAuditoria),
-    momento: instanteSchema,
+    momento: momentoSchema,
     codigo_operador: codigoNullable,
     operador: rotuloNullable,
     cartao_anterior: codigoNullable,

@@ -110,6 +110,23 @@ it("aceita e preserva a sequência bigint máxima como texto", () => {
   }
 });
 
+it("mantém a faixa completa de capturado_em independente dos limites de momento", () => {
+  const pedido = paginaProdutos();
+  for (const capturado_em of [
+    "0001-01-01T00:00:00+15:59",
+    "9999-12-31T23:59:59-15:59",
+  ]) {
+    const resultado = validarPedidoRelatorios({
+      ...pedido,
+      manifesto: { ...pedido.manifesto, capturado_em },
+    });
+    expect(resultado.success).toBe(true);
+    if (resultado.success && resultado.data.acao === "pagina") {
+      expect(resultado.data.manifesto.capturado_em).toBe(capturado_em);
+    }
+  }
+});
+
 it("aplica os limites de linhas e páginas por carga", () => {
   const pedido = paginaProdutos();
   expect(

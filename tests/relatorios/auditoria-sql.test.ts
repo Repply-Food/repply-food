@@ -285,9 +285,27 @@ describe("auditoria nas fotografias reais do PostgreSQL local", () => {
         ),
       "linha_relatorio_invalida"
     );
+    for (const momento of [
+      "0001-01-01T00:00:00+15:59",
+      "9999-12-31T23:59:59-15:59",
+    ]) {
+      await recusarConsulta(
+        banco,
+        () =>
+          banco.query(
+            "select public.validar_linha_relatorio('auditoria',$1::jsonb)",
+            [JSON.stringify(evento({ momento }))]
+          ),
+        "linha_relatorio_invalida"
+      );
+    }
     await banco.query(
       "select public.validar_linha_relatorio('auditoria',$1::jsonb)",
-      [JSON.stringify(evento({ momento: "9999-12-31T23:59:59-15:59" }))]
+      [JSON.stringify(evento({ momento: "0002-01-01T00:00:00+15:59" }))]
+    );
+    await banco.query(
+      "select public.validar_linha_relatorio('auditoria',$1::jsonb)",
+      [JSON.stringify(evento({ momento: "9998-12-31T23:59:59-15:59" }))]
     );
   });
 });

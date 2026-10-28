@@ -34,7 +34,7 @@ type Pedido =
 
 Publicação vazia: `total_paginas=1`, `total_linhas=0`, página 1 com `[]` e depois publicar. Ausência de envio nunca significa zero. Todas as linhas precisam pertencer ao dia do manifesto, mesmo que o evento civil seja na madrugada seguinte.
 
-`capturado_em` precisa ser representável como `timestamptz`: ano entre 0001 e 9999 e offset entre -15:59 e +15:59. O manifesto preserva o texto original para conferir retries. `momento` das linhas de Caixa e Auditoria também precisa ficar nesse intervalo do PostgreSQL; o texto ISO8601 original continua no JSON e só é convertido durante a consulta. A validação rejeita ano 0000 e offsets fora de -15:59..+15:59 antes de qualquer cast. Caixa retorna ainda `diaCivil`, calculado no fuso da casa a partir do instante real; o filtro de data continua usando `dia_movimento` do manifesto.
+`capturado_em` precisa ser representável como `timestamptz`: ano entre 0001 e 9999 e offset entre -15:59 e +15:59. O manifesto preserva o texto original para conferir retries. `momento` das linhas de Caixa e Auditoria usa o intervalo mais estreito: ano 0002..9998 e offset -15:59..+15:59 ou `Z`. Essa margem de um ano em cada ponta cobre a virada civil após aplicar o offset e o fuso da casa. O texto ISO8601 original continua no JSON e só é convertido durante a consulta. Caixa retorna ainda `diaCivil`, calculado no fuso da casa a partir do instante real, e recusa saída fora do intervalo de datas PostgreSQL `0001..9999`; o filtro continua usando `dia_movimento` do manifesto.
 
 ## 2. Linhas normalizadas
 
@@ -71,7 +71,7 @@ Uma linha por operador/dia. A consulta recebida fornece as vendas: item não can
 ```ts
 type LinhaCaixa = {
   codigo_lancamento: Codigo;
-  momento: string; // ISO8601, ano 0001..9999 e offset -15:59..+15:59 ou Z
+  momento: string; // ISO8601, ano 0002..9998 e offset -15:59..+15:59 ou Z
   codigo_operador: Codigo|null; operador: string|null;
   tipo: 'credito'|'debito'; codigo_categoria: Codigo; categoria: string;
   valor: Decimal; // >=0; direção está em tipo
@@ -86,7 +86,7 @@ A SCC normaliza direção e magnitude; valor negativo sem regra de estorno expl�
 type TipoAuditoria = 'cancelamento_produto'|'perda_cartao'|'alteracao_limites'
   | 'exclusao_taxa_servico'|'transferencia_produtos';
 type LinhaAuditoria = {
-  tipo: TipoAuditoria; momento: string; // Mesmo intervalo PostgreSQL de Caixa
+  tipo: TipoAuditoria; momento: string; // Mesmo intervalo de Caixa
   codigo_operador: Codigo|null; operador: string|null;
   cartao_anterior: Codigo|null; cartao_novo: Codigo|null;
   codigo_produto: Codigo|null; produto: string|null;

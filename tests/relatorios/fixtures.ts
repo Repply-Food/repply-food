@@ -188,11 +188,27 @@ export const casosLinhasInvalidas: [Relatorio, unknown][] = [
   ["caixa", { ...linhasRelatorios.caixa, momento: "0000-02-29T12:00:00Z" }],
   [
     "caixa",
+    { ...linhasRelatorios.caixa, momento: "0001-01-01T00:00:00+15:59" },
+  ],
+  [
+    "caixa",
+    { ...linhasRelatorios.caixa, momento: "9999-12-31T23:59:59-15:59" },
+  ],
+  [
+    "caixa",
     { ...linhasRelatorios.caixa, momento: "2026-02-14T12:00:00+16:00" },
   ],
   [
     "auditoria",
     { ...linhasRelatorios.auditoria, momento: "2026-02-14T12:00:00-16:00" },
+  ],
+  [
+    "auditoria",
+    { ...linhasRelatorios.auditoria, momento: "0001-01-01T00:00:00+15:59" },
+  ],
+  [
+    "auditoria",
+    { ...linhasRelatorios.auditoria, momento: "9999-12-31T23:59:59-15:59" },
   ],
   ["caixa", { ...linhasRelatorios.caixa, tipo: "outro" }],
   ["auditoria", { ...linhasRelatorios.auditoria, tipo: "outro" }],
@@ -205,10 +221,10 @@ export const casosLinhasValidas: [Relatorio, unknown][] = [
   ),
   [
     "caixa",
-    { ...linhasRelatorios.caixa, momento: "0001-01-01T00:00:00+15:59" },
+    { ...linhasRelatorios.caixa, momento: "0002-01-01T00:00:00+15:59" },
   ],
   [
     "auditoria",
-    { ...linhasRelatorios.auditoria, momento: "9999-12-31T23:59:59-15:59" },
+    { ...linhasRelatorios.auditoria, momento: "9998-12-31T23:59:59-15:59" },
   ],
 ];

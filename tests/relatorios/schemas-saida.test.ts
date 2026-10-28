@@ -303,6 +303,13 @@ describe("saídas concretas e fechadas", () => {
       resultadoSchemas.caixa.safeParse({
         ...envelope,
         ...amostras.caixa,
+        linhas: [{ ...amostras.caixa.linhas[0], diaCivil: "0001-12-31" }],
+      }).success
+    ).toBe(true);
+    expect(
+      resultadoSchemas.caixa.safeParse({
+        ...envelope,
+        ...amostras.caixa,
         linhas: [{ ...amostras.caixa.linhas[0], diaCivil: "2026-02-30" }],
       }).success
     ).toBe(false);

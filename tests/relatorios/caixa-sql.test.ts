@@ -191,6 +191,28 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
     ).toBeNull();
   });
 
+  it("desempata entre dias de movimento depois de todas as demais chaves", async () => {
+    const empate = lancamento({ codigo_lancamento: "L-EMPATE" });
+    await publicarFixture(banco, fixture.restauranteA, {
+      relatorio: "caixa",
+      dia: "2026-10-24",
+      recursos: ["operador", "tipo", "categoria"],
+      linhas: [empate],
+    });
+    await publicarFixture(banco, fixture.restauranteA, {
+      relatorio: "caixa",
+      dia: "2026-10-25",
+      recursos: ["operador", "tipo", "categoria"],
+      linhas: [empate],
+    });
+    await identidade(banco, fixture.usuarioA);
+    const resultado = await consultar(filtrosDoisDias);
+    expect(resultado.linhas.map((linha) => linha.diaMovimento)).toEqual([
+      "2026-10-24",
+      "2026-10-25",
+    ]);
+  });
+
   it("isola usuários e casas e exige os recursos publicados", async () => {
     await publicarFixture(banco, fixture.restauranteA, {
       relatorio: "caixa",
@@ -242,13 +264,81 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
       () =>
         banco.query(
           "select public.validar_linha_relatorio('caixa',$1::jsonb)",
+          [JSON.stringify(lancamento({ momento: "0001-01-01T00:00:00+15:59" }))]
+        ),
+      "linha_relatorio_invalida"
+    );
+    await recusarConsulta(
+      banco,
+      () =>
+        banco.query(
+          "select public.validar_linha_relatorio('caixa',$1::jsonb)",
+          [JSON.stringify(lancamento({ momento: "9999-12-31T23:59:59-15:59" }))]
+        ),
+      "linha_relatorio_invalida"
+    );
+    await recusarConsulta(
+      banco,
+      () =>
+        banco.query(
+          "select public.validar_linha_relatorio('caixa',$1::jsonb)",
           [JSON.stringify(lancamento({ momento: "2026-02-14T12:00:00+16:00" }))]
         ),
       "linha_relatorio_invalida"
     );
     await banco.query(
       "select public.validar_linha_relatorio('caixa',$1::jsonb)",
-      [JSON.stringify(lancamento({ momento: "0001-01-01T00:00:00+15:59" }))]
+      [JSON.stringify(lancamento({ momento: "0002-01-01T00:00:00+15:59" }))]
+    );
+    await banco.query(
+      "select public.validar_linha_relatorio('caixa',$1::jsonb)",
+      [JSON.stringify(lancamento({ momento: "9998-12-31T23:59:59-15:59" }))]
+    );
+  });
+
+  it("calcula dia civil nas viradas de ano extremas dentro da faixa segura", async () => {
+    await publicarFixture(banco, fixture.restauranteA, {
+      relatorio: "caixa",
+      dia: "0002-01-01",
+      recursos: ["operador", "tipo", "categoria"],
+      linhas: [
+        lancamento({ momento: "0002-01-01T00:00:00+15:59", valor: "1.00" }),
+      ],
+    });
+    await publicarFixture(banco, fixture.restauranteA, {
+      relatorio: "caixa",
+      dia: "9998-12-31",
+      recursos: ["operador", "tipo", "categoria"],
+      linhas: [
+        lancamento({
+          momento: "9998-12-31T23:59:59-15:59",
+          valor: "2.00",
+        }),
+      ],
+    });
+    await identidade(banco, fixture.usuarioA);
+    const inferior = await consultar({
+      inicio: "0002-01-01",
+      fim: "0002-01-01",
+      fonte: "historico",
+    });
+    const superior = await consultar({
+      inicio: "9998-12-31",
+      fim: "9998-12-31",
+      fonte: "historico",
+    });
+    expect(inferior.linhas[0]?.diaCivil).toBe("0001-12-31");
+    expect(superior.linhas[0]?.diaCivil).toBe("9999-01-01");
+  });
+
+  it("recusa dia civil PostgreSQL fora do ano 0001..9999", async () => {
+    await recusarConsulta(
+      banco,
+      () =>
+        banco.query(
+          "select relatorios_privados.dia_civil_caixa('9999-12-31T23:59:59-15:59'::timestamptz,'Etc/GMT+3')"
+        ),
+      "dia_civil_invalido"
     );
   });
 
