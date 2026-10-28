@@ -1,6 +1,7 @@
 import { EstadoRelatorio } from "@/components/painel/relatorios/estado";
 import { FiltrosRelatorioForm } from "@/components/painel/relatorios/filtros";
 import { PaginacaoRelatorio } from "@/components/painel/relatorios/paginacao";
+import { PainelRelatorio } from "@/components/painel/relatorios/painel-relatorio";
 import { exigirCasa } from "@/lib/auth/sessao";
 import { datasIniciaisRelatorio } from "@/lib/relatorios/datas-iniciais";
 import { parseConsulta, serializarConsulta } from "@/lib/relatorios/filtros";
@@ -194,6 +195,13 @@ export default async function PaginaRelatorio({
         fuso={casa.fuso}
         temFiltros={temFiltroAdicional(consulta.filtros)}
       />
+      {resultado.linhas.length > 0 ? (
+        <PainelRelatorio
+          relatorio={relatorio}
+          resultado={resultado}
+          fuso={casa.fuso}
+        />
+      ) : null}
       {resultado.linhas.length > 0 ? (
         <p className="text-sm text-quiet">
           Exibindo {resultado.linhas.length} de{" "}

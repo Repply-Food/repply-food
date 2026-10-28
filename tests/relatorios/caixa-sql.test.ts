@@ -95,6 +95,15 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
       creditos: "50.00",
       debitos: "12.50",
       saldo: "37.50",
+      grupos: [
+        {
+          codigoOperador: "O1",
+          diaCivil: "2026-10-24",
+          creditos: "50.00",
+          debitos: "12.50",
+          saldo: "37.50",
+        },
+      ],
     });
     expect(
       (await consultar({ ...filtros, categoria: "credito:1" })).resumo
@@ -150,6 +159,32 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
         })
       ).linhas
     ).toEqual([]);
+  });
+
+  it("calcula totais completos de operador/dia antes de paginar", async () => {
+    await publicarFixture(banco, fixture.restauranteA, {
+      relatorio: "caixa",
+      recursos: ["operador", "tipo", "categoria"],
+      linhas: [
+        lancamento({ codigo_lancamento: "L1", valor: "10.00" }),
+        lancamento({ codigo_lancamento: "L2", tipo: "debito", valor: "3.00" }),
+      ],
+    });
+    await identidade(banco, fixture.usuarioA);
+    const primeira = await consultar(filtros, 1, 1);
+    const segunda = await consultar(filtros, 2, 1);
+    expect(primeira.linhas).toHaveLength(1);
+    expect(segunda.linhas).toHaveLength(1);
+    expect(primeira.resumo.grupos).toEqual([
+      {
+        codigoOperador: "O1",
+        diaCivil: "2026-10-24",
+        creditos: "10.00",
+        debitos: "3.00",
+        saldo: "7.00",
+      },
+    ]);
+    expect(segunda.resumo.grupos).toEqual(primeira.resumo.grupos);
   });
 
   it("ordena operadores, dia civil e instantes reais, mantendo totais entre páginas", async () => {
@@ -348,7 +383,12 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
       await consultar({ ...filtros, inicio: "2026-10-25", fim: "2026-10-25" })
     ).toEqual({
       linhas: [],
-      resumo: { creditos: "0.00", debitos: "0.00", saldo: "0.00" },
+      resumo: {
+        creditos: "0.00",
+        debitos: "0.00",
+        saldo: "0.00",
+        grupos: [],
+      },
       paginacao: { pagina: 1, tamanho: 50, totalLinhas: 0 },
     });
     await recusarConsulta(

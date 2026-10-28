@@ -23,6 +23,7 @@ const resultado: ResultadoDoRelatorio<"produtos"> = {
     vendas: "0.00",
     custos: null,
     diferenca: null,
+    grupos: [],
   },
   paginacao: { pagina: 1, tamanho: 50, totalLinhas: 0 },
 };

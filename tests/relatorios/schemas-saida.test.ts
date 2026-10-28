@@ -83,6 +83,16 @@ const amostras = {
       vendas: "9007199254740993.01",
       custos: null,
       diferenca: null,
+      grupos: [
+        {
+          codigoPdv: null,
+          codigoGrupo: null,
+          quantidade: "1.500000",
+          vendas: "9007199254740993.01",
+          custos: null,
+          diferenca: null,
+        },
+      ],
     },
   },
   comissao: {
@@ -116,7 +126,20 @@ const amostras = {
         valor: "12.50",
       },
     ],
-    resumo: { creditos: "50.00", debitos: "12.50", saldo: "37.50" },
+    resumo: {
+      creditos: "50.00",
+      debitos: "12.50",
+      saldo: "37.50",
+      grupos: [
+        {
+          codigoOperador: null,
+          diaCivil: "2026-02-15",
+          creditos: "50.00",
+          debitos: "12.50",
+          saldo: "37.50",
+        },
+      ],
+    },
   },
   auditoria: {
     linhas: [auditoria],
@@ -391,6 +414,35 @@ describe("saídas concretas e fechadas", () => {
         ...envelope,
         ...amostras.caixa,
         linhas: [{ ...amostras.caixa.linhas[0], valor: "-1.00" }],
+      }).success
+    ).toBe(false);
+  });
+
+  it("recusa grupos completos duplicados no resumo de produtos e caixa", () => {
+    expect(
+      resultadoSchemas.produtos.safeParse({
+        ...envelope,
+        ...amostras.produtos,
+        resumo: {
+          ...amostras.produtos.resumo,
+          grupos: [
+            ...amostras.produtos.resumo.grupos,
+            ...amostras.produtos.resumo.grupos,
+          ],
+        },
+      }).success
+    ).toBe(false);
+    expect(
+      resultadoSchemas.caixa.safeParse({
+        ...envelope,
+        ...amostras.caixa,
+        resumo: {
+          ...amostras.caixa.resumo,
+          grupos: [
+            ...amostras.caixa.resumo.grupos,
+            ...amostras.caixa.resumo.grupos,
+          ],
+        },
       }).success
     ).toBe(false);
   });

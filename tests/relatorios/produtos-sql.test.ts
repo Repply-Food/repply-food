@@ -103,6 +103,16 @@ describe("produtos agregados nas fotografias reais do PostgreSQL local", () => {
         vendas: "21.25",
         custos: null,
         diferenca: null,
+        grupos: [
+          {
+            codigoPdv: "D1",
+            codigoGrupo: "G1",
+            quantidade: "2.000000",
+            vendas: "21.25",
+            custos: null,
+            diferenca: null,
+          },
+        ],
       },
       paginacao: { pagina: 1, tamanho: 1, totalLinhas: 2 },
     });
@@ -244,6 +254,16 @@ describe("produtos agregados nas fotografias reais do PostgreSQL local", () => {
       vendas: "1.21",
       custos: "0.00",
       diferenca: "1.21",
+      grupos: [
+        {
+          codigoPdv: "D1",
+          codigoGrupo: "G1",
+          quantidade: "1.500000",
+          vendas: "1.21",
+          custos: "0.00",
+          diferenca: "1.21",
+        },
+      ],
     });
   });
 
@@ -296,6 +316,16 @@ describe("produtos agregados nas fotografias reais do PostgreSQL local", () => {
         vendas: "15.00",
         custos: null,
         diferenca: null,
+        grupos: [
+          {
+            codigoPdv: "D1",
+            codigoGrupo: "G1",
+            quantidade: "1.000000",
+            vendas: "15.00",
+            custos: null,
+            diferenca: null,
+          },
+        ],
       },
       paginacao: { totalLinhas: 1 },
     });
@@ -353,6 +383,7 @@ describe("produtos agregados nas fotografias reais do PostgreSQL local", () => {
         vendas: "0.00",
         custos: "0.00",
         diferenca: "0.00",
+        grupos: [],
       },
       paginacao: { pagina: 1, tamanho: 50, totalLinhas: 0 },
     });

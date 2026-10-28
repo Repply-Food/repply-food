@@ -163,7 +163,12 @@ describe("consulta da rota de relatório", () => {
         recursos: ["tipo", "categoria"],
       },
       linhas: [],
-      resumo: { creditos: "0.00", debitos: "0.00", saldo: "0.00" },
+      resumo: {
+        creditos: "0.00",
+        debitos: "0.00",
+        saldo: "0.00",
+        grupos: [],
+      },
       paginacao: { pagina: 1, tamanho: 50, totalLinhas: 0 },
     });
     await PaginaRelatorio({
@@ -188,6 +193,46 @@ describe("consulta da rota de relatório", () => {
       "",
       1
     );
+  });
+
+  it("não mostra fixture quando a SCC ainda não enviou linhas", async () => {
+    mocks.exigirCasa.mockResolvedValue({
+      casa: { id: "casa-id", fuso: "America/Fortaleza" },
+    });
+    mocks.obterRelatorio.mockResolvedValue({
+      situacao: "sem_dados",
+      revisao: "0",
+      cobertura: {
+        esperados: 1,
+        recebidos: 0,
+        ausentes: ["2026-10-26"],
+        capturadoEm: null,
+        simulacao: false,
+        recursos: [],
+      },
+      linhas: [],
+      resumo: {
+        quantidade: "0",
+        vendas: "0.00",
+        custos: "0.00",
+        diferenca: "0.00",
+        grupos: [],
+      },
+      paginacao: { pagina: 1, tamanho: 50, totalLinhas: 0 },
+    });
+    const pagina = await PaginaRelatorio({
+      params: Promise.resolve({ slug: "casa-x", relatorio: "produtos" }),
+      searchParams: Promise.resolve({
+        inicio: "2026-10-26",
+        fim: "2026-10-26",
+        fonte: "historico",
+      }),
+    });
+    render(pagina);
+    expect(
+      screen.getByText("A SCC ainda não enviou este relatório para o período")
+    ).toBeTruthy();
+    expect(screen.queryByText("Produto fictício")).toBeNull();
   });
 
   it("mostra erro para consulta incompleta sem chamar a leitura", async () => {

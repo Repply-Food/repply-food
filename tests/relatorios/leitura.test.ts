@@ -62,6 +62,16 @@ const resultadoProdutos = {
     vendas: "999.00",
     custos: "200.00",
     diferenca: "799.00",
+    grupos: [
+      {
+        codigoPdv: "D1",
+        codigoGrupo: "G1",
+        quantidade: "48.500",
+        vendas: "999.00",
+        custos: "200.00",
+        diferenca: "799.00",
+      },
+    ],
   },
   paginacao: { pagina: 2, tamanho: 25, totalLinhas: 40 },
 };

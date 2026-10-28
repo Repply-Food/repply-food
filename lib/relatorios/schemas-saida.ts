@@ -33,14 +33,35 @@ export const linhaProdutosSaidaSchema = z
     diferenca: componente,
   })
   .strict();
-export const resumoProdutosSchema = z
+export const grupoProdutosSaidaSchema = z
   .object({
+    codigoPdv: produtos.shape.codigo_pdv,
+    codigoGrupo: produtos.shape.codigo_grupo,
     quantidade: decimal,
     vendas: decimal,
     custos: componente,
     diferenca: componente,
   })
   .strict();
+export const resumoProdutosSchema = z
+  .object({
+    quantidade: decimal,
+    vendas: decimal,
+    custos: componente,
+    diferenca: componente,
+    grupos: z.array(grupoProdutosSaidaSchema),
+  })
+  .strict()
+  .superRefine((valor, contexto) => {
+    const grupos = valor.grupos.map((grupo) =>
+      JSON.stringify([grupo.codigoPdv, grupo.codigoGrupo])
+    );
+    if (new Set(grupos).size !== grupos.length)
+      contexto.addIssue({
+        code: "custom",
+        message: "Grupo de produtos duplicado no resumo",
+      });
+  });
 
 export const linhaComissaoSaidaSchema = z
   .object({
@@ -73,13 +94,33 @@ export const linhaCaixaSaidaSchema = z
     valor: caixa.shape.valor,
   })
   .strict();
-export const resumoCaixaSchema = z
+export const grupoCaixaSaidaSchema = z
   .object({
+    codigoOperador: caixa.shape.codigo_operador,
+    diaCivil: dataCivilSchema,
     creditos: decimal.refine((v) => !v.startsWith("-")),
     debitos: decimal.refine((v) => !v.startsWith("-")),
     saldo: decimal,
   })
   .strict();
+export const resumoCaixaSchema = z
+  .object({
+    creditos: decimal.refine((v) => !v.startsWith("-")),
+    debitos: decimal.refine((v) => !v.startsWith("-")),
+    saldo: decimal,
+    grupos: z.array(grupoCaixaSaidaSchema),
+  })
+  .strict()
+  .superRefine((valor, contexto) => {
+    const grupos = valor.grupos.map((grupo) =>
+      JSON.stringify([grupo.codigoOperador, grupo.diaCivil])
+    );
+    if (new Set(grupos).size !== grupos.length)
+      contexto.addIssue({
+        code: "custom",
+        message: "Grupo de caixa duplicado no resumo",
+      });
+  });
 
 export const linhaAuditoriaSaidaSchema = z
   .object({

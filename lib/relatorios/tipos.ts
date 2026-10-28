@@ -2,6 +2,8 @@ import type { Relatorio } from "@/lib/validators/relatorios";
 import type { z } from "zod";
 import type {
   coberturaSchema,
+  grupoCaixaSaidaSchema,
+  grupoProdutosSaidaSchema,
   linhaAuditoriaSaidaSchema,
   linhaCaixaSaidaSchema,
   linhaComissaoSaidaSchema,
@@ -54,6 +56,8 @@ export type LinhaFinanceiro = z.infer<typeof linhaFinanceiroSaidaSchema>;
 export type ResumoProdutos = z.infer<typeof resumoProdutosSchema>;
 export type ResumoComissao = z.infer<typeof resumoComissaoSchema>;
 export type ResumoCaixa = z.infer<typeof resumoCaixaSchema>;
+export type GrupoProdutos = z.infer<typeof grupoProdutosSaidaSchema>;
+export type GrupoCaixa = z.infer<typeof grupoCaixaSaidaSchema>;
 export type ResumoAuditoria = z.infer<typeof resumoAuditoriaSchema>;
 export type ResumoNotas = z.infer<typeof resumoNotasSchema>;
 export type ResumoFinanceiro = z.infer<typeof resumoFinanceiroSchema>;
