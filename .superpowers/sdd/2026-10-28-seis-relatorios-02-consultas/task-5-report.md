@@ -7,3 +7,7 @@ Financeiro retorna uma linha por fotografia diária recebida, incluindo zero par
 Foram adicionados testes SQL de comissão e financeiro, com fixtures fictícias e rollback. A conexão de `beforeAll` ao PostgreSQL local falhou (`conectarBanco`: Supabase local indisponível), então os casos de SQL ficaram bloqueados e não foi possível inspecionar a saída das consultas no banco. Não usei mocks. A geração de tipos com `npm run types` também não completou porque depende do banco local.
 
 Verificações concluídas: `npm run check`, `npm run lint`, `npx tsc --noEmit`, e testes de contrato, schemas de saída e append-only de migrations (57 testes passaram). A inspeção das consultas SQL permanece pendente da disponibilidade do PostgreSQL local.
+
+## Fix após revisão — inventário de EXECUTE
+
+Incluí `relatorios_privados.comissao(uuid,jsonb,integer,integer)` e `relatorios_privados.financeiro(uuid,jsonb,integer,integer)` em `tests/isolamento/funcoes-fechadas.test.ts`, com acesso `authenticated` e sem acesso `anon`, acompanhando os grants da migration. O teste focado `tests/isolamento/funcoes-fechadas.test.ts` continua bloqueado no `beforeAll` pela indisponibilidade do PostgreSQL local. `npx tsc --noEmit` e `npx biome check` focado passaram.

@@ -113,6 +113,16 @@ const abertas = [
     authenticated: true,
   },
   {
+    funcao: "relatorios_privados.comissao(uuid, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "relatorios_privados.financeiro(uuid, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
+  {
     funcao:
       "relatorios_privados.notas_assinadas(uuid, jsonb, integer, integer)",
     anon: false,
