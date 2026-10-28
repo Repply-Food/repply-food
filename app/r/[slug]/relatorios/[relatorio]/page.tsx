@@ -1,3 +1,4 @@
+import { BaixarPdfRelatorio } from "@/components/painel/relatorios/baixar-pdf";
 import { EstadoRelatorio } from "@/components/painel/relatorios/estado";
 import { FiltrosRelatorioForm } from "@/components/painel/relatorios/filtros";
 import { PaginacaoRelatorio } from "@/components/painel/relatorios/paginacao";
@@ -174,13 +175,18 @@ export default async function PaginaRelatorio({
 
   return (
     <section className="flex flex-col gap-4 md:gap-5">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight">
-          {REGISTRO_RELATORIOS[relatorio].titulo}
-        </h1>
-        <p className="text-sm text-quiet">
-          {REGISTRO_RELATORIOS[relatorio].descricao}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">
+            {REGISTRO_RELATORIOS[relatorio].titulo}
+          </h1>
+          <p className="text-sm text-quiet">
+            {REGISTRO_RELATORIOS[relatorio].descricao}
+          </p>
+        </div>
+        <BaixarPdfRelatorio
+          href={`/r/${slug}/relatorios/${relatorio}/pdf?${serializarConsulta({ ...consulta, pagina: 1 })}`}
+        />
       </div>
       <FiltrosRelatorioForm
         relatorio={relatorio}
