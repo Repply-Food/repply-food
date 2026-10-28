@@ -200,14 +200,12 @@ begin
           raise exception using errcode = '22023', message = 'linha_relatorio_invalida';
         end if;
       elsif tipo = 'instante' then
-        if texto !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]([.][0-9]+)?(Z|[+-](0[0-9]|1[0-5]):[0-5][0-9])$' then
+        if substring(texto from 1 for 4) = '0000'
+          or texto !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]([.][0-9]+)?(Z|[+-](0[0-9]|1[0-5]):[0-5][0-9])$' then
           raise exception using errcode = '22023', message = 'linha_relatorio_invalida';
         end if;
-        if substring(texto from 1 for 4)::int not between 2 and 9998 then
-          raise exception using errcode = '22023', message = 'linha_relatorio_invalida';
-        end if;
-        -- O momento é preservado em JSON. A margem anual também mantém
-        -- diaCivil dentro do calendário quando offset e fuso cruzam o ano.
+        -- O momento é preservado em JSON, mas precisa ser seguro para os casts
+        -- timestamptz da consulta: ano 0001..9999 e offset máximo ±15:59.
         ano := substring(texto from 1 for 4)::int;
         mes := substring(texto from 6 for 2)::int;
         dia := substring(texto from 9 for 2)::int;
@@ -243,7 +241,7 @@ begin
     select 1 from public.relatorio_linhas l
     where l.relatorio in ('caixa','auditoria')
       and ((l.dados->>'momento') is null
-        or substring(l.dados->>'momento' from 1 for 4)::int not between 2 and 9998
+        or substring(l.dados->>'momento' from 1 for 4) = '0000'
         or (l.dados->>'momento') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]([.][0-9]+)?(Z|[+-](0[0-9]|1[0-5]):[0-5][0-9])$')
   ) then
     raise exception 'momentos existentes fora do intervalo aceito pelo PostgreSQL';
@@ -253,22 +251,6 @@ begin
   where l.relatorio in ('caixa','auditoria');
 exception when others then
   raise exception 'momentos existentes não podem ser convertidos pelo PostgreSQL';
-end;
-$$;
-
-create function relatorios_privados.dia_civil_caixa(
-  p_instante timestamptz, p_fuso text
-) returns date
-language plpgsql stable security invoker
-set search_path = pg_catalog
-as $$
-declare resultado date;
-begin
-  resultado := (p_instante at time zone p_fuso)::date;
-  if extract(year from resultado) not between 1 and 9999 then
-    raise exception using errcode = '22023', message = 'dia_civil_invalido';
-  end if;
-  return resultado;
 end;
 $$;
 
@@ -286,8 +268,7 @@ begin
   ), filtradas as materialized (
     select l.dados, l.dia_movimento, l.posicao,
       (l.dados->>'momento')::timestamptz instante,
-      relatorios_privados.dia_civil_caixa(
-        (l.dados->>'momento')::timestamptz, c.fuso) dia_civil
+      ((l.dados->>'momento')::timestamptz at time zone c.fuso)::date dia_civil
     from public.relatorio_linhas l cross join casa c
     where l.restaurante_id = p_casa and l.relatorio = 'caixa'
       and l.fonte = p_filtros->>'fonte'
@@ -305,8 +286,7 @@ begin
   ), pagina as (
     select * from filtradas
     order by (dados->>'codigo_operador') collate "C" nulls last, dia_civil,
-      instante, (dados->>'codigo_lancamento') collate "C" nulls last, posicao,
-      dia_movimento
+      instante, (dados->>'codigo_lancamento') collate "C" nulls last, posicao
     offset (p_pagina::bigint - 1) * p_tamanho limit p_tamanho
   )
   select jsonb_build_object(
@@ -319,8 +299,7 @@ begin
       'codigoCategoria',dados->>'codigo_categoria','categoria',dados->>'categoria',
       'valor',dados->>'valor') order by
         (dados->>'codigo_operador') collate "C" nulls last, dia_civil,
-        instante, (dados->>'codigo_lancamento') collate "C" nulls last, posicao,
-        dia_movimento),'[]'::jsonb) from pagina),
+        instante, (dados->>'codigo_lancamento') collate "C" nulls last, posicao),'[]'::jsonb) from pagina),
     'resumo',jsonb_build_object('creditos',creditos,'debitos',debitos,'saldo',saldo),
     'paginacao',jsonb_build_object('pagina',p_pagina,'tamanho',p_tamanho,'totalLinhas',total_linhas)
   ) into resultado from resumo;
@@ -389,9 +368,7 @@ $$;
 
 revoke all on function relatorios_privados.caixa(uuid,jsonb,int,int) from public, anon, authenticated, service_role;
 revoke all on function relatorios_privados.auditoria(uuid,jsonb,int,int) from public, anon, authenticated, service_role;
-revoke all on function relatorios_privados.dia_civil_caixa(timestamptz,text) from public, anon, authenticated, service_role;
 grant execute on function relatorios_privados.caixa(uuid,jsonb,int,int) to authenticated;
 grant execute on function relatorios_privados.auditoria(uuid,jsonb,int,int) to authenticated;
-grant execute on function relatorios_privados.dia_civil_caixa(timestamptz,text) to authenticated;
 
 commit;
