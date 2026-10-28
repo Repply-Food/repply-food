@@ -45,7 +45,14 @@ export const dataCivilSchema = z
       data.getUTCDate() === dia
     );
   });
-const instanteSchema = z.string().datetime({ offset: true });
+const instanteSchema = z
+  .string()
+  .datetime({ offset: true })
+  .refine(
+    (valor) =>
+      !valor.startsWith("0000-") && /(Z|[+-](0\d|1[0-5]):[0-5]\d)$/.test(valor),
+    "Instante fora do intervalo aceito pelo PostgreSQL"
+  );
 const sequenciaSchema = z
   .string()
   .regex(/^[1-9]\d{0,18}$/)
