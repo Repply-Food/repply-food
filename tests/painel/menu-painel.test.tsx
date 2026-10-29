@@ -15,26 +15,26 @@ afterEach(cleanup);
 
 describe("moldura do painel", () => {
   it.each(["lateral", "inferior"] as const)(
-    "o menu %s leva às quatro telas da casa e marca a seção atual",
+    "o menu %s leva aos três destinos da casa e marca Resultados na rota de relatórios",
     (variante) => {
       render(<MenuPainel slug="casa-x" variante={variante} />);
       const links = screen.getAllByRole("link");
       expect(links.map((link) => link.getAttribute("href"))).toEqual([
         "/r/casa-x/hoje",
         "/r/casa-x/resultados",
-        "/r/casa-x/relatorios",
         "/r/casa-x/ajustes",
       ]);
       expect(
         screen
-          .getByRole("link", { name: /relatórios/i })
+          .getByRole("link", { name: "Resultados" })
           .getAttribute("aria-current")
       ).toBe("page");
       expect(
-        screen.getByRole("link", { name: /hoje/i }).getAttribute("aria-current")
+        screen.getByRole("link", { name: "Hoje" }).getAttribute("aria-current")
       ).toBeNull();
+      expect(screen.queryByRole("link", { name: "Relatórios" })).toBeNull();
       if (variante === "inferior")
-        expect(screen.getByRole("list").className).toContain("grid-cols-4");
+        expect(screen.getByRole("list").className).toContain("grid-cols-3");
     }
   );
 

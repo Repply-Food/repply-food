@@ -1,24 +1,18 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import {
-  ChartColumn,
-  FileBarChart,
-  LayoutDashboard,
-  Settings,
-} from "lucide-react";
+import { ChartColumn, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const ITENS = [
   { tela: "hoje", rotulo: "Hoje", Icone: LayoutDashboard },
   { tela: "resultados", rotulo: "Resultados", Icone: ChartColumn },
-  { tela: "relatorios", rotulo: "Relatórios", Icone: FileBarChart },
   { tela: "ajustes", rotulo: "Ajustes", Icone: Settings },
 ] as const;
 
 /**
- * Hoje · Resultados · Relatórios · Ajustes. "lateral" é a barra escura do computador;
+ * Hoje · Resultados · Ajustes. "lateral" é a barra escura do computador;
  * "inferior" é o menu fixo do celular (alvos de 56 px). A tela atual vai em
  * negrito, com o traço laranja e `aria-current`: não só a cor.
  */
@@ -37,12 +31,17 @@ export function MenuPainel({
     >
       <ul
         className={
-          variante === "inferior" ? "grid grid-cols-4" : "flex flex-col gap-1"
+          variante === "inferior" ? "grid grid-cols-3" : "flex flex-col gap-1"
         }
       >
         {ITENS.map(({ tela, rotulo, Icone }) => {
           const href = `/r/${slug}/${tela}`;
-          const atual = caminho === href || caminho.startsWith(`${href}/`);
+          const atual =
+            caminho === href ||
+            caminho.startsWith(`${href}/`) ||
+            (tela === "resultados" &&
+              (caminho === `/r/${slug}/relatorios` ||
+                caminho.startsWith(`/r/${slug}/relatorios/`)));
           return (
             <li key={tela}>
               <Link
