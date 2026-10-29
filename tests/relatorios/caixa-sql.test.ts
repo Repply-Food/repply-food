@@ -111,6 +111,15 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
       creditos: "50.00",
       debitos: "0.00",
       saldo: "50.00",
+      grupos: [
+        {
+          codigoOperador: "O1",
+          diaCivil: "2026-10-24",
+          creditos: "50.00",
+          debitos: "0.00",
+          saldo: "50.00",
+        },
+      ],
     });
     expect(
       (await consultar({ ...filtros, categoria: "debito:1" })).resumo
@@ -118,6 +127,15 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
       creditos: "0.00",
       debitos: "12.50",
       saldo: "-12.50",
+      grupos: [
+        {
+          codigoOperador: "O1",
+          diaCivil: "2026-10-24",
+          creditos: "0.00",
+          debitos: "12.50",
+          saldo: "-12.50",
+        },
+      ],
     });
   });
 

@@ -14,6 +14,11 @@ const abertas = [
   // Rodam dentro das restrições de `restaurantes`: o Postgres confere o
   // EXECUTE de quem grava (o admin, pelo login). São puras, sem ler tabela.
   { funcao: "cnpj_valido(text)", anon: false, authenticated: true },
+  {
+    funcao: "consultar_relatorio(uuid, text, jsonb, integer, integer, text)",
+    anon: false,
+    authenticated: true,
+  },
   // Pura (só calcula uma data, não lê tabela). As metrica_* são security
   // invoker e a chamam com o login de quem consulta (etapa 5).
   {
@@ -108,18 +113,28 @@ const abertas = [
   },
   // Helpers fora dos schemas da API também têm EXECUTE inventariado.
   {
+    funcao: "relatorios_privados.auditoria(uuid, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "relatorios_privados.caixa(uuid, jsonb, integer, integer)",
+    anon: false,
+    authenticated: true,
+  },
+  {
     funcao: "relatorios_privados.cobertura(uuid, text, jsonb)",
+    anon: false,
+    authenticated: true,
+  },
+  {
+    funcao: "relatorios_privados.comissao(uuid, jsonb, integer, integer)",
     anon: false,
     authenticated: true,
   },
   {
     funcao:
       "relatorios_privados.dia_civil_caixa(timestamp with time zone, text)",
-    anon: false,
-    authenticated: true,
-  },
-  {
-    funcao: "relatorios_privados.comissao(uuid, jsonb, integer, integer)",
     anon: false,
     authenticated: true,
   },
@@ -142,11 +157,6 @@ const abertas = [
   {
     funcao:
       "relatorios_privados.validar_consulta(uuid, text, jsonb, integer, integer)",
-    anon: false,
-    authenticated: true,
-  },
-  {
-    funcao: "consultar_relatorio(uuid, text, jsonb, integer, integer, text)",
     anon: false,
     authenticated: true,
   },
