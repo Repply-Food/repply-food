@@ -145,7 +145,7 @@ begin
       'grupos',(select coalesce(jsonb_agg(jsonb_build_object(
         'codigoOperador',codigo_operador,
         'diaCivil',to_char(dia_civil,'YYYY-MM-DD'),
-        'creditos',creditos,'debitos',debitos,'saldo',saldo
+        'creditos',creditos,'debitos',debitos,'saldo',saldo)
         order by codigo_operador collate "C" nulls last,dia_civil),
         '[]'::jsonb) from grupos)),
     'paginacao',jsonb_build_object('pagina',p_pagina,'tamanho',p_tamanho,'totalLinhas',total_linhas)

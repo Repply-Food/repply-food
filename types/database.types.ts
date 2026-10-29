@@ -225,6 +225,130 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"relatorio_cargas": {
+                  Row: {
+                    "bytes_recebidos": number,"capturado_em": string,"criada_em": string,"dia_movimento": string,"estado": string,"fonte": string,"id": string,"manifesto": Json | null,"natureza": string,"publicada_em": string | null,"recursos": (string)[],"relatorio": string,"restaurante_id": string,"revisao_publicada": number | null,"sequencia": number,"total_linhas": number,"total_paginas": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bytes_recebidos"?: number,"capturado_em": string,"criada_em"?: string,"dia_movimento": string,"estado": string,"fonte": string,"id": string,"manifesto"?: Json | null,"natureza": string,"publicada_em"?: string | null,"recursos": (string)[],"relatorio": string,"restaurante_id": string,"revisao_publicada"?: number | null,"sequencia": number,"total_linhas": number,"total_paginas": number
+                  }
+                  Update: {
+                    "bytes_recebidos"?: number,"capturado_em"?: string,"criada_em"?: string,"dia_movimento"?: string,"estado"?: string,"fonte"?: string,"id"?: string,"manifesto"?: Json | null,"natureza"?: string,"publicada_em"?: string | null,"recursos"?: (string)[],"relatorio"?: string,"restaurante_id"?: string,"revisao_publicada"?: number | null,"sequencia"?: number,"total_linhas"?: number,"total_paginas"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "relatorio_cargas_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "relatorio_cargas_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"relatorio_linhas": {
+                  Row: {
+                    "dados": NonNullable<Json>,"dia_movimento": string,"fonte": string,"posicao": number,"relatorio": string,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "dados": NonNullable<Json>,"dia_movimento": string,"fonte": string,"posicao": number,"relatorio": string,"restaurante_id": string
+                  }
+                  Update: {
+                    "dados"?: NonNullable<Json>,"dia_movimento"?: string,"fonte"?: string,"posicao"?: number,"relatorio"?: string,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "relatorio_linhas_restaurante_id_relatorio_dia_movimento_fo_fkey"
+      columns: ["restaurante_id","relatorio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "relatorio_publicacoes"
+      referencedColumns: ["restaurante_id","relatorio","dia_movimento","fonte"]
+    }
+                  ]
+                },"relatorio_paginas": {
+                  Row: {
+                    "bytes": number,"carga_id": string,"dados": Json | null,"hash": string,"numero": number,"quantidade": number,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bytes": number,"carga_id": string,"dados"?: Json | null,"hash": string,"numero": number,"quantidade": number,"restaurante_id": string
+                  }
+                  Update: {
+                    "bytes"?: number,"carga_id"?: string,"dados"?: Json | null,"hash"?: string,"numero"?: number,"quantidade"?: number,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "relatorio_paginas_restaurante_id_carga_id_fkey"
+      columns: ["restaurante_id","carga_id"]
+isOneToOne: false
+      referencedRelation: "relatorio_cargas"
+      referencedColumns: ["restaurante_id","id"]
+    }
+                  ]
+                },"relatorio_publicacoes": {
+                  Row: {
+                    "capturado_em": string,"carga_id": string,"dia_movimento": string,"fonte": string,"natureza": string,"publicada_em": string,"quantidade": number,"recursos": (string)[],"relatorio": string,"restaurante_id": string,"sequencia": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "capturado_em": string,"carga_id": string,"dia_movimento": string,"fonte": string,"natureza": string,"publicada_em"?: string,"quantidade": number,"recursos": (string)[],"relatorio": string,"restaurante_id": string,"sequencia": number
+                  }
+                  Update: {
+                    "capturado_em"?: string,"carga_id"?: string,"dia_movimento"?: string,"fonte"?: string,"natureza"?: string,"publicada_em"?: string,"quantidade"?: number,"recursos"?: (string)[],"relatorio"?: string,"restaurante_id"?: string,"sequencia"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "relatorio_publicacoes_restaurante_id_carga_id_fkey"
+      columns: ["restaurante_id","carga_id"]
+isOneToOne: false
+      referencedRelation: "relatorio_cargas"
+      referencedColumns: ["restaurante_id","id"]
+    },{
+      foreignKeyName: "relatorio_publicacoes_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "relatorio_publicacoes_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"relatorio_versoes": {
+                  Row: {
+                    "restaurante_id": string,"revisao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "restaurante_id": string,"revisao"?: number
+                  }
+                  Update: {
+                    "restaurante_id"?: string,"revisao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "relatorio_versoes_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "relatorio_versoes_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"restaurantes": {
                   Row: {
                     "atualizado_em": string,"cnpj": string | null,"criado_em": string,"demonstracao": boolean,"fuso": string,"hora_virada": string,"horario_funcionamento": NonNullable<Json>,"id": string,"intervalo_envio_segundos": number,"limite_conta_esquecida": string,"nome": string,"pedido_reenvio_desde": string | null,"situacao": string,"slug": string,"turnos": NonNullable<Json>
@@ -340,6 +464,9 @@ isOneToOne: false
 "confirmar_alerta_sinal":
 { Args: { "p_alerta_id": string,"p_corpo": Json,"p_erro": string,"p_status": number }; Returns: undefined
                            },
+"consultar_relatorio":
+{ Args: { "p_filtros": Json,"p_pagina": number,"p_relatorio": string,"p_restaurante_id": string,"p_revisao"?: string,"p_tamanho": number }; Returns: Json
+                           },
 "dia_operacao_de":
 { Args: { "p_fuso": string,"p_momento": string,"p_virada": string }; Returns: string
                            },
@@ -354,6 +481,9 @@ isOneToOne: false
                            },
 "id_do_login_por_email":
 { Args: { "p_email": string }; Returns: string
+                           },
+"limpar_cargas_relatorio":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "limpar_tentativas":
 { Args: { "p_email": string }; Returns: undefined
@@ -434,14 +564,23 @@ isOneToOne: false
 "normaliza_numeric":
 { Args: { "p_valor": string }; Returns: number
                            },
+"opcoes_relatorio":
+{ Args: { "p_busca"?: string,"p_dimensao": string,"p_filtros": Json,"p_pagina"?: number,"p_relatorio": string,"p_restaurante_id": string }; Returns: Json
+                           },
 "processar_alertas_sinal":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "processar_envio":
 { Args: { "p_campos_desconhecidos"?: (string)[],"p_envelope": Json,"p_restaurante_id": string }; Returns: Json
                            },
+"publicar_relatorio":
+{ Args: { "p_carga_id": string,"p_restaurante_id": string }; Returns: Json
+                           },
 "recalcular_dia_operacao":
 { Args: { "p_restaurante_id": string }; Returns: undefined
+                           },
+"receber_pagina_relatorio":
+{ Args: { "p_pedido": Json,"p_restaurante_id": string }; Returns: Json
                            },
 "registrar_parada_sinal":
 { Args: { "p_momento": string,"p_restaurante_id": string }; Returns: undefined
@@ -466,6 +605,9 @@ isOneToOne: false
                            },
 "validar_intervalo_resultados":
 { Args: { "p_fim": string,"p_inicio": string }; Returns: undefined
+                           },
+"validar_linha_relatorio":
+{ Args: { "p_linha": Json,"p_relatorio": string }; Returns: undefined
                            }
           }
           Enums: {
