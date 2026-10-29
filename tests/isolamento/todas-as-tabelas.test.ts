@@ -349,6 +349,11 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
     // INSERT só em quatro colunas (privilégio de coluna, conferido abaixo):
     // no nível da tabela, só SELECT.
     registro_admin: { anon: [], authenticated: ["SELECT"] },
+    relatorio_cargas: { anon: [], authenticated: [] },
+    relatorio_paginas: { anon: [], authenticated: [] },
+    relatorio_publicacoes: { anon: [], authenticated: ["SELECT"] },
+    relatorio_linhas: { anon: [], authenticated: ["SELECT"] },
+    relatorio_versoes: { anon: [], authenticated: ["SELECT"] },
     restaurantes: SO_RLS,
     restaurantes_no_admin: { anon: [], authenticated: ["SELECT"] },
     sinal_de_vida: SO_RLS,

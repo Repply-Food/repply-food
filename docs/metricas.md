@@ -1,6 +1,6 @@
 # Métricas do repply food.
 
-*Definição exata de cada número que aparece no painel. Se a tela, o PDF e (no futuro) o mentor IA mostram um número, ele sai daqui. Estas definições viram **funções SQL com nome** no banco (`metrica_*`) e **testes automáticos** com o exemplo da §2.*
+*Definição exata dos números das telas Hoje e Resultados. Se a tela, o PDF e (no futuro) o mentor IA mostram uma dessas métricas, ela sai daqui. Estas definições viram **funções SQL com nome** no banco (`metrica_*`) e **testes automáticos** com o exemplo da §2. Os relatórios SCC têm agregações próprias e regras de apresentação descritas na §6; não se deve inferir fórmula oficial ausente.*
 
 - **Origem:** o cardápio de métricas da descoberta (M01–M45, avaliado pela SCC, D-23). Aqui estão só as da **primeira versão**.
 - **Estado:** **provisório** até a SCC responder as perguntas B6 (dia de operação), H5 (fórmula do `ValorConsumido`), H6 (taxa de serviço) e H7 (fiado e cortesia). Cada métrica diz de qual pergunta depende.
@@ -127,3 +127,18 @@ Ficam fora as métricas M13, M17, M19, M20, M22, M23 e M26 a M45 do cardápio:
 - as de clientes, porque o nome do cliente não é guardado no MVP (D-29).
 
 A lista completa, com o que cada uma precisa, está no cardápio de métricas da descoberta (`_descoberta/2026-10-08-cardapio-de-metricas.md`).
+
+## 6. Relatórios recebidos da SCC
+
+Os seis relatórios SCC (Financeiro, Produtos, Comissão, Caixa, Auditoria e Notas assinadas) são fotografias recebidas e agregadas por consultas SQL específicas, separadas das métricas `metrica_*` das telas Hoje e Resultados. O painel pode consultar o histórico em um intervalo de até **366 dias** ou a fonte **on-line** para um único dia. A exportação PDF aceita no máximo **2.000 linhas**; não deve gerar arquivo parcial acima do limite. Cada página da tabela tem paginação independente, enquanto os resumos completos vêm da agregação SQL e não devem ser somados a partir das linhas visíveis.
+
+| Relatório | Conteúdo exibido | Regra de apresentação |
+|---|---|---|
+| Produtos | Quantidade, vendas, custos e diferença, agrupados por PDV e grupo | Subtotais completos vêm do SQL; custo desconhecido permanece nulo |
+| Comissão | Vendas elegíveis, comissão e operador | A comissão oficial não é estimada; campo ausente é “Não informado pela SCC” |
+| Caixa | Créditos, débitos, saldo e lançamentos por operador/dia civil | Crédito e débito mantêm direção; saldo usa os valores publicados pela SCC |
+| Auditoria | Eventos por tipo e seus dados de origem | Transferência/perda não é apresentada como valor perdido; não há deduplicação de ocorrências |
+| Notas assinadas | Quantidade, valor e identificadores recebidos | Cliente aparece apenas pelo código; nomes e dados pessoais não são coletados |
+| Financeiro | Componentes, totais oficiais, meios, contagens e público | Totais oficiais e meios são blocos separados; público só em contagens agregadas |
+
+`null` significa “não informado pela SCC”, nunca zero. Componentes, totais oficiais, fórmula de comissão e categorias ainda não confirmadas mantêm os valores publicados ou `null`; a aplicação não estima números. Para operação, limites e checklist de homologação, consulte [`operacao/relatorios.md`](operacao/relatorios.md) e o [contrato v1](integracao-scc/contrato-relatorios-v1.md). A implementação local e as amostras fictícias não constituem homologação SCC nem publicação.

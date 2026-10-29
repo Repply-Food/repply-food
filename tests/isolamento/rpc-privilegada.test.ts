@@ -9,6 +9,7 @@ import {
 } from "../helpers/supabase-local";
 
 const funcoesReservadas = [
+  "public.validar_linha_relatorio(text,jsonb)",
   "public.processar_envio(uuid,jsonb,text[])",
   "public.recalcular_dia_operacao(uuid)",
   "public.atualizar_estados()",
@@ -77,6 +78,7 @@ describe("RPCs reservadas", () => {
 
   it("recusa execução real para anon e authenticated, inclusive admin", async () => {
     const chamadas = [
+      "select public.validar_linha_relatorio(null::text, null::jsonb)",
       "select public.processar_envio(null::uuid, null::jsonb)",
       "select public.recalcular_dia_operacao(null::uuid)",
       "select public.atualizar_estados()",

@@ -185,6 +185,21 @@ export async function limparFixture(
     await cliente.query("begin");
   }
   try {
+    // O cache de relatórios preserva fotografias por padrão e, por segurança,
+    // não apaga em cascata quando uma casa é removida. A fixture precisa limpar
+    // essas tabelas técnicas explicitamente antes de excluir o restaurante.
+    for (const tabela of [
+      "relatorio_linhas",
+      "relatorio_publicacoes",
+      "relatorio_paginas",
+      "relatorio_cargas",
+      "relatorio_versoes",
+    ]) {
+      await cliente.query(
+        `delete from public.${tabela} where restaurante_id = any($1::uuid[])`,
+        [fixture.idsRestaurantes]
+      );
+    }
     await cliente.query(
       "delete from public.restaurantes where id = any($1::uuid[])",
       [fixture.idsRestaurantes]
