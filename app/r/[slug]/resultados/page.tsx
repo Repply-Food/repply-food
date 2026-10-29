@@ -1,3 +1,4 @@
+import { CatalogoRelatorios } from "@/components/painel/relatorios/catalogo";
 import { AbaDescontos } from "@/components/painel/resultados/aba-descontos";
 import { AbaEquipe } from "@/components/painel/resultados/aba-equipe";
 import { AbaHorarios } from "@/components/painel/resultados/aba-horarios";
@@ -60,6 +61,18 @@ export default async function PaginaResultados({
           descontos: <AbaDescontos dados={dados} />,
         }}
       />
+      <section
+        className="flex flex-col gap-4 md:gap-5"
+        aria-labelledby="relatorios-scc"
+      >
+        <h2
+          id="relatorios-scc"
+          className="text-lg font-semibold tracking-tight"
+        >
+          Relatórios da SCC
+        </h2>
+        <CatalogoRelatorios slug={slug} />
+      </section>
     </div>
   );
 }
