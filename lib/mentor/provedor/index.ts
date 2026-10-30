@@ -1,3 +1,4 @@
+import "server-only";
 import { ProvedorGemini } from "./gemini";
 import type { ProvedorIA } from "./tipos";
 

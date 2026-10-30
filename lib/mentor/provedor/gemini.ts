@@ -1,3 +1,4 @@
+import "server-only";
 import {
   type Content,
   type FunctionCall,
@@ -42,10 +43,16 @@ function paraConteudo(mensagem: MensagemIA): Content {
   };
 }
 
-function chamadasDe(conteudo: Content | undefined): FunctionCall[] {
-  const chamadas: FunctionCall[] = [];
+type ChamadaComNome = FunctionCall & { name: string };
+
+function temNome(chamada: FunctionCall | undefined): chamada is ChamadaComNome {
+  return Boolean(chamada?.name);
+}
+
+function chamadasDe(conteudo: Content | undefined): ChamadaComNome[] {
+  const chamadas: ChamadaComNome[] = [];
   for (const parte of conteudo?.parts ?? []) {
-    if (parte.functionCall?.name) chamadas.push(parte.functionCall);
+    if (temNome(parte.functionCall)) chamadas.push(parte.functionCall);
   }
   return chamadas;
 }
@@ -56,11 +63,11 @@ function chamadasDe(conteudo: Content | undefined): FunctionCall[] {
  */
 function parearComChamadas(
   resultados: ResultadoFerramenta[],
-  chamadas: FunctionCall[]
-): FunctionCall[] | null {
+  chamadas: ChamadaComNome[]
+): ChamadaComNome[] | null {
   if (chamadas.length !== resultados.length) return null;
   const livres = [...chamadas];
-  const pares: FunctionCall[] = [];
+  const pares: ChamadaComNome[] = [];
   for (const resultado of resultados) {
     const indice = livres.findIndex((c) => c.name === resultado.nome);
     if (indice === -1) return null;
@@ -79,8 +86,11 @@ function parearComChamadas(
  * própria instância, o último turno de pedidos de função que devolveu.
  *
  * Consequência: use UMA instância por conversa/requisição (como faz
- * `escolherProvedor()`) e reuse-a no laço de ferramentas. Sem o turno guardado,
- * o pedido é reconstruído só pelo nome da função (sem argumentos).
+ * `escolherProvedor()`) e reuse-a no laço de ferramentas. Se vierem resultados
+ * e o turno guardado não existir ou não casar com eles, `responder` lança
+ * `turno de ferramentas anterior indisponível`: inventar o pedido de função
+ * (por exemplo com argumentos vazios) faria o modelo "lembrar" de algo que
+ * ele não pediu.
  */
 export class ProvedorGemini implements ProvedorIA {
   private readonly cliente: ClienteGemini;
@@ -132,7 +142,7 @@ export class ProvedorGemini implements ProvedorIA {
 
     const conteudo = resposta.candidates?.[0]?.content;
     const pedidos: PedidoFerramenta[] = chamadasDe(conteudo).map((chamada) => ({
-      nome: chamada.name ?? "",
+      nome: chamada.name,
       argumentos: chamada.args ?? {},
     }));
     if (pedidos.length > 0) {
@@ -154,21 +164,19 @@ export class ProvedorGemini implements ProvedorIA {
   private turnosDosResultados(resultados: ResultadoFerramenta[]): Content[] {
     const guardadas = chamadasDe(this.ultimoTurnoDeFerramentas);
     const pares = parearComChamadas(resultados, guardadas);
+    if (!pares || !this.ultimoTurnoDeFerramentas) {
+      throw new Error("turno de ferramentas anterior indisponível");
+    }
 
-    const turnoDoModelo: Content =
-      pares && this.ultimoTurnoDeFerramentas
-        ? { ...this.ultimoTurnoDeFerramentas, role: "model" }
-        : {
-            role: "model",
-            parts: resultados.map((r) => ({
-              functionCall: { name: r.nome, args: {} },
-            })),
-          };
+    const turnoDoModelo: Content = {
+      ...this.ultimoTurnoDeFerramentas,
+      role: "model",
+    };
 
     const turnoDosResultados: Content = {
       role: "user",
       parts: resultados.map((resultado, indice) => {
-        const id = pares?.[indice]?.id;
+        const id = pares[indice]?.id;
         return {
           functionResponse: {
             ...(id ? { id } : {}),

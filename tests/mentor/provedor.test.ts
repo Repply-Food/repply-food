@@ -16,6 +16,9 @@ import type {
 
 // Nenhum teste aqui chama a API do Gemini de verdade: só dublês.
 
+// `server-only` só existe dentro do Next; no Vitest entra um vazio.
+vi.mock("server-only", () => ({}));
+
 const historico: MensagemIA[] = [
   { papel: "dono", texto: "Como foi o faturamento de ontem?" },
 ];
@@ -327,47 +330,108 @@ describe("ProvedorGemini (com cliente falso, sem rede)", () => {
     ]);
   });
 
-  it("sem o turno anterior na memória, reconstrói o pedido de função pelo nome", async () => {
+  it("com resultados e sem o turno anterior na memória, lança erro claro e não chama a API", async () => {
     const { cliente, chamadas } = clienteFalso([texto("Pronto.")]);
     const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
 
-    await provedor.responder({
-      instrucoes: "x",
-      historico,
-      ferramentas,
-      resultados: [
-        { nome: "faturamento_do_dia", resultado: [1, 2, 3] },
-        { nome: "contas_esquecidas", resultado: null },
+    await expect(
+      provedor.responder({
+        instrucoes: "x",
+        historico,
+        ferramentas,
+        resultados: [{ nome: "faturamento_do_dia", resultado: [1, 2, 3] }],
+      })
+    ).rejects.toThrow("turno de ferramentas anterior indisponível");
+    expect(chamadas).toHaveLength(0);
+  });
+
+  describe("quando os resultados não casam com o turno guardado", () => {
+    const pedidoDoModelo: RespostaBruta = {
+      candidates: [
+        {
+          content: {
+            role: "model",
+            parts: [
+              {
+                functionCall: {
+                  name: "faturamento_do_dia",
+                  args: { dia: "ontem" },
+                },
+              },
+            ],
+          },
+        },
       ],
+    };
+
+    async function aposPedirFerramenta() {
+      const { cliente, chamadas } = clienteFalso([
+        pedidoDoModelo,
+        texto("Não deveria chegar aqui."),
+      ]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+      const primeira = await provedor.responder({
+        instrucoes: "x",
+        historico,
+        ferramentas,
+      });
+      expect(primeira.tipo).toBe("ferramenta");
+      return { provedor, chamadas };
+    }
+
+    it("lança erro claro quando há mais resultados que pedidos guardados", async () => {
+      const { provedor, chamadas } = await aposPedirFerramenta();
+
+      await expect(
+        provedor.responder({
+          instrucoes: "x",
+          historico,
+          ferramentas,
+          resultados: [
+            { nome: "faturamento_do_dia", resultado: 1 },
+            { nome: "contas_esquecidas", resultado: 2 },
+          ],
+        })
+      ).rejects.toThrow("turno de ferramentas anterior indisponível");
+      expect(chamadas).toHaveLength(1);
     });
 
-    expect(chamadas.at(0)?.contents).toEqual([
-      { role: "user", parts: [{ text: "Como foi o faturamento de ontem?" }] },
-      {
-        role: "model",
-        parts: [
-          { functionCall: { name: "faturamento_do_dia", args: {} } },
-          { functionCall: { name: "contas_esquecidas", args: {} } },
-        ],
-      },
-      {
-        role: "user",
-        parts: [
-          {
-            functionResponse: {
-              name: "faturamento_do_dia",
-              response: { output: [1, 2, 3] },
-            },
-          },
-          {
-            functionResponse: {
-              name: "contas_esquecidas",
-              response: { output: null },
-            },
-          },
-        ],
-      },
-    ]);
+    it("lança erro claro quando o nome do resultado é outro", async () => {
+      const { provedor, chamadas } = await aposPedirFerramenta();
+
+      await expect(
+        provedor.responder({
+          instrucoes: "x",
+          historico,
+          ferramentas,
+          resultados: [{ nome: "contas_esquecidas", resultado: 1 }],
+        })
+      ).rejects.toThrow("turno de ferramentas anterior indisponível");
+      expect(chamadas).toHaveLength(1);
+    });
+
+    it("lança erro claro quando o turno já foi consumido por uma resposta de texto", async () => {
+      const { provedor, chamadas } = await aposPedirFerramenta();
+      const resultados = [{ nome: "faturamento_do_dia", resultado: 1 }];
+
+      const segunda = await provedor.responder({
+        instrucoes: "x",
+        historico,
+        ferramentas,
+        resultados,
+      });
+      expect(segunda.tipo).toBe("texto");
+
+      await expect(
+        provedor.responder({
+          instrucoes: "x",
+          historico,
+          ferramentas,
+          resultados,
+        })
+      ).rejects.toThrow("turno de ferramentas anterior indisponível");
+      expect(chamadas).toHaveLength(2);
+    });
   });
 
   it("lança erro claro quando o modelo não devolve nada", async () => {
