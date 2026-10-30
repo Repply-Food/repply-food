@@ -16,6 +16,7 @@ const codigosErro = [
   "falha_salvar_turnos",
   "falha_leitura_ajustes",
   "falha_leitura_relatorios",
+  "falha_ferramenta_mentor",
 ] as const;
 const codigosInfo = ["envio_processado", "envio_rejeitado"] as const;
 const contextos = ["receber-envio"] as const;
