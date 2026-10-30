@@ -35,11 +35,23 @@ const FRASE_LIMITE = "você já usou bastante o mentor hoje; ele volta amanhã";
 const FRASE_INDISPONIVEL = "o mentor está indisponível agora, tente de novo";
 const FRASE_CONVERSA = "não encontrei essa conversa; comece uma nova";
 const FRASE_VAZIA = "escreva sua pergunta para o mentor";
+const FRASE_LONGA =
+  "sua pergunta ficou longa demais; resuma em até 4000 caracteres";
 
+/** O tamanho máximo da pergunta do dono, em caracteres (depois de aparada). */
+const TAMANHO_MAXIMO_DA_PERGUNTA = 4000;
 /** Quantas vezes o mentor pode pedir ferramentas antes de responder. */
 const MAXIMO_DE_RODADAS = 5;
-/** Quantas ferramentas ele pode pedir de uma vez numa rodada. */
-const MAXIMO_DE_PEDIDOS_POR_RODADA = 8;
+/**
+ * Quantas ferramentas rodam de uma vez numa rodada. O catálogo tem 14: um
+ * panorama (hoje + semana) pode pedir quase todas, e a mesma ferramenta em
+ * vários meses também. Pedidos além do teto NÃO derrubam a conversa: voltam ao
+ * provedor com um resultado de erro (ver `RESULTADO_ALEM_DO_LIMITE`).
+ */
+const MAXIMO_DE_PEDIDOS_POR_RODADA = 16;
+const RESULTADO_ALEM_DO_LIMITE = {
+  erro: "pedido além do limite desta rodada; peça de novo se precisar",
+};
 /** Quantas mensagens salvas voltam ao provedor (as mais recentes). */
 const MAXIMO_DE_MENSAGENS_NO_HISTORICO = 30;
 const TAMANHO_DO_TITULO = 60;
@@ -129,7 +141,10 @@ async function lerCartilha(): Promise<string> {
     "mentor_cartilha_ativa"
   );
   if (error) throw new FalhaDoMentor("falha_mentor_geral");
-  return typeof data === "string" ? data.trim() : "";
+  if (data === null) return "";
+  // Outra coisa que não texto não é "sem cartilha": falha fechado.
+  if (typeof data !== "string") throw new FalhaDoMentor("falha_mentor_geral");
+  return data.trim();
 }
 
 /** A conversa existe, é desta casa e o dono a enxerga? Filtra pela casa da sessão. */
@@ -325,23 +340,35 @@ async function conversar(args: {
   let rodadas = 0;
   while (resposta.tipo === "ferramenta") {
     const { pedidos } = resposta;
-    // Mais pedidos do que o teto não são cortados: o provedor espera um
-    // resultado para cada chamada que fez, então cortar só gera outro erro.
-    if (
-      rodadas >= MAXIMO_DE_RODADAS ||
-      pedidos.length === 0 ||
-      pedidos.length > MAXIMO_DE_PEDIDOS_POR_RODADA
-    ) {
+    // Resposta de ferramenta sem nenhum pedido não deveria existir: é defeito
+    // do provedor, e seguir só rodaria o laço à toa. Falha fechado.
+    if (pedidos.length === 0) throw new FalhaDoMentor("falha_mentor_provedor");
+    if (rodadas >= MAXIMO_DE_RODADAS) {
       throw new FalhaDoMentor("falha_mentor_geral");
     }
     rodadas += 1;
-    const resultados: ResultadoFerramenta[] = await classificando(
+
+    // Pedidos demais não derrubam a conversa e não são "cortados" em silêncio:
+    // o provedor espera um resultado para CADA chamada que fez (pareamento 1:1,
+    // na ordem). Os primeiros rodam de verdade; cada excedente volta com um erro
+    // que o modelo entende e pode pedir de novo na rodada seguinte.
+    const aExecutar = pedidos.slice(0, MAXIMO_DE_PEDIDOS_POR_RODADA);
+    const excedentes = pedidos.slice(MAXIMO_DE_PEDIDOS_POR_RODADA);
+    const executados: ResultadoFerramenta[] = await classificando(
       "falha_mentor_geral",
-      () => executarFerramentas(pedidos, restauranteId)
+      () => executarFerramentas(aExecutar, restauranteId)
     );
-    for (const { nome } of pedidos) {
+    // Só os que rodaram contam como "usados" na mensagem salva.
+    for (const { nome } of aExecutar) {
       if (catalogo.has(nome) && !usadas.includes(nome)) usadas.push(nome);
     }
+    const resultados: ResultadoFerramenta[] = [
+      ...executados,
+      ...excedentes.map(({ nome }) => ({
+        nome,
+        resultado: RESULTADO_ALEM_DO_LIMITE,
+      })),
+    ];
     resposta = await chamarProvedor({ resultados });
   }
 
@@ -364,6 +391,17 @@ async function conversar(args: {
 /**
  * Responde à pergunta do dono. `restauranteId` é o da SESSÃO, nunca do corpo
  * da requisição nem do modelo. `conversaId` nulo abre uma conversa nova.
+ *
+ * O `provedor` é UMA instância por chamada: o laço de ferramentas reusa a mesma
+ * instância, e o Gemini guarda nela o estado dos pedidos de função (e dos
+ * resultados já devolvidos) da conversa em andamento. Por isso o padrão é
+ * `escolherProvedor()` a cada chamada, e NUNCA se guarda um provedor em
+ * variável de módulo: duas requisições dividiriam esse estado e uma
+ * devolveria resultados à outra.
+ *
+ * A pergunta é validada aqui dentro, no mesmo caminho que falha fechado: texto,
+ * aparada, de 1 a 4000 caracteres. Qualquer outra coisa vira uma frase do
+ * produto, nunca um erro cru.
  */
 export async function responderNoMentor(args: {
   restauranteId: string;
@@ -371,10 +409,14 @@ export async function responderNoMentor(args: {
   mensagemDoDono: string;
   provedor?: ProvedorIA;
 }): Promise<ResultadoDoMentor> {
-  const pergunta = args.mensagemDoDono.trim();
-  if (pergunta === "") return { ok: false, error: FRASE_VAZIA };
-
   try {
+    const pergunta =
+      typeof args.mensagemDoDono === "string" ? args.mensagemDoDono.trim() : "";
+    if (pergunta === "") return { ok: false, error: FRASE_VAZIA };
+    if (pergunta.length > TAMANHO_MAXIMO_DA_PERGUNTA) {
+      return { ok: false, error: FRASE_LONGA };
+    }
+
     return await conversar({
       restauranteId: args.restauranteId,
       conversaId: args.conversaId,

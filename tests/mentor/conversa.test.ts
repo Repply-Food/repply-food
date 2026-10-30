@@ -63,6 +63,9 @@ import { TRILHOS } from "@/lib/mentor/trilhos";
 const FRASE_LIMITE = "você já usou bastante o mentor hoje; ele volta amanhã";
 const FRASE_INDISPONIVEL = "o mentor está indisponível agora, tente de novo";
 const FRASE_CONVERSA = "não encontrei essa conversa; comece uma nova";
+const FRASE_VAZIA = "escreva sua pergunta para o mentor";
+const FRASE_LONGA =
+  "sua pergunta ficou longa demais; resuma em até 4000 caracteres";
 
 const opcoes = { auth: { persistSession: false, autoRefreshToken: false } };
 const sufixo = randomUUID().slice(0, 8);
@@ -174,6 +177,39 @@ async function diaDaCasa(casa: string) {
     [casa]
   );
   return r.rows[0]?.dia ?? "";
+}
+
+/**
+ * O mesmo dono logado, mas com a GRAVAÇÃO (insert) de uma tabela recusada: o
+ * banco "devolve erro" como se a RLS ou a rede tivesse barrado. Leituras e as
+ * demais tabelas passam para o cliente de verdade.
+ */
+function comFalhaNaGravacao(
+  cliente: Cliente,
+  tabela: "mentor_conversas" | "mentor_mensagens"
+): Cliente {
+  const falha = { data: null, error: { message: "falha forçada pelo teste" } };
+  return new Proxy(cliente, {
+    get(alvo, propriedade) {
+      const valor = Reflect.get(alvo, propriedade, alvo);
+      if (propriedade !== "from" || typeof valor !== "function") {
+        return typeof valor === "function" ? valor.bind(alvo) : valor;
+      }
+      return (nome: string) => {
+        const construtor = alvo.from(nome as typeof tabela);
+        if (nome !== tabela) return construtor;
+        return new Proxy(construtor, {
+          get(c, p) {
+            if (p === "insert") {
+              return () => ({ select: async () => falha });
+            }
+            const v = Reflect.get(c, p, c);
+            return typeof v === "function" ? v.bind(c) : v;
+          },
+        });
+      };
+    },
+  });
 }
 
 /** Põe o contador de hoje da casa num valor exato, pelo cliente de serviço. */
@@ -529,6 +565,47 @@ describe("continuar uma conversa", () => {
     expect(responder).not.toHaveBeenCalled();
     expect(await usoDeHoje(casaA)).toBe(usoAntes);
   });
+
+  it("aceita a pergunta de exatamente 4000 caracteres (depois de aparada) e recusa a de 4001", async () => {
+    const usoAntes = await usoDeHoje(casaA);
+    const longa = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: `  ${"a".repeat(4001)}  `,
+      provedor: provedorRoteirizado([texto("não deveria")]).provedor,
+    });
+    expect(longa).toEqual({ ok: false, error: FRASE_LONGA });
+    expect(await usoDeHoje(casaA)).toBe(usoAntes);
+    expect(logError).not.toHaveBeenCalled();
+
+    const { provedor, responder } = provedorRoteirizado([texto("Li tudo.")]);
+    const limite = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: `  ${"a".repeat(4000)}  `,
+      provedor,
+    });
+    expect(limite.ok).toBe(true);
+    expect(responder.mock.calls[0]?.[0].historico).toEqual([
+      { papel: "dono", texto: "a".repeat(4000) },
+    ]);
+  });
+
+  it("mensagem que nem é texto vira frase de produto, nunca erro cru", async () => {
+    const usoAntes = await usoDeHoje(casaA);
+    for (const invalida of [undefined, null, 42, { texto: "oi" }]) {
+      const { provedor, responder } = provedorRoteirizado([texto("oi")]);
+      const resultado = await responderNoMentor({
+        restauranteId: casaA,
+        conversaId: null,
+        mensagemDoDono: invalida as unknown as string,
+        provedor,
+      });
+      expect(resultado).toEqual({ ok: false, error: FRASE_VAZIA });
+      expect(responder).not.toHaveBeenCalled();
+    }
+    expect(await usoDeHoje(casaA)).toBe(usoAntes);
+  });
 });
 
 describe("o limite diário", () => {
@@ -645,6 +722,62 @@ describe("quando algo dá errado", () => {
     expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
   });
 
+  it("falha ao gravar a conversa nova: frase de produto, sem vazar o erro, nada gravado", async () => {
+    estado.cliente = comFalhaNaGravacao(donoA, "mentor_conversas");
+    const conversasAntes = await contar("mentor_conversas", casaA);
+    const mensagensAntes = await contar("mentor_mensagens", casaA);
+    const { provedor, responder } = provedorRoteirizado([
+      texto("Resposta que nunca vai ser salva."),
+    ]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Pergunta sigilosa antes da falha de gravação",
+      provedor,
+    });
+
+    expect(resultado).toEqual({ ok: false, error: FRASE_INDISPONIVEL });
+    expect(JSON.stringify(resultado)).not.toContain("forçada");
+    expect(responder).toHaveBeenCalledTimes(1);
+    expect(logError.mock.calls).toEqual([["falha_mentor_geral"]]);
+    expect(await contar("mentor_conversas", casaA)).toBe(conversasAntes);
+    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+  });
+
+  it("falha ao gravar as mensagens de uma conversa existente: ok false e nenhuma linha nova", async () => {
+    const primeira = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Pergunta que abre a conversa",
+      provedor: provedorRoteirizado([texto("Resposta que abre")]).provedor,
+    });
+    expect(primeira.ok).toBe(true);
+    if (!primeira.ok) return;
+    logError.mockReset();
+
+    const conversasAntes = await contar("mentor_conversas", casaA);
+    const mensagensAntes = await contar("mentor_mensagens", casaA);
+    estado.cliente = comFalhaNaGravacao(donoA, "mentor_mensagens");
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: primeira.conversaId,
+      mensagemDoDono: "Pergunta cuja gravação falha",
+      provedor: provedorRoteirizado([texto("Resposta perdida")]).provedor,
+    });
+
+    expect(resultado).toEqual({ ok: false, error: FRASE_INDISPONIVEL });
+    expect(JSON.stringify(resultado)).not.toContain("forçada");
+    expect(logError.mock.calls).toEqual([["falha_mentor_geral"]]);
+    // Relido no banco: nenhuma conversa nem mensagem nova, e o histórico antigo
+    // segue como estava.
+    expect(await contar("mentor_conversas", casaA)).toBe(conversasAntes);
+    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+    expect(
+      (await mensagensDa(primeira.conversaId)).map((m) => m.texto)
+    ).toEqual(["Pergunta que abre a conversa", "Resposta que abre"]);
+  });
+
   it("provedor que devolve texto vazio conta como indisponível e não grava", async () => {
     const mensagensAntes = await contar("mentor_mensagens", casaA);
     const resultado = await responderNoMentor({
@@ -675,10 +808,29 @@ describe("quando algo dá errado", () => {
     expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
   });
 
-  it("pedido com ferramentas demais numa rodada não executa nenhuma", async () => {
+  it("resposta de ferramenta sem nenhum pedido falha fechado como defeito do provedor, sem laço", async () => {
     const mensagensAntes = await contar("mentor_mensagens", casaA);
-    const { provedor } = provedorRoteirizado([
+    const { provedor, responder } = provedorRoteirizado([
+      { tipo: "ferramenta", pedidos: [] },
+      texto("não deveria chegar aqui"),
+    ]);
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Pedido vazio",
+      provedor,
+    });
+    expect(resultado).toEqual({ ok: false, error: FRASE_INDISPONIVEL });
+    expect(responder).toHaveBeenCalledTimes(1);
+    expect(executarFerramentas).not.toHaveBeenCalled();
+    expect(logError.mock.calls).toEqual([["falha_mentor_provedor"]]);
+    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+  });
+
+  it("até 16 pedidos numa rodada rodam todos, sem erro (panorama pede muitas ferramentas)", async () => {
+    const { provedor, responder } = provedorRoteirizado([
       pedir(...Array.from({ length: 9 }, () => "faturamento")),
+      texto("Panorama pronto."),
     ]);
     const resultado = await responderNoMentor({
       restauranteId: casaA,
@@ -686,10 +838,101 @@ describe("quando algo dá errado", () => {
       mensagemDoDono: "Quero tudo",
       provedor,
     });
-    expect(resultado).toEqual({ ok: false, error: FRASE_INDISPONIVEL });
-    expect(executarFerramentas).not.toHaveBeenCalled();
-    expect(logError.mock.calls).toEqual([["falha_mentor_geral"]]);
-    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+    expect(resultado.ok).toBe(true);
+    expect(executarFerramentas).toHaveBeenCalledTimes(1);
+    expect(executarFerramentas.mock.calls[0]?.[0]).toHaveLength(9);
+    expect(responder.mock.calls[1]?.[0].resultados).toEqual(
+      Array.from({ length: 9 }, () => ({
+        nome: "faturamento",
+        resultado: { valor: "1234.56" },
+      }))
+    );
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it("pedidos além de 16 não derrubam a conversa: os 16 primeiros rodam e os excedentes voltam com erro, na ordem", async () => {
+    const pedidos: PedidoFerramenta[] = Array.from({ length: 20 }, (_, i) => ({
+      nome: i < 16 ? "faturamento" : "mesas_abertas",
+      argumentos: { n: i },
+    }));
+    const { provedor, responder } = provedorRoteirizado([
+      { tipo: "ferramenta", pedidos },
+      texto("Respondi com o que deu."),
+    ]);
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Quero muito mais do que cabe",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    // Só os 16 primeiros foram executados, com a casa da sessão.
+    expect(executarFerramentas).toHaveBeenCalledTimes(1);
+    expect(executarFerramentas).toHaveBeenCalledWith(
+      pedidos.slice(0, 16),
+      casaA
+    );
+    // O provedor recebe um resultado para CADA pedido (1:1, na ordem).
+    expect(responder).toHaveBeenCalledTimes(2);
+    const resultados = responder.mock.calls[1]?.[0].resultados ?? [];
+    expect(resultados.map((r) => r.nome)).toEqual(pedidos.map((p) => p.nome));
+    expect(resultados.slice(0, 16)).toEqual(
+      pedidos
+        .slice(0, 16)
+        .map((p) => ({ nome: p.nome, resultado: { valor: "1234.56" } }))
+    );
+    expect(resultados.slice(16)).toEqual(
+      pedidos.slice(16).map((p) => ({
+        nome: p.nome,
+        resultado: {
+          erro: "pedido além do limite desta rodada; peça de novo se precisar",
+        },
+      }))
+    );
+    // Sem throw e sem gastar o laço: nenhuma falha no log, e a conversa foi gravada.
+    expect(logError).not.toHaveBeenCalled();
+    const mensagens = await mensagensDa(resultado.conversaId);
+    expect(mensagens.map((m) => m.papel)).toEqual(["dono", "mentor"]);
+    // "mesas_abertas" só apareceu nos excedentes, que não rodaram: não conta.
+    expect(mensagens[1]?.ferramentas_usadas).toEqual(["faturamento"]);
+  });
+
+  it("a ferramenta que ficou de fora pode ser pedida de novo na rodada seguinte", async () => {
+    // 16 de "faturamento" rodam; a 17ª ("mesas_abertas") só volta com erro.
+    const pedidos: PedidoFerramenta[] = [
+      ...Array.from({ length: 16 }, () => ({
+        nome: "faturamento",
+        argumentos: {},
+      })),
+      { nome: "mesas_abertas", argumentos: {} },
+    ];
+    const { provedor, responder } = provedorRoteirizado([
+      { tipo: "ferramenta", pedidos },
+      pedir("mesas_abertas"), // pede de novo o que ficou de fora
+      texto("Agora sim."),
+    ]);
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Faturamento e mesas",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(responder).toHaveBeenCalledTimes(3);
+    expect(executarFerramentas).toHaveBeenCalledTimes(2);
+    expect(executarFerramentas.mock.calls[0]?.[0]).toHaveLength(16);
+    expect(executarFerramentas.mock.calls[1]?.[0]).toEqual([
+      { nome: "mesas_abertas", argumentos: {} },
+    ]);
+    const mensagens = await mensagensDa(resultado.conversaId);
+    expect(mensagens[1]?.ferramentas_usadas).toEqual([
+      "faturamento",
+      "mesas_abertas",
+    ]);
   });
 
   it("executor de ferramentas que lança (não devia) vira frase de produto e não grava", async () => {

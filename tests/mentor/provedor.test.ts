@@ -330,6 +330,201 @@ describe("ProvedorGemini (com cliente falso, sem rede)", () => {
     ]);
   });
 
+  describe("cadeia de 2 ou mais rodadas de ferramenta", () => {
+    const turnoDaRodada1 = {
+      role: "model",
+      parts: [
+        {
+          functionCall: {
+            id: "chamada-r1",
+            name: "faturamento_do_dia",
+            args: { dia: "2026-10-29" },
+          },
+          thoughtSignature: "assinatura-r1",
+        },
+      ],
+    };
+    const turnoDaRodada2 = {
+      role: "model",
+      parts: [
+        {
+          functionCall: {
+            id: "chamada-r2",
+            name: "contas_esquecidas",
+            args: {},
+          },
+          thoughtSignature: "assinatura-r2",
+        },
+      ],
+    };
+    const respostaR1 = {
+      role: "user",
+      parts: [
+        {
+          functionResponse: {
+            id: "chamada-r1",
+            name: "faturamento_do_dia",
+            response: { output: { total: "1000.00" } },
+          },
+        },
+      ],
+    };
+    const respostaR2 = {
+      role: "user",
+      parts: [
+        {
+          functionResponse: {
+            id: "chamada-r2",
+            name: "contas_esquecidas",
+            response: { output: { quantidade: 2 } },
+          },
+        },
+      ],
+    };
+    const pergunta = {
+      role: "user",
+      parts: [{ text: "Como foi o faturamento de ontem?" }],
+    };
+
+    const entrada = (resultados?: { nome: string; resultado: unknown }[]) => ({
+      instrucoes: "x",
+      historico,
+      ferramentas,
+      ...(resultados ? { resultados } : {}),
+    });
+
+    it("a 3ª chamada ainda leva o resultado da rodada 1 (e o turno do modelo dela)", async () => {
+      const { cliente, chamadas } = clienteFalso([
+        { candidates: [{ content: turnoDaRodada1 }] },
+        { candidates: [{ content: turnoDaRodada2 }] },
+        texto("Foram R$ 1.000,00 e 2 contas esquecidas."),
+      ]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+
+      // Imita o laço do cérebro: a mesma instância, resultados a cada rodada.
+      const primeira = await provedor.responder(entrada());
+      expect(primeira.tipo).toBe("ferramenta");
+      const segunda = await provedor.responder(
+        entrada([
+          { nome: "faturamento_do_dia", resultado: { total: "1000.00" } },
+        ])
+      );
+      expect(segunda.tipo).toBe("ferramenta");
+      const terceira = await provedor.responder(
+        entrada([{ nome: "contas_esquecidas", resultado: { quantidade: 2 } }])
+      );
+      expect(terceira).toEqual({
+        tipo: "texto",
+        texto: "Foram R$ 1.000,00 e 2 contas esquecidas.",
+      });
+
+      expect(chamadas).toHaveLength(3);
+      expect(chamadas.at(0)?.contents).toEqual([pergunta]);
+      expect(chamadas.at(1)?.contents).toEqual([
+        pergunta,
+        turnoDaRodada1,
+        respostaR1,
+      ]);
+      // O ponto do conserto: a rodada 1 inteira continua lá, na ordem, e o
+      // pareamento pedido -> resultado se mantém.
+      expect(chamadas.at(2)?.contents).toEqual([
+        pergunta,
+        turnoDaRodada1,
+        respostaR1,
+        turnoDaRodada2,
+        respostaR2,
+      ]);
+      expect(JSON.stringify(chamadas.at(2)?.contents)).toContain("chamada-r1");
+    });
+
+    it("pergunta nova (sem resultados) começa do zero: não arrasta a cadeia anterior", async () => {
+      const { cliente, chamadas } = clienteFalso([
+        { candidates: [{ content: turnoDaRodada1 }] },
+        { candidates: [{ content: turnoDaRodada2 }] },
+        { candidates: [{ content: turnoDaRodada1 }] },
+        texto("Pronto."),
+      ]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+
+      await provedor.responder(entrada());
+      await provedor.responder(
+        entrada([{ nome: "faturamento_do_dia", resultado: 1 }])
+      );
+      // O dono fez outra pergunta: nada do que veio antes volta.
+      await provedor.responder(entrada());
+      await provedor.responder(
+        entrada([{ nome: "faturamento_do_dia", resultado: 2 }])
+      );
+
+      expect(chamadas.at(2)?.contents).toEqual([pergunta]);
+      expect(chamadas.at(3)?.contents).toEqual([
+        pergunta,
+        turnoDaRodada1,
+        {
+          role: "user",
+          parts: [
+            {
+              functionResponse: {
+                id: "chamada-r1",
+                name: "faturamento_do_dia",
+                response: { output: 2 },
+              },
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("depois de uma resposta de texto, a cadeia é zerada", async () => {
+      const { cliente, chamadas } = clienteFalso([
+        { candidates: [{ content: turnoDaRodada1 }] },
+        texto("Primeira resposta."),
+        { candidates: [{ content: turnoDaRodada2 }] },
+        texto("Segunda resposta."),
+      ]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+
+      await provedor.responder(entrada());
+      await provedor.responder(
+        entrada([{ nome: "faturamento_do_dia", resultado: 1 }])
+      );
+      await provedor.responder(entrada());
+      await provedor.responder(
+        entrada([{ nome: "contas_esquecidas", resultado: { quantidade: 2 } }])
+      );
+
+      expect(chamadas.at(3)?.contents).toEqual([
+        pergunta,
+        turnoDaRodada2,
+        respostaR2,
+      ]);
+    });
+
+    it("se a chamada ao modelo falha, a mesma rodada pode ser tentada de novo sem duplicar o par", async () => {
+      const { cliente, chamadas } = clienteFalso([
+        { candidates: [{ content: turnoDaRodada1 }] },
+        { candidates: [] }, // resposta vazia: o provedor lança
+        texto("Deu certo na 2ª tentativa."),
+      ]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+      const resultados = [
+        { nome: "faturamento_do_dia", resultado: { total: "1000.00" } },
+      ];
+
+      await provedor.responder(entrada());
+      await expect(provedor.responder(entrada(resultados))).rejects.toThrow(
+        "Resposta vazia do provedor"
+      );
+      await provedor.responder(entrada(resultados));
+
+      expect(chamadas.at(2)?.contents).toEqual([
+        pergunta,
+        turnoDaRodada1,
+        respostaR1,
+      ]);
+    });
+  });
+
   it("com resultados e sem o turno anterior na memória, lança erro claro e não chama a API", async () => {
     const { cliente, chamadas } = clienteFalso([texto("Pronto.")]);
     const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });

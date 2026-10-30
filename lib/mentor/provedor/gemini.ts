@@ -83,7 +83,11 @@ function parearComChamadas(
  * argumentos nem a assinatura de raciocínio do pedido de função. O Gemini exige
  * que o resultado venha logo depois do pedido que o gerou, e que o turno do
  * modelo volte exatamente como foi recebido. Por isso o provedor guarda, na
- * própria instância, o último turno de pedidos de função que devolveu.
+ * própria instância, o último turno de pedidos de função que devolveu e, junto,
+ * os pares (turno do modelo + turno dos resultados) das rodadas anteriores da
+ * MESMA conversa: numa cadeia de 2 ou mais rodadas de ferramenta, a chamada
+ * seguinte reenvia o acumulado inteiro. Sem isso o modelo "esquece" o resultado
+ * da rodada 1, pede de novo e o laço estoura.
  *
  * Consequência: use UMA instância por conversa/requisição (como faz
  * `escolherProvedor()`) e reuse-a no laço de ferramentas. Se vierem resultados
@@ -91,11 +95,17 @@ function parearComChamadas(
  * `turno de ferramentas anterior indisponível`: inventar o pedido de função
  * (por exemplo com argumentos vazios) faria o modelo "lembrar" de algo que
  * ele não pediu.
+ *
+ * O acumulado é zerado quando `responder` roda SEM resultados (pergunta nova do
+ * dono) ou quando o modelo responde com texto (fim da cadeia).
  */
 export class ProvedorGemini implements ProvedorIA {
   private readonly cliente: ClienteGemini;
   private readonly modelo: string;
+  /** O turno de pedidos do modelo que ainda espera resultados. */
   private ultimoTurnoDeFerramentas: Content | undefined;
+  /** Os pares já respondidos (turno do modelo + resultados), na ordem das rodadas. */
+  private acumuladoDeFerramentas: Content[] = [];
 
   constructor(opcoes: OpcoesGemini = {}) {
     this.modelo =
@@ -114,10 +124,22 @@ export class ProvedorGemini implements ProvedorIA {
   async responder(
     entrada: Parameters<ProvedorIA["responder"]>[0]
   ): Promise<RespostaIA> {
-    const contents = entrada.historico.map(paraConteudo);
+    // Sem resultados é uma pergunta nova do dono: a cadeia anterior acabou.
+    // Com resultados, continua a cadeia: o par da rodada que acabou de voltar
+    // só entra no acumulado depois que o modelo responder (se a chamada falhar,
+    // nada muda e dá para tentar de novo).
+    let parDaRodada: Content[] = [];
     if (entrada.resultados && entrada.resultados.length > 0) {
-      contents.push(...this.turnosDosResultados(entrada.resultados));
+      parDaRodada = this.turnosDosResultados(entrada.resultados);
+    } else {
+      this.ultimoTurnoDeFerramentas = undefined;
+      this.acumuladoDeFerramentas = [];
     }
+    const contents = [
+      ...entrada.historico.map(paraConteudo),
+      ...this.acumuladoDeFerramentas,
+      ...parDaRodada,
+    ];
 
     const config: GenerateContentConfig = {
       systemInstruction: entrada.instrucoes,
@@ -146,6 +168,10 @@ export class ProvedorGemini implements ProvedorIA {
       argumentos: chamada.args ?? {},
     }));
     if (pedidos.length > 0) {
+      this.acumuladoDeFerramentas = [
+        ...this.acumuladoDeFerramentas,
+        ...parDaRodada,
+      ];
       this.ultimoTurnoDeFerramentas = conteudo;
       return { tipo: "ferramenta", pedidos };
     }
@@ -157,6 +183,7 @@ export class ProvedorGemini implements ProvedorIA {
       .trim();
     if (!texto) throw new Error("Resposta vazia do provedor");
     this.ultimoTurnoDeFerramentas = undefined;
+    this.acumuladoDeFerramentas = [];
     return { tipo: "texto", texto };
   }
 
