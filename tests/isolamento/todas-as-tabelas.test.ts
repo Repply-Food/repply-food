@@ -345,6 +345,16 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
     entradas: SO_RLS,
     envios: SO_RLS,
     incidentes_sinal: { anon: [], authenticated: [] },
+    // Conversas do mentor de IA: o dono lê, cria e altera (nunca apaga) as da
+    // casa dele; o admin só lê, pela política. Sem login, nada.
+    mentor_conversas: {
+      anon: [],
+      authenticated: ["INSERT", "SELECT", "UPDATE"],
+    },
+    mentor_mensagens: {
+      anon: [],
+      authenticated: ["INSERT", "SELECT", "UPDATE"],
+    },
     metas: SO_RLS,
     // INSERT só em quatro colunas (privilégio de coluna, conferido abaixo):
     // no nível da tabela, só SELECT.
