@@ -13,6 +13,11 @@ import { conectarBanco } from "../helpers/supabase-local";
 // devolve erro de permissão ou zero linhas afetadas. O teste confere sempre a
 // CONTAGEM e, quando muda dado, relê pelo banco: zero linhas afetadas, ou
 // duplicada, não é sucesso.
+//
+// O contador de uso só anda pela função mentor_registrar_uso (security definer),
+// chamada pelo dono logado. O dono NÃO escreve direto em mentor_uso, senão
+// zerava o próprio limite diário: quem prepara o cenário do teste (pré-encher
+// a contagem, simular um dia anterior) grava pelo cliente de serviço.
 
 const opcoes = { auth: { persistSession: false, autoRefreshToken: false } };
 const sufixo = randomUUID().slice(0, 8);
@@ -65,8 +70,11 @@ let casaA = "";
 let casaB = "";
 // Casa que ninguém usou (nenhum login tem acesso): serve ao teste do admin.
 let casaC = "";
+// Casa só do teste do limite protegido: começa do zero e tem o próprio dono.
+let casaD = "";
 let donoA: Cliente;
 let donoB: Cliente;
+let donoD: Cliente;
 let admin: Cliente;
 let adminId = "";
 let sementeId = "";
@@ -85,24 +93,28 @@ beforeAll(async () => {
     `insert into public.restaurantes (slug, nome, fuso, hora_virada)
      values ($1, 'Casa A do uso', 'America/Fortaleza', '05:00'),
             ($2, 'Casa B do uso', 'America/Rio_Branco', '23:59'),
-            ($3, 'Casa C do uso', 'America/Fortaleza', '05:00')
+            ($3, 'Casa C do uso', 'America/Fortaleza', '05:00'),
+            ($4, 'Casa D do uso', 'America/Fortaleza', '05:00')
      returning id, slug`,
-    [`uso-a-${sufixo}`, `uso-b-${sufixo}`, `uso-c-${sufixo}`]
+    [`uso-a-${sufixo}`, `uso-b-${sufixo}`, `uso-c-${sufixo}`, `uso-d-${sufixo}`]
   );
   casaA = casas.rows.find((c) => c.slug === `uso-a-${sufixo}`)?.id ?? "";
   casaB = casas.rows.find((c) => c.slug === `uso-b-${sufixo}`)?.id ?? "";
   casaC = casas.rows.find((c) => c.slug === `uso-c-${sufixo}`)?.id ?? "";
+  casaD = casas.rows.find((c) => c.slug === `uso-d-${sufixo}`)?.id ?? "";
 
   const loginA = await criarLoginLogado("dono-a");
   const loginB = await criarLoginLogado("dono-b");
+  const loginD = await criarLoginLogado("dono-d");
   const loginAdmin = await criarLoginLogado("admin");
   donoA = loginA.cliente;
   donoB = loginB.cliente;
+  donoD = loginD.cliente;
   admin = loginAdmin.cliente;
   adminId = loginAdmin.id;
   await banco.query(
-    "insert into public.acessos (user_id, restaurante_id) values ($1, $2), ($3, $4)",
-    [loginA.id, casaA, loginB.id, casaB]
+    "insert into public.acessos (user_id, restaurante_id) values ($1, $2), ($3, $4), ($5, $6)",
+    [loginA.id, casaA, loginB.id, casaB, loginD.id, casaD]
   );
   await banco.query("insert into public.admins_repply (user_id) values ($1)", [
     adminId,
@@ -358,10 +370,14 @@ describe("o contador de uso diário do mentor", () => {
   });
 
   it("um dia novo recomeça em 1 e não mexe no dia anterior", async () => {
-    await banco.query(
-      "insert into public.mentor_uso (restaurante_id, dia, contagem) values ($1, '2020-01-15', 7)",
-      [casaB]
-    );
+    // Cenário preparado pelo cliente de serviço: o dono não escreve direto.
+    const diaAnterior = await servico
+      .from("mentor_uso")
+      .insert({ restaurante_id: casaB, dia: "2020-01-15", contagem: 7 })
+      .select("contagem");
+    expect(diaAnterior.error).toBeNull();
+    expect(diaAnterior.data).toEqual([{ contagem: 7 }]);
+
     const hoje = await donoB.rpc("mentor_registrar_uso", {
       p_restaurante_id: casaB,
     });
@@ -468,14 +484,15 @@ describe("o contador de uso diário do mentor", () => {
     expect(anonimo.error?.code).toBe("42501");
   });
 
-  it("o dono de A não mexe no uso da casa B (0 linhas afetadas, conferido pelo banco)", async () => {
+  it("o dono de A não mexe no uso da casa B (barrado, conferido pelo banco)", async () => {
+    // O dono nem tem privilégio de escrita em mentor_uso: erro de permissão.
     const altera = await donoA
       .from("mentor_uso")
       .update({ contagem: 0 })
       .eq("restaurante_id", casaB)
       .select();
-    expect(altera.error).toBeNull();
-    expect(altera.data).toHaveLength(0);
+    expect(altera.error?.code).toBe("42501");
+    expect(altera.data ?? []).toHaveLength(0);
 
     const cria = await donoA.from("mentor_uso").insert({
       restaurante_id: casaB,
@@ -510,5 +527,117 @@ describe("o contador de uso diário do mentor", () => {
       [casaA]
     );
     expect(noBanco.rows[0]?.total).toBe(1);
+  });
+});
+
+describe("o limite do mentor é protegido: o dono não zera o próprio contador", () => {
+  /** O contador da casa, relido pelo cliente de serviço (nunca sob a RLS do dono). */
+  async function usoPeloServico(casa: string) {
+    const lido = await servico
+      .from("mentor_uso")
+      .select("dia, contagem")
+      .eq("restaurante_id", casa)
+      .order("dia");
+    expect(lido.error).toBeNull();
+    return lido.data ?? [];
+  }
+
+  it("o dono só avança o contador pela função: não zera, não insere e não faz upsert direto", async () => {
+    const primeira = await donoD.rpc("mentor_registrar_uso", {
+      p_restaurante_id: casaD,
+    });
+    expect(primeira.error).toBeNull();
+    expect(primeira.data).toBe(1);
+
+    const antes = await usoPeloServico(casaD);
+    expect(antes).toHaveLength(1);
+    expect(antes[0]?.contagem).toBe(1);
+    const hoje = antes[0]?.dia ?? "";
+    expect(hoje).not.toBe("");
+
+    // Zerar o próprio contador: o dono não tem privilégio de escrita.
+    const zera = await donoD
+      .from("mentor_uso")
+      .update({ contagem: 0 })
+      .eq("restaurante_id", casaD)
+      .eq("dia", hoje)
+      .select();
+    expect(zera.error?.code).toBe("42501");
+    expect(zera.data ?? []).toHaveLength(0);
+
+    // Inserir uma linha à mão (por exemplo, de outro dia).
+    const insere = await donoD.from("mentor_uso").insert({
+      restaurante_id: casaD,
+      dia: "2020-03-03",
+      contagem: 0,
+    });
+    expect(insere.error?.code).toBe("42501");
+
+    // Upsert por cima da linha de hoje (o caminho "insere ou troca").
+    const troca = await donoD
+      .from("mentor_uso")
+      .upsert({ restaurante_id: casaD, dia: hoje, contagem: 0 })
+      .select();
+    expect(troca.error?.code).toBe("42501");
+    expect(troca.data ?? []).toHaveLength(0);
+
+    // Relido pelo serviço: nada mudou, nenhuma linha nova.
+    expect(await usoPeloServico(casaD)).toEqual(antes);
+
+    // E a função segue contando de onde parou (não recomeça).
+    const segunda = await donoD.rpc("mentor_registrar_uso", {
+      p_restaurante_id: casaD,
+    });
+    expect(segunda.error).toBeNull();
+    expect(segunda.data).toBe(2);
+    expect(await usoPeloServico(casaD)).toEqual([{ dia: hoje, contagem: 2 }]);
+  });
+
+  it("a função é security definer: só o dono logado executa (serviço e anônimo não); o admin leva 42501", async () => {
+    const definicao = await banco.query<{
+      prosecdef: boolean;
+      proconfig: string[] | null;
+    }>(
+      `select prosecdef, proconfig from pg_proc
+        where oid = 'public.mentor_registrar_uso(uuid)'::regprocedure`
+    );
+    expect(definicao.rows[0]?.prosecdef).toBe(true);
+    expect(definicao.rows[0]?.proconfig).toEqual(
+      expect.arrayContaining(["search_path=public", "row_security=off"])
+    );
+
+    const privilegios = await banco.query<{
+      anon: boolean;
+      authenticated: boolean;
+      servico: boolean;
+    }>(
+      `select has_function_privilege('anon', 'public.mentor_registrar_uso(uuid)', 'execute') as anon,
+              has_function_privilege('authenticated', 'public.mentor_registrar_uso(uuid)', 'execute') as authenticated,
+              has_function_privilege('service_role', 'public.mentor_registrar_uso(uuid)', 'execute') as servico`
+    );
+    expect(privilegios.rows[0]).toEqual({
+      anon: false,
+      authenticated: true,
+      servico: false,
+    });
+
+    const antes = await usoPeloServico(casaD);
+    expect(antes).toHaveLength(1);
+
+    // O serviço não conta o uso de ninguém (e, sem login, a função recusaria).
+    const peloServico = await servico.rpc("mentor_registrar_uso", {
+      p_restaurante_id: casaD,
+    });
+    expect(peloServico.data).toBeNull();
+    expect(peloServico.error?.code).toBe("42501");
+
+    // O admin em modo leitura não gasta o limite do cliente (conferência por dentro).
+    const peloAdmin = await admin.rpc("mentor_registrar_uso", {
+      p_restaurante_id: casaD,
+    });
+    expect(peloAdmin.data).toBeNull();
+    expect(peloAdmin.error?.code).toBe("42501");
+
+    expect(await usoPeloServico(casaD)).toEqual(antes);
   });
 });

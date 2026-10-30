@@ -362,13 +362,11 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
       anon: [],
       authenticated: ["INSERT", "SELECT", "UPDATE"],
     },
-    // Uso diário do mentor: o dono lê e escreve o da casa dele (a função
-    // mentor_registrar_uso roda sob a RLS dele); o admin só lê. Nunca apaga:
-    // sai junto com a casa. Sem login, nada.
-    mentor_uso: {
-      anon: [],
-      authenticated: ["INSERT", "SELECT", "UPDATE"],
-    },
+    // Uso diário do mentor: o dono (e o admin) só LÊ. A escrita passa só por
+    // mentor_registrar_uso (security definer), que confere o acesso por dentro:
+    // se o dono pudesse escrever direto, zerava o próprio limite diário. Nunca
+    // apaga: sai junto com a casa. Sem login, nada.
+    mentor_uso: { anon: [], authenticated: ["SELECT"] },
     metas: SO_RLS,
     // INSERT só em quatro colunas (privilégio de coluna, conferido abaixo):
     // no nível da tabela, só SELECT.
