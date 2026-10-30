@@ -173,6 +173,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"mentor_cartilhas": {
+                  Row: {
+                    "ativa": boolean,"criada_em": string,"criada_por": string | null,"id": string,"texto": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ativa"?: boolean,"criada_em"?: string,"criada_por"?: string | null,"id"?: string,"texto": string
+                  }
+                  Update: {
+                    "ativa"?: boolean,"criada_em"?: string,"criada_por"?: string | null,"id"?: string,"texto"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"mentor_conversas": {
                   Row: {
                     "criada_em": string,"id": string,"restaurante_id": string,"titulo": string | null,"ultima_em": string
@@ -225,6 +239,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     },{
       foreignKeyName: "mentor_mensagens_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"mentor_uso": {
+                  Row: {
+                    "contagem": number,"dia": string,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "contagem"?: number,"dia": string,"restaurante_id": string
+                  }
+                  Update: {
+                    "contagem"?: number,"dia"?: string,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mentor_uso_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mentor_uso_restaurante_id_fkey"
       columns: ["restaurante_id"]
 isOneToOne: false
       referencedRelation: "restaurantes_no_admin"
@@ -548,6 +588,12 @@ isOneToOne: false
                            },
 "login_bloqueado":
 { Args: { "p_email": string }; Returns: string
+                           },
+"mentor_cartilha_ativa":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"mentor_registrar_uso":
+{ Args: { "p_restaurante_id": string }; Returns: number
                            },
 "metrica_comparacao_do_dia":
 { Args: { "p_agora": string,"p_restaurante_id": string }; Returns: {

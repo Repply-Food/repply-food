@@ -33,6 +33,10 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
+  // Security invoker: o dono só mexe no uso do mentor da casa dele (RLS de
+  // mentor_uso). mentor_cartilha_ativa() é só do service_role e por isso nem
+  // aparece nesta lista.
+  { funcao: "mentor_registrar_uso(uuid)", anon: false, authenticated: true },
   // Métricas do painel (security invoker: o isolamento é a RLS de entradas).
   {
     funcao: "metrica_comparacao_do_dia(uuid, timestamp with time zone)",

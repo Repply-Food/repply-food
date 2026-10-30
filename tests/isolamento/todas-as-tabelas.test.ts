@@ -345,6 +345,13 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
     entradas: SO_RLS,
     envios: SO_RLS,
     incidentes_sinal: { anon: [], authenticated: [] },
+    // Cartilha do mentor de IA: config da Repply. O privilégio é de quem tem
+    // login, mas a política só deixa o admin ler e escrever (o dono recebe zero
+    // linhas). Sem login, nada.
+    mentor_cartilhas: {
+      anon: [],
+      authenticated: ["DELETE", "INSERT", "SELECT", "UPDATE"],
+    },
     // Conversas do mentor de IA: o dono lê, cria e altera (nunca apaga) as da
     // casa dele; o admin só lê, pela política. Sem login, nada.
     mentor_conversas: {
@@ -352,6 +359,13 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
       authenticated: ["INSERT", "SELECT", "UPDATE"],
     },
     mentor_mensagens: {
+      anon: [],
+      authenticated: ["INSERT", "SELECT", "UPDATE"],
+    },
+    // Uso diário do mentor: o dono lê e escreve o da casa dele (a função
+    // mentor_registrar_uso roda sob a RLS dele); o admin só lê. Nunca apaga:
+    // sai junto com a casa. Sem login, nada.
+    mentor_uso: {
       anon: [],
       authenticated: ["INSERT", "SELECT", "UPDATE"],
     },
