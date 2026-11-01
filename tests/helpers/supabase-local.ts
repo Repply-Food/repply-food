@@ -189,6 +189,21 @@ export async function limparFixture(
     // não apaga em cascata quando uma casa é removida. A fixture precisa limpar
     // essas tabelas técnicas explicitamente antes de excluir o restaurante.
     for (const tabela of [
+      "financeiro_meios_scc",
+      "financeiro_publico_scc",
+      "financeiro_scc",
+      "itens_vendidos_scc",
+      "comissoes_scc",
+      "movimentos_caixa_scc",
+      "eventos_auditoria_scc",
+      "notas_assinadas_scc",
+      "fotografias_scc",
+      "paginas_scc",
+      "cursores_scc",
+      "cargas_scc",
+      "revisoes_scc",
+      "limites_requisicao_scc",
+      "produtos_scc",
       "relatorio_linhas",
       "relatorio_publicacoes",
       "relatorio_paginas",
