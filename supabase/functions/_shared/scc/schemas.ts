@@ -250,6 +250,7 @@ const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/);
 const extraEntrada = z
   .union([z.string(), z.number().finite(), z.boolean(), z.null()])
   .optional();
+const inteiroEntrada = z.number().int().min(-2_147_483_648).max(2_147_483_647);
 export const entradaSchema = z
   .object({
     codEntrada: z.number().int(),
@@ -264,12 +265,12 @@ export const entradaSchema = z
     Complemento: decimalSchema,
     ValorConsumido: decimalSchema,
     Pago: z.union([z.literal("Sim"), z.literal("Não"), z.boolean()]),
-    codCartaoMesa: z.number().int().nullable(),
-    CodGarcon: z.number().int().nullable(),
-    codOperadorHab: z.number().int().nullable(),
-    codOperadorDesab: z.number().int().nullable(),
-    codCliente: z.number().int().nullable(),
-    NumeroOcupantes: z.number().int(),
+    codCartaoMesa: inteiroEntrada.nullable(),
+    CodGarcon: inteiroEntrada.nullable(),
+    codOperadorHab: inteiroEntrada.nullable(),
+    codOperadorDesab: inteiroEntrada.nullable(),
+    codCliente: inteiroEntrada.nullable(),
+    NumeroOcupantes: inteiroEntrada,
     TipoOcupacao: z.string(),
     TipoCartao: z.string(),
     Reabilitado: extraEntrada,

@@ -15,7 +15,7 @@ describe("staging do webhook SCC v2", () => {
   let casas: Fixture;
   const id = randomUUID();
   const pagina = {
-    ...fixtures[3],
+    ...fixtures[5],
     id_envio: id,
     pagina: { numero: 1, total: 2 },
     total_registros: 2,
@@ -64,7 +64,7 @@ describe("staging do webhook SCC v2", () => {
   it("recusa alteração da mesma página ou do manifesto", async () => {
     const alterada = {
       ...pagina,
-      dados: [{ ...pagina.dados[0], vendas_elegiveis: "2" }],
+      dados: [{ ...pagina.dados[0], quantidade: "2" }],
     };
     await expect(receber(casas.restauranteA, alterada)).rejects.toMatchObject({
       code: "PR409",
@@ -97,17 +97,16 @@ describe("staging do webhook SCC v2", () => {
     });
   });
 
-  it("não finge publicação quando a última página chega", async () => {
-    const segunda = { ...pagina, pagina: { numero: 2, total: 2 } };
-    await expect(receber(casas.restauranteA, segunda)).rejects.toMatchObject({
-      code: "PR503",
-      message: "publicacao_indisponivel",
-    });
-    const { rows } = await banco.query<{ paginas: string }>(
-      "select count(*) as paginas from public.paginas_scc where restaurante_id=$1 and id_envio=$2",
-      [casas.restauranteA, id]
-    );
-    expect(rows[0]?.paginas).toBe("1");
+  it("publica automaticamente quando chega a última página", async () => {
+    await banco.query("begin");
+    try {
+      const segunda = { ...pagina, pagina: { numero: 2, total: 2 } };
+      expect(
+        (await receber(casas.restauranteA, segunda)).rows[0]?.recibo.estado
+      ).toBe("publicada");
+    } finally {
+      await banco.query("rollback");
+    }
   });
 
   it("recusa página maior que o máximo e casa inexistente", async () => {
@@ -160,23 +159,24 @@ describe("staging do webhook SCC v2", () => {
   });
 
   it("aceita página fora de ordem sem publicar dados parciais", async () => {
-    const foraDeOrdem = {
-      ...pagina,
-      id_envio: randomUUID(),
-      sequencia: "7",
-      pagina: { numero: 2, total: 2 },
-    };
-    const recibo = await receber(casas.restauranteA, foraDeOrdem);
-    expect(recibo.rows[0]?.recibo).toMatchObject({ estado: "recebendo" });
-    await expect(
-      receber(casas.restauranteA, {
+    await banco.query("begin");
+    try {
+      const foraDeOrdem = {
+        ...pagina,
+        id_envio: randomUUID(),
+        sequencia: "7",
+        pagina: { numero: 2, total: 2 },
+      };
+      const recibo = await receber(casas.restauranteA, foraDeOrdem);
+      expect(recibo.rows[0]?.recibo).toMatchObject({ estado: "recebendo" });
+      const concluida = await receber(casas.restauranteA, {
         ...foraDeOrdem,
         pagina: { numero: 1, total: 2 },
-      })
-    ).rejects.toMatchObject({
-      code: "PR503",
-      message: "publicacao_indisponivel",
-    });
+      });
+      expect(concluida.rows[0]?.recibo.estado).toBe("publicada");
+    } finally {
+      await banco.query("rollback");
+    }
   });
 
   it("limita a dez cargas abertas por casa", async () => {

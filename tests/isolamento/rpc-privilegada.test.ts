@@ -11,7 +11,6 @@ import {
 const funcoesReservadas = [
   "public.receber_pagina_scc_v2(uuid,jsonb)",
   "public.consumir_limite_scc(uuid)",
-  "public.validar_pagina_scc_v2(jsonb)",
   "public.limpar_cargas_scc_v2()",
   "public.validar_linha_relatorio(text,jsonb)",
   "public.processar_envio(uuid,jsonb,text[])",

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import type { Client } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { validarEnvioSccV2 } from "../../lib/validators/recepcao";
 import { conectarBanco, criarFixture } from "../helpers/supabase-local";
 import { fixtures } from "./fixtures-v2";
 
@@ -20,6 +21,28 @@ describe("validação SQL do webhook SCC v2", () => {
       "select to_regprocedure('public.validar_pagina_scc_v2(jsonb)')::text as funcao"
     );
     expect(rows[0]?.funcao).toBe("validar_pagina_scc_v2(jsonb)");
+  });
+
+  it.each([
+    "codCartaoMesa",
+    "CodGarcon",
+    "codOperadorHab",
+    "codOperadorDesab",
+    "codCliente",
+    "NumeroOcupantes",
+  ])("aplica a faixa integer do banco a %s no Zod e no SQL", async (campo) => {
+    for (const valor of [-2147483649, 2147483648]) {
+      const pagina = {
+        ...fixtures[0],
+        dados: [{ ...fixtures[0].dados[0], [campo]: valor }],
+      };
+      expect(validarEnvioSccV2(pagina).success).toBe(false);
+      await expect(
+        banco.query("select public.validar_pagina_scc_v2($1::jsonb)", [
+          JSON.stringify(pagina),
+        ])
+      ).rejects.toMatchObject({ code: "PR422" });
+    }
   });
 
   it.each([
