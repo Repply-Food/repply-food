@@ -95,6 +95,90 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"cargas_scc": {
+                  Row: {
+                    "atualizada_em": string,"bytes_recebidos": number,"chave_escopo": string | null,"criada_em": string,"dia_movimento": string | null,"enviado_em": string,"estado": string,"fonte": string | null,"id_envio": string,"janela_ate": string | null,"janela_desde": string | null,"modo": string,"natureza": string,"publicada_em": string | null,"recibo": Json | null,"recursos": (string)[],"restaurante_id": string,"sequencia": number,"tipo_envio": string,"total_paginas": number,"total_registros": number,"versao_scc": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atualizada_em"?: string,"bytes_recebidos"?: number,"chave_escopo"?: never,"criada_em"?: string,"dia_movimento"?: string | null,"enviado_em": string,"estado"?: string,"fonte"?: string | null,"id_envio": string,"janela_ate"?: string | null,"janela_desde"?: string | null,"modo": string,"natureza": string,"publicada_em"?: string | null,"recibo"?: Json | null,"recursos"?: (string)[],"restaurante_id": string,"sequencia": number,"tipo_envio": string,"total_paginas": number,"total_registros": number,"versao_scc": string
+                  }
+                  Update: {
+                    "atualizada_em"?: string,"bytes_recebidos"?: number,"chave_escopo"?: never,"criada_em"?: string,"dia_movimento"?: string | null,"enviado_em"?: string,"estado"?: string,"fonte"?: string | null,"id_envio"?: string,"janela_ate"?: string | null,"janela_desde"?: string | null,"modo"?: string,"natureza"?: string,"publicada_em"?: string | null,"recibo"?: Json | null,"recursos"?: (string)[],"restaurante_id"?: string,"sequencia"?: number,"tipo_envio"?: string,"total_paginas"?: number,"total_registros"?: number,"versao_scc"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cargas_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cargas_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"comissoes_scc": {
+                  Row: {
+                    "codigo_operador": string,"comissao_oficial": number | null,"dia_movimento": string,"fonte": string,"funcao": string | null,"operador": string | null,"posicao": number,"restaurante_id": string,"tipo_envio": string,"vendas_elegiveis": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo_operador": string,"comissao_oficial"?: number | null,"dia_movimento": string,"fonte": string,"funcao"?: string | null,"operador"?: string | null,"posicao": number,"restaurante_id": string,"tipo_envio"?: string,"vendas_elegiveis": number
+                  }
+                  Update: {
+                    "codigo_operador"?: string,"comissao_oficial"?: number | null,"dia_movimento"?: string,"fonte"?: string,"funcao"?: string | null,"operador"?: string | null,"posicao"?: number,"restaurante_id"?: string,"tipo_envio"?: string,"vendas_elegiveis"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "comissoes_scc_restaurante_id_tipo_envio_dia_movimento_font_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "fotografias_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"cursores_scc": {
+                  Row: {
+                    "chave_escopo": string,"id_envio": string,"restaurante_id": string,"sequencia": number,"tipo_envio": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "chave_escopo": string,"id_envio": string,"restaurante_id": string,"sequencia": number,"tipo_envio": string
+                  }
+                  Update: {
+                    "chave_escopo"?: string,"id_envio"?: string,"restaurante_id"?: string,"sequencia"?: number,"tipo_envio"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cursores_scc_carga_escopo_fk"
+      columns: ["restaurante_id","id_envio","tipo_envio","sequencia","chave_escopo"]
+isOneToOne: false
+      referencedRelation: "cargas_scc"
+      referencedColumns: ["restaurante_id","id_envio","tipo_envio","sequencia","chave_escopo"]
+    },{
+      foreignKeyName: "cursores_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cursores_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cursores_scc_restaurante_id_id_envio_fkey"
+      columns: ["restaurante_id","id_envio"]
+isOneToOne: false
+      referencedRelation: "cargas_scc"
+      referencedColumns: ["restaurante_id","id_envio"]
+    }
+                  ]
                 },"entradas": {
                   Row: {
                     "aberta_em": string,"atualizada_em": string,"cod_cartao_mesa": number | null,"cod_cliente": number | null,"cod_entrada": number,"cod_garcom": number | null,"cod_operador_abertura": number | null,"cod_operador_fechamento": number | null,"complemento": number,"dia_operacao": string,"extras": NonNullable<Json>,"fechada_em": string | null,"hash_origem": string,"numero_ocupantes": number | null,"pago": boolean,"recebida_em": string,"removida_em": string | null,"restaurante_id": string,"taxa_servico": number,"tipo_cartao": string | null,"tipo_ocupacao": string | null,"valor_acrescimos": number,"valor_consumido": number,"valor_descontos": number,"valor_itens": number
@@ -147,6 +231,124 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"eventos_auditoria_scc": {
+                  Row: {
+                    "cartao_anterior": string | null,"cartao_novo": string | null,"codigo_operador": string | null,"codigo_produto": string | null,"dia_movimento": string,"fonte": string,"limite_maximo_anterior": number | null,"limite_maximo_novo": number | null,"limite_minimo_anterior": number | null,"limite_minimo_novo": number | null,"momento": string,"operador": string | null,"posicao": number,"produto": string | null,"quantidade": number | null,"restaurante_id": string,"tipo": string,"tipo_envio": string,"total": number | null,"valor_unitario": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cartao_anterior"?: string | null,"cartao_novo"?: string | null,"codigo_operador"?: string | null,"codigo_produto"?: string | null,"dia_movimento": string,"fonte": string,"limite_maximo_anterior"?: number | null,"limite_maximo_novo"?: number | null,"limite_minimo_anterior"?: number | null,"limite_minimo_novo"?: number | null,"momento": string,"operador"?: string | null,"posicao": number,"produto"?: string | null,"quantidade"?: number | null,"restaurante_id": string,"tipo": string,"tipo_envio"?: string,"total"?: number | null,"valor_unitario"?: number | null
+                  }
+                  Update: {
+                    "cartao_anterior"?: string | null,"cartao_novo"?: string | null,"codigo_operador"?: string | null,"codigo_produto"?: string | null,"dia_movimento"?: string,"fonte"?: string,"limite_maximo_anterior"?: number | null,"limite_maximo_novo"?: number | null,"limite_minimo_anterior"?: number | null,"limite_minimo_novo"?: number | null,"momento"?: string,"operador"?: string | null,"posicao"?: number,"produto"?: string | null,"quantidade"?: number | null,"restaurante_id"?: string,"tipo"?: string,"tipo_envio"?: string,"total"?: number | null,"valor_unitario"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "eventos_auditoria_scc_restaurante_id_tipo_envio_dia_movime_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "fotografias_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"financeiro_meios_scc": {
+                  Row: {
+                    "classe": string,"codigo": string,"dia_movimento": string,"fonte": string,"posicao": number,"restaurante_id": string,"rotulo": string,"tipo_envio": string,"valor": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "classe": string,"codigo": string,"dia_movimento": string,"fonte": string,"posicao": number,"restaurante_id": string,"rotulo": string,"tipo_envio"?: string,"valor": number
+                  }
+                  Update: {
+                    "classe"?: string,"codigo"?: string,"dia_movimento"?: string,"fonte"?: string,"posicao"?: number,"restaurante_id"?: string,"rotulo"?: string,"tipo_envio"?: string,"valor"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "financeiro_meios_scc_restaurante_id_tipo_envio_dia_movimen_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "financeiro_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"financeiro_publico_scc": {
+                  Row: {
+                    "categoria": string,"dia_movimento": string,"fonte": string,"posicao": number,"quantidade": number,"restaurante_id": string,"sexo": string,"tipo_envio": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "categoria": string,"dia_movimento": string,"fonte": string,"posicao": number,"quantidade": number,"restaurante_id": string,"sexo": string,"tipo_envio"?: string
+                  }
+                  Update: {
+                    "categoria"?: string,"dia_movimento"?: string,"fonte"?: string,"posicao"?: number,"quantidade"?: number,"restaurante_id"?: string,"sexo"?: string,"tipo_envio"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "financeiro_publico_scc_restaurante_id_tipo_envio_dia_movim_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "financeiro_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"financeiro_scc": {
+                  Row: {
+                    "abertos": number | null,"complemento": number | null,"consumo": number | null,"descontos": number | null,"dia_movimento": string,"encerrados": number | null,"flyers": number | null,"fonte": string,"habilitados": number | null,"notas_assinadas": number | null,"posicao": number,"produto_embutido": number | null,"projetado": number | null,"reabilitados": number | null,"recebido": number | null,"restaurante_id": string,"servico": number | null,"taxas_entrada": number | null,"tipo_envio": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "abertos"?: number | null,"complemento"?: number | null,"consumo"?: number | null,"descontos"?: number | null,"dia_movimento": string,"encerrados"?: number | null,"flyers"?: number | null,"fonte": string,"habilitados"?: number | null,"notas_assinadas"?: number | null,"posicao"?: number,"produto_embutido"?: number | null,"projetado"?: number | null,"reabilitados"?: number | null,"recebido"?: number | null,"restaurante_id": string,"servico"?: number | null,"taxas_entrada"?: number | null,"tipo_envio"?: string
+                  }
+                  Update: {
+                    "abertos"?: number | null,"complemento"?: number | null,"consumo"?: number | null,"descontos"?: number | null,"dia_movimento"?: string,"encerrados"?: number | null,"flyers"?: number | null,"fonte"?: string,"habilitados"?: number | null,"notas_assinadas"?: number | null,"posicao"?: number,"produto_embutido"?: number | null,"projetado"?: number | null,"reabilitados"?: number | null,"recebido"?: number | null,"restaurante_id"?: string,"servico"?: number | null,"taxas_entrada"?: number | null,"tipo_envio"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "financeiro_scc_restaurante_id_tipo_envio_dia_movimento_fon_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: true
+      referencedRelation: "fotografias_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"fotografias_scc": {
+                  Row: {
+                    "capturado_em": string,"dia_movimento": string,"fonte": string,"id_envio": string,"natureza": string,"publicado_em": string,"quantidade": number,"recursos": (string)[],"restaurante_id": string,"sequencia": number,"tipo_envio": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "capturado_em": string,"dia_movimento": string,"fonte": string,"id_envio": string,"natureza": string,"publicado_em"?: string,"quantidade": number,"recursos": (string)[],"restaurante_id": string,"sequencia": number,"tipo_envio": string
+                  }
+                  Update: {
+                    "capturado_em"?: string,"dia_movimento"?: string,"fonte"?: string,"id_envio"?: string,"natureza"?: string,"publicado_em"?: string,"quantidade"?: number,"recursos"?: (string)[],"restaurante_id"?: string,"sequencia"?: number,"tipo_envio"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fotografias_scc_carga_escopo_fk"
+      columns: ["restaurante_id","id_envio","tipo_envio","sequencia","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "cargas_scc"
+      referencedColumns: ["restaurante_id","id_envio","tipo_envio","sequencia","dia_movimento","fonte"]
+    },{
+      foreignKeyName: "fotografias_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fotografias_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fotografias_scc_restaurante_id_id_envio_fkey"
+      columns: ["restaurante_id","id_envio"]
+isOneToOne: false
+      referencedRelation: "cargas_scc"
+      referencedColumns: ["restaurante_id","id_envio"]
+    }
+                  ]
                 },"incidentes_sinal": {
                   Row: {
                     "alerta_parado_enviado_em": string | null,"alerta_voltou_enviado_em": string | null,"criado_em": string,"encerrado_em": string | null,"id": string,"parado_em": string,"restaurante_id": string,"voltou_em": string | null
@@ -173,6 +375,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"itens_vendidos_scc": {
+                  Row: {
+                    "codigo_entrada": string,"codigo_garcom": string | null,"codigo_grupo": string | null,"codigo_pdv": string | null,"codigo_produto": string,"custos": number | null,"dia_movimento": string,"fonte": string,"garcom": string | null,"grupo": string | null,"mesa": number | null,"ordinal": number,"pdv": string | null,"posicao": number,"produto": string,"quantidade": number,"restaurante_id": string,"tipo_envio": string,"vendas": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo_entrada": string,"codigo_garcom"?: string | null,"codigo_grupo"?: string | null,"codigo_pdv"?: string | null,"codigo_produto": string,"custos"?: number | null,"dia_movimento": string,"fonte": string,"garcom"?: string | null,"grupo"?: string | null,"mesa"?: number | null,"ordinal": number,"pdv"?: string | null,"posicao": number,"produto": string,"quantidade": number,"restaurante_id": string,"tipo_envio"?: string,"vendas": number
+                  }
+                  Update: {
+                    "codigo_entrada"?: string,"codigo_garcom"?: string | null,"codigo_grupo"?: string | null,"codigo_pdv"?: string | null,"codigo_produto"?: string,"custos"?: number | null,"dia_movimento"?: string,"fonte"?: string,"garcom"?: string | null,"grupo"?: string | null,"mesa"?: number | null,"ordinal"?: number,"pdv"?: string | null,"posicao"?: number,"produto"?: string,"quantidade"?: number,"restaurante_id"?: string,"tipo_envio"?: string,"vendas"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "itens_vendidos_scc_restaurante_id_tipo_envio_dia_movimento_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "fotografias_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"limites_requisicao_scc": {
+                  Row: {
+                    "inicio_janela": string,"quantidade": number,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "inicio_janela": string,"quantidade": number,"restaurante_id": string
+                  }
+                  Update: {
+                    "inicio_janela"?: string,"quantidade"?: number,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "limites_requisicao_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "limites_requisicao_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"metas": {
                   Row: {
                     "atualizado_em": string,"mes": string,"restaurante_id": string,"valor": number
@@ -193,6 +441,92 @@ isOneToOne: false
       referencedColumns: ["id"]
     },{
       foreignKeyName: "metas_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"movimentos_caixa_scc": {
+                  Row: {
+                    "categoria": string,"codigo_categoria": string,"codigo_lancamento": string,"codigo_operador": string | null,"dia_movimento": string,"fonte": string,"momento": string,"operador": string | null,"posicao": number,"restaurante_id": string,"tipo": string,"tipo_envio": string,"valor": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "categoria": string,"codigo_categoria": string,"codigo_lancamento": string,"codigo_operador"?: string | null,"dia_movimento": string,"fonte": string,"momento": string,"operador"?: string | null,"posicao": number,"restaurante_id": string,"tipo": string,"tipo_envio"?: string,"valor": number
+                  }
+                  Update: {
+                    "categoria"?: string,"codigo_categoria"?: string,"codigo_lancamento"?: string,"codigo_operador"?: string | null,"dia_movimento"?: string,"fonte"?: string,"momento"?: string,"operador"?: string | null,"posicao"?: number,"restaurante_id"?: string,"tipo"?: string,"tipo_envio"?: string,"valor"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "movimentos_caixa_scc_restaurante_id_tipo_envio_dia_movimen_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "fotografias_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"notas_assinadas_scc": {
+                  Row: {
+                    "codigo_cliente": string,"codigo_entrada": string,"codigo_nota": string,"dia_movimento": string,"fonte": string,"posicao": number,"restaurante_id": string,"tipo_envio": string,"valor": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo_cliente": string,"codigo_entrada": string,"codigo_nota": string,"dia_movimento": string,"fonte": string,"posicao": number,"restaurante_id": string,"tipo_envio"?: string,"valor": number
+                  }
+                  Update: {
+                    "codigo_cliente"?: string,"codigo_entrada"?: string,"codigo_nota"?: string,"dia_movimento"?: string,"fonte"?: string,"posicao"?: number,"restaurante_id"?: string,"tipo_envio"?: string,"valor"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notas_assinadas_scc_restaurante_id_tipo_envio_dia_moviment_fkey"
+      columns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+isOneToOne: false
+      referencedRelation: "fotografias_scc"
+      referencedColumns: ["restaurante_id","tipo_envio","dia_movimento","fonte"]
+    }
+                  ]
+                },"paginas_scc": {
+                  Row: {
+                    "bytes": number,"dados": Json | null,"hash": string,"id_envio": string,"numero": number,"quantidade": number,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bytes": number,"dados"?: Json | null,"hash": string,"id_envio": string,"numero": number,"quantidade": number,"restaurante_id": string
+                  }
+                  Update: {
+                    "bytes"?: number,"dados"?: Json | null,"hash"?: string,"id_envio"?: string,"numero"?: number,"quantidade"?: number,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "paginas_scc_restaurante_id_id_envio_fkey"
+      columns: ["restaurante_id","id_envio"]
+isOneToOne: false
+      referencedRelation: "cargas_scc"
+      referencedColumns: ["restaurante_id","id_envio"]
+    }
+                  ]
+                },"produtos_scc": {
+                  Row: {
+                    "alterado_em": string,"ativo": boolean,"codigo_grupo": string | null,"codigo_produto": string,"grupo": string | null,"preco_custo_atual": number | null,"produto": string,"restaurante_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alterado_em": string,"ativo": boolean,"codigo_grupo"?: string | null,"codigo_produto": string,"grupo"?: string | null,"preco_custo_atual"?: number | null,"produto": string,"restaurante_id": string
+                  }
+                  Update: {
+                    "alterado_em"?: string,"ativo"?: boolean,"codigo_grupo"?: string | null,"codigo_produto"?: string,"grupo"?: string | null,"preco_custo_atual"?: number | null,"produto"?: string,"restaurante_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "produtos_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "produtos_scc_restaurante_id_fkey"
       columns: ["restaurante_id"]
 isOneToOne: false
       referencedRelation: "restaurantes_no_admin"
@@ -362,6 +696,32 @@ isOneToOne: true
                   }
                   Relationships: [
                     
+                  ]
+                },"revisoes_scc": {
+                  Row: {
+                    "restaurante_id": string,"revisao": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "restaurante_id": string,"revisao"?: number
+                  }
+                  Update: {
+                    "restaurante_id"?: string,"revisao"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "revisoes_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "revisoes_scc_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: true
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"sinal_de_vida": {
                   Row: {

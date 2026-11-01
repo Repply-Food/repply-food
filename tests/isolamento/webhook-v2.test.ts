@@ -298,4 +298,122 @@ describe("isolamento dos dados SCC v2", () => {
       await banco.query("rollback");
     }
   });
+
+  async function rejeitaAlteracao(
+    sql: string,
+    parametros: unknown[],
+    codigo = /^23/
+  ) {
+    await banco.query("begin");
+    try {
+      await expect(banco.query(sql, parametros)).rejects.toMatchObject({
+        code: expect.stringMatching(codigo),
+      });
+    } finally {
+      await banco.query("rollback");
+    }
+  }
+
+  it("exige carga correspondente ao tipo, sequência, dia e fonte da fotografia", async () => {
+    for (const alteracao of [
+      "tipo_envio='comissoes'",
+      "sequencia=2",
+      "dia_movimento='2026-10-02'",
+      "fonte='historico'",
+    ]) {
+      await rejeitaAlteracao(
+        `update public.fotografias_scc set ${alteracao} where restaurante_id=$1 and tipo_envio='itens_vendidos'`,
+        [fixture.restauranteA]
+      );
+    }
+  });
+
+  it("exige carga correspondente ao tipo, sequência e escopo do cursor", async () => {
+    for (const [tipo, chave, sequencia, id] of [
+      ["cadastro_produtos", "cadastro_produtos", 1, idEnvio],
+      ["itens_vendidos", "2026-10-02|online", 1, ids[0]],
+      ["itens_vendidos", "2026-10-01|historico", 1, ids[0]],
+    ] as const) {
+      await rejeitaAlteracao(
+        "insert into public.cursores_scc (restaurante_id,tipo_envio,chave_escopo,sequencia,id_envio) values ($1,$2,$3,$4,$5)",
+        [fixture.restauranteA, tipo, chave, sequencia, id],
+        /^23503$/
+      );
+    }
+    await rejeitaAlteracao(
+      "update public.cursores_scc set sequencia=2 where restaurante_id=$1 and tipo_envio='entradas'",
+      [fixture.restauranteA],
+      /^23503$/
+    );
+  });
+
+  it("recusa códigos e rótulos fora do contrato", async () => {
+    for (const [tabela, coluna, valor] of [
+      ["produtos_scc", "codigo_produto", "com espaço"],
+      ["produtos_scc", "codigo_grupo", "x".repeat(81)],
+      ["produtos_scc", "produto", ""],
+      ["produtos_scc", "grupo", "linha\nquebrada"],
+      ["itens_vendidos_scc", "codigo_entrada", "!"],
+      ["itens_vendidos_scc", "pdv", "x".repeat(121)],
+      ["comissoes_scc", "funcao", "x".repeat(81)],
+      ["movimentos_caixa_scc", "codigo_categoria", ""],
+      ["eventos_auditoria_scc", "cartao_anterior", " inv"],
+      ["notas_assinadas_scc", "codigo_cliente", "á"],
+      ["financeiro_meios_scc", "rotulo", "\u0085"],
+    ]) {
+      await rejeitaAlteracao(
+        `update public.${tabela} set ${coluna}=$2 where restaurante_id=$1`,
+        [fixture.restauranteA, valor]
+      );
+    }
+  });
+
+  it("recusa recursos desconhecidos, repetidos ou nulos", async () => {
+    for (const tabela of ["cargas_scc", "fotografias_scc"]) {
+      for (const recursos of [["invalido"], ["pdv", "pdv"], [null]]) {
+        await rejeitaAlteracao(
+          `update public.${tabela} set recursos=$2 where restaurante_id=$1 and tipo_envio='itens_vendidos'`,
+          [fixture.restauranteA, recursos]
+        );
+      }
+    }
+  });
+
+  it("permite apagar apenas os dados da página para retenção", async () => {
+    await banco.query("begin");
+    try {
+      const resultado = await banco.query(
+        "update public.paginas_scc set dados=null where restaurante_id=$1 and id_envio=$2 returning dados, hash",
+        [fixture.restauranteA, idEnvio]
+      );
+      expect(resultado.rows).toEqual([{ dados: null, hash: "a".repeat(64) }]);
+    } finally {
+      await banco.query("rollback");
+    }
+  });
+
+  it("aceita cursor fotográfico correto e recursos e rótulos válidos", async () => {
+    await banco.query("begin");
+    try {
+      const cursor = await banco.query(
+        "insert into public.cursores_scc (restaurante_id,tipo_envio,chave_escopo,sequencia,id_envio) values ($1,'itens_vendidos','2026-10-01|online',1,$2)",
+        [fixture.restauranteA, ids[0]]
+      );
+      expect(cursor.rowCount).toBe(1);
+      const recursos = await banco.query(
+        "update public.fotografias_scc set recursos=array['pdv','garcom'] where restaurante_id=$1 and tipo_envio='itens_vendidos'",
+        [fixture.restauranteA]
+      );
+      expect(recursos.rowCount).toBe(1);
+      const produto = await banco.query(
+        "update public.produtos_scc set codigo_grupo=$2,grupo=$3 where restaurante_id=$1",
+        [fixture.restauranteA, "a".repeat(80), "Café São João"]
+      );
+      expect(produto.rowCount).toBe(1);
+    } finally {
+      await banco.query("rollback");
+    }
+  });
+
+  it.todo("recepção v2 recusa dados nulos e número de página acima do total");
 });

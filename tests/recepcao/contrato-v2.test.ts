@@ -25,6 +25,15 @@ describe("contrato SCC v2", () => {
       validarEnvioSccV2({ ...fixtures[0], dados: fixtures[1].dados }).success
     ).toBe(false);
   });
+  it("recusa dados nulos e número de página maior que o total na entrada", () => {
+    expect(validarEnvioSccV2({ ...fixtures[0], dados: null }).success).toBe(
+      false
+    );
+    expect(
+      validarEnvioSccV2({ ...fixtures[0], pagina: { numero: 2, total: 1 } })
+        .success
+    ).toBe(false);
+  });
   it("valida limites, correlações e escalares", () => {
     const entrada = fixtures[0];
     const foto = fixtures[2];
