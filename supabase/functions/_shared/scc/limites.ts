@@ -1,0 +1,7 @@
+export const MAX_BYTES_PAGINA = 1048576;
+export const MAX_REGISTROS_PAGINA = 500;
+export const MAX_PAGINAS = 200;
+export const MAX_REGISTROS_CARGA = 100000;
+export const MAX_BYTES_CARGA = 33554432;
+export const MAX_CARGAS_ABERTAS = 10;
+export const MAX_REQUISICOES_MINUTO = 120;

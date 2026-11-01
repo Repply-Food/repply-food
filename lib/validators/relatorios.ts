@@ -3,12 +3,6 @@ export {
   pedidoRelatoriosSchema,
   RELATORIOS,
   type Fotografia,
-  type LinhaAuditoria,
-  type LinhaCaixa,
-  type LinhaComissao,
-  type LinhaFinanceiro,
-  type LinhaNota,
-  type LinhaProdutos,
   type Manifesto,
   type PedidoRelatorios,
   type Relatorio,
@@ -19,3 +13,12 @@ import { pedidoRelatoriosSchema } from "../../supabase/functions/_shared/relator
 export function validarPedidoRelatorios(entrada: unknown) {
   return pedidoRelatoriosSchema.safeParse(entrada);
 }
+
+export type {
+  LinhaAuditoria,
+  LinhaCaixa,
+  LinhaComissao,
+  LinhaFinanceiro,
+  LinhaNota,
+  LinhaProdutos,
+} from "../../supabase/functions/_shared/scc/schemas.ts";
