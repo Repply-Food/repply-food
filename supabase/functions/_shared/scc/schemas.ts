@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  MAX_PAGINAS,
+  MAX_REGISTROS_CARGA,
+  MAX_REGISTROS_PAGINA,
+} from "./limites.ts";
 export const decimalSchema = z.string().regex(/^-?\d{1,14}(\.\d{1,6})?$/);
 export const codigoSchema = z
   .string()
@@ -312,11 +317,11 @@ const base = {
   natureza: z.enum(["scc", "simulacao"]),
   pagina: z
     .object({
-      numero: z.number().int().min(1).max(200),
-      total: z.number().int().min(1).max(200),
+      numero: z.number().int().min(1).max(MAX_PAGINAS),
+      total: z.number().int().min(1).max(MAX_PAGINAS),
     })
     .strict(),
-  total_registros: z.number().int().min(0).max(100000),
+  total_registros: z.number().int().min(0).max(MAX_REGISTROS_CARGA),
 };
 const foto = {
   modo: z.literal("fotografia"),
@@ -347,7 +352,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
         .object({ desde: dataCivilSchema, ate: dataCivilSchema })
         .strict()
         .refine((v) => v.desde <= v.ate),
-      dados: z.array(entradaSchema).max(500),
+      dados: z.array(entradaSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -355,7 +360,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
       ...base,
       tipo_envio: z.literal("cadastro_produtos"),
       modo: z.literal("incremental"),
-      dados: z.array(cadastroProdutoSchema).max(500),
+      dados: z.array(cadastroProdutoSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -363,7 +368,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
       ...base,
       ...foto,
       tipo_envio: z.literal("itens_vendidos"),
-      dados: z.array(itemVendidoSchema).max(500),
+      dados: z.array(itemVendidoSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -371,7 +376,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
       ...base,
       ...foto,
       tipo_envio: z.literal("comissoes"),
-      dados: z.array(linhaComissaoSchema).max(500),
+      dados: z.array(linhaComissaoSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -379,7 +384,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
       ...base,
       ...foto,
       tipo_envio: z.literal("movimentos_caixa"),
-      dados: z.array(linhaCaixaSchema).max(500),
+      dados: z.array(linhaCaixaSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -387,7 +392,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
       ...base,
       ...foto,
       tipo_envio: z.literal("eventos_auditoria"),
-      dados: z.array(linhaAuditoriaSchema).max(500),
+      dados: z.array(linhaAuditoriaSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -395,7 +400,7 @@ const schema = z.discriminatedUnion("tipo_envio", [
       ...base,
       ...foto,
       tipo_envio: z.literal("notas_assinadas"),
-      dados: z.array(linhaNotaSchema).max(500),
+      dados: z.array(linhaNotaSchema).max(MAX_REGISTROS_PAGINA),
     })
     .strict(),
   z
@@ -419,7 +424,8 @@ export const envioSccV2Schema = schema.superRefine((v, ctx) => {
   if (
     v.pagina.numero > v.pagina.total ||
     v.dados.length > v.total_registros ||
-    v.total_registros > v.pagina.total * 500 ||
+    v.total_registros >
+      v.dados.length + (v.pagina.total - 1) * MAX_REGISTROS_PAGINA ||
     (v.pagina.total === 1 && v.dados.length !== v.total_registros) ||
     (v.total_registros === 0 &&
       (v.pagina.total !== 1 ||
