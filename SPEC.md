@@ -184,7 +184,7 @@ E a verificação obrigatória passa: tipos, lint, testes e build.
 
 ## 11. Pendências com a SCC
 
-As perguntas técnicas abertas (blocos B e H) estão no [contrato de dados §11](docs/integracao-scc/contrato-de-dados.md) e na pauta da reunião (`_descoberta/pauta-reuniao-scc.md`, fora do repositório). Até as respostas, as métricas usam as regras provisórias de [`metricas.md`](docs/metricas.md).
+As perguntas técnicas abertas (blocos B e H) estão no banco de perguntas (`_descoberta/2026-10-05-banco-de-perguntas.md`) e na pauta da reunião (`_descoberta/pauta-reuniao-scc.md`), fora do repositório. O [contrato de dados v2](docs/integracao-scc/contrato-de-dados.md#campos-por-tipo) descreve os campos por tipo. Até as respostas, as métricas usam as regras provisórias de [`metricas.md`](docs/metricas.md).
 
 ---
 
