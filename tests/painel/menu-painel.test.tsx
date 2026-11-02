@@ -15,7 +15,7 @@ afterEach(cleanup);
 
 describe("moldura do painel", () => {
   it.each(["lateral", "inferior"] as const)(
-    "o menu %s leva aos três destinos da casa e marca Resultados na rota de relatórios",
+    "o menu %s leva aos quatro destinos da casa e marca Resultados na rota de relatórios",
     (variante) => {
       render(<MenuPainel slug="casa-x" variante={variante} />);
       const links = screen.getAllByRole("link");
@@ -23,6 +23,7 @@ describe("moldura do painel", () => {
         "/r/casa-x/hoje",
         "/r/casa-x/resultados",
         "/r/casa-x/ajustes",
+        "/r/casa-x/mentor",
       ]);
       expect(
         screen
@@ -34,7 +35,7 @@ describe("moldura do painel", () => {
       ).toBeNull();
       expect(screen.queryByRole("link", { name: "Relatórios" })).toBeNull();
       if (variante === "inferior")
-        expect(screen.getByRole("list").className).toContain("grid-cols-3");
+        expect(screen.getByRole("list").className).toContain("grid-cols-4");
     }
   );
 

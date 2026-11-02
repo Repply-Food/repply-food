@@ -1,0 +1,195 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// A Server Action é a FRONTEIRA de segurança da tela do mentor: ela mesma
+// confere o modo leitura do admin, valida o texto e tira o restaurante da
+// sessão. Aqui o cérebro (`responderNoMentor`) e o guarda (`exigirCasa`) são
+// dublês para provar que a action NÃO confia na tela.
+
+const { exigirCasa, responderNoMentor } = vi.hoisted(() => ({
+  exigirCasa: vi.fn(),
+  responderNoMentor: vi.fn(),
+}));
+
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/auth/sessao", () => ({ exigirCasa }));
+vi.mock("@/lib/mentor/conversa", () => ({ responderNoMentor }));
+
+import { enviarMensagemAction } from "@/lib/mentor/enviar-action";
+
+const CASA = "11111111-1111-4111-8111-111111111111";
+const CONVERSA = "22222222-2222-4222-8222-222222222222";
+
+function dono() {
+  exigirCasa.mockResolvedValue({
+    casa: { id: CASA },
+    modoAdmin: false,
+    sessao: {},
+  });
+}
+function admin() {
+  exigirCasa.mockResolvedValue({
+    casa: { id: CASA },
+    modoAdmin: true,
+    sessao: {},
+  });
+}
+
+beforeEach(() => vi.clearAllMocks());
+
+describe("enviarMensagemAction", () => {
+  it("passa o restaurante da SESSÃO ao cérebro e devolve a resposta", async () => {
+    dono();
+    responderNoMentor.mockResolvedValue({
+      ok: true,
+      conversaId: CONVERSA,
+      resposta: "A semana fechou em alta.",
+    });
+
+    const r = await enviarMensagemAction(
+      "bar-do-ze",
+      null,
+      "Como foi a semana?"
+    );
+
+    expect(r).toEqual({
+      ok: true,
+      data: { conversaId: CONVERSA, resposta: "A semana fechou em alta." },
+    });
+    expect(exigirCasa).toHaveBeenCalledWith("bar-do-ze");
+    expect(responderNoMentor).toHaveBeenCalledTimes(1);
+    expect(responderNoMentor).toHaveBeenCalledWith({
+      restauranteId: CASA,
+      conversaId: null,
+      mensagemDoDono: "Como foi a semana?",
+    });
+  });
+
+  it("continua a conversa informada e entrega o texto já aparado", async () => {
+    dono();
+    responderNoMentor.mockResolvedValue({
+      ok: true,
+      conversaId: CONVERSA,
+      resposta: "ok",
+    });
+
+    await enviarMensagemAction("bar-do-ze", CONVERSA, "  e ontem?  ");
+
+    expect(responderNoMentor).toHaveBeenCalledWith({
+      restauranteId: CASA,
+      conversaId: CONVERSA,
+      mensagemDoDono: "e ontem?",
+    });
+  });
+
+  it("não deixa o chamador escolher o provedor de IA", async () => {
+    dono();
+    responderNoMentor.mockResolvedValue({
+      ok: true,
+      conversaId: CONVERSA,
+      resposta: "ok",
+    });
+
+    await enviarMensagemAction("bar-do-ze", null, "oi");
+
+    const entrada = responderNoMentor.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect("provedor" in entrada).toBe(false);
+  });
+
+  it("recusa o admin no modo leitura SEM chamar o cérebro", async () => {
+    admin();
+
+    const r = await enviarMensagemAction("bar-do-ze", null, "Como foi?");
+
+    expect(r).toEqual({
+      ok: false,
+      error: "no modo leitura do admin o mentor não responde",
+    });
+    expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+
+  it("repassa a frase de erro do cérebro", async () => {
+    dono();
+    responderNoMentor.mockResolvedValue({
+      ok: false,
+      error: "você já usou bastante o mentor hoje; ele volta amanhã",
+    });
+
+    const r = await enviarMensagemAction("bar-do-ze", null, "Como foi?");
+
+    expect(r).toEqual({
+      ok: false,
+      error: "você já usou bastante o mentor hoje; ele volta amanhã",
+    });
+  });
+
+  it.each([
+    ["vazio", ""],
+    ["só espaços", "   \n  "],
+  ])("texto %s vira frase de produto sem chamar o cérebro", async (_n, t) => {
+    dono();
+
+    const r = await enviarMensagemAction("bar-do-ze", null, t);
+
+    expect(r).toEqual({
+      ok: false,
+      error: "escreva sua pergunta para o mentor",
+    });
+    expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+
+  it("texto maior que 4000 caracteres vira frase de produto sem chamar o cérebro", async () => {
+    dono();
+
+    const r = await enviarMensagemAction("bar-do-ze", null, "a".repeat(4001));
+
+    expect(r).toEqual({
+      ok: false,
+      error: "sua pergunta ficou longa demais; resuma em até 4000 caracteres",
+    });
+    expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+
+  it("aceita exatamente 4000 caracteres", async () => {
+    dono();
+    responderNoMentor.mockResolvedValue({
+      ok: true,
+      conversaId: CONVERSA,
+      resposta: "ok",
+    });
+
+    const r = await enviarMensagemAction("bar-do-ze", null, "a".repeat(4000));
+
+    expect(r.ok).toBe(true);
+    expect(responderNoMentor).toHaveBeenCalledTimes(1);
+  });
+
+  it("texto que não é string (chamada forjada) vira frase de produto", async () => {
+    dono();
+
+    const r = await enviarMensagemAction("bar-do-ze", null, {
+      texto: "oi",
+    } as unknown as string);
+
+    expect(r).toEqual({
+      ok: false,
+      error: "escreva sua pergunta para o mentor",
+    });
+    expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+
+  it("o texto inválido do admin também nem chega a ser validado: modo leitura vem primeiro", async () => {
+    admin();
+
+    const r = await enviarMensagemAction("bar-do-ze", null, "");
+
+    expect(r).toEqual({
+      ok: false,
+      error: "no modo leitura do admin o mentor não responde",
+    });
+    expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+});
