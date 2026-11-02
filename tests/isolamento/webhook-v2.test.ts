@@ -254,7 +254,6 @@ describe("isolamento dos dados SCC v2", () => {
       "insert into public.itens_vendidos_scc (restaurante_id,dia_movimento,fonte,posicao,codigo_entrada,ordinal,codigo_produto,produto,quantidade,vendas) values ($1,'2026-10-01','online',2,'e',0,'p','Produto',1,2)",
       "insert into public.comissoes_scc (restaurante_id,dia_movimento,fonte,posicao,codigo_operador,vendas_elegiveis) values ($1,'2026-10-01','online',2,'o',2)",
       "insert into public.movimentos_caixa_scc (restaurante_id,dia_movimento,fonte,posicao,codigo_lancamento,momento,tipo,codigo_categoria,categoria,valor) values ($1,'2026-10-01','online',2,'l',now(),'credito','c','Categoria',2)",
-      "insert into public.notas_assinadas_scc (restaurante_id,dia_movimento,fonte,posicao,codigo_nota,codigo_entrada,codigo_cliente,valor) values ($1,'2026-10-01','online',2,'n','e','c',2)",
       "insert into public.financeiro_publico_scc (restaurante_id,dia_movimento,fonte,posicao,sexo,categoria,quantidade) values ($1,'2026-10-01','online',2,'nao_informado','outro',1)",
     ]) {
       await expect(

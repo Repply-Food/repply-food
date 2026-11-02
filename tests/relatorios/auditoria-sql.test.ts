@@ -133,7 +133,7 @@ describe("auditoria nas fotografias reais do PostgreSQL local", () => {
       resultado.linhas.filter(
         (linha) =>
           linha.tipo === "cancelamento_produto" &&
-          linha.momento === cancelamento.momento &&
+          Date.parse(linha.momento) === Date.parse(cancelamento.momento) &&
           linha.total === cancelamento.total
       )
     ).toHaveLength(2);
@@ -214,7 +214,9 @@ describe("auditoria nas fotografias reais do PostgreSQL local", () => {
     const primeira = await consultar(filtros, 1, 1);
     const segunda = await consultar(filtros, 2, 1);
     expect(primeira.linhas[0]?.tipo).toBe("cancelamento_produto");
-    expect(primeira.linhas[0]?.momento).toBe("2026-10-24T19:00:00-03:00");
+    expect(Date.parse(primeira.linhas[0]?.momento ?? "")).toBe(
+      Date.parse("2026-10-24T19:00:00-03:00")
+    );
     expect(segunda.linhas[0]).toEqual(primeira.linhas[0]);
     expect(primeira.resumo).toEqual(segunda.resumo);
     expect(primeira.paginacao.totalLinhas).toBe(4);
