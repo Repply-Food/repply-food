@@ -13,6 +13,8 @@ import { fixtures } from "../recepcao/fixtures-v2";
 const internas = [
   "public.publicar_carga_scc_v2(uuid,uuid)",
   "public.publicar_entradas_scc_v2(uuid,uuid)",
+  "public.publicar_carga_scc_v2_sem_revisao(uuid,uuid)",
+  "public.publicar_entradas_scc_v2_sem_revisao(uuid,uuid)",
   "public.publicar_itens_scc_v2(uuid,uuid)",
   "public.publicar_comissoes_caixa_scc_v2(uuid,uuid)",
   "public.publicar_auditoria_notas_scc_v2(uuid,uuid)",

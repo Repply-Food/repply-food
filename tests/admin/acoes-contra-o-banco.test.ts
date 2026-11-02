@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { createClient as criarCliente } from "@supabase/supabase-js";
 import type { Client } from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -8,7 +8,7 @@ import { URL_LOCAL, chaveLocal } from "../helpers/chaves-locais";
 import {
   conectarBanco,
   envelhecerSinal,
-  envelope,
+  envelopeV2,
   enviar,
 } from "../helpers/supabase-local";
 
@@ -42,6 +42,7 @@ import {
   revogarTokensAction,
   trocarEmailAction,
 } from "@/lib/admin/actions";
+import { cnpjValido } from "@/lib/admin/cnpj";
 import { detalheDoRestaurante, listarRestaurantes } from "@/lib/admin/dados";
 import { hojeNaCasa, somarDias } from "@/lib/admin/datas";
 import { DIA_FECHADO } from "@/lib/admin/horario";
@@ -57,7 +58,10 @@ const servico = criarCliente<Database>(
 const sufixo = randomUUID().slice(0, 8);
 const email = (quem: string) => `${quem}-${sufixo}@teste.repply.local`;
 const senhaDoAdmin = `admin-${randomUUID()}`;
-const CNPJ = "13.579.246/0001-01";
+let CNPJ = "";
+while (!cnpjValido(CNPJ)) {
+  CNPJ = `${randomInt(10000000, 100000000)}0001${String(randomInt(100)).padStart(2, "0")}`;
+}
 const registros: string[] = [];
 const segredos: string[] = [];
 
@@ -126,6 +130,18 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
+    for (const tabela of [
+      "paginas_scc",
+      "cursores_scc",
+      "cargas_scc",
+      "revisoes_scc",
+      "limites_requisicao_scc",
+    ]) {
+      await banco.query(
+        `delete from public.${tabela} where restaurante_id = any($1::uuid[])`,
+        [[casaA, casaB].filter(Boolean)]
+      );
+    }
     await banco.query("delete from public.restaurantes where slug like $1", [
       `%${sufixo}%`,
     ]);
@@ -164,7 +180,7 @@ describe("funções do servidor do admin contra o banco e o Auth locais", () => 
       `casa-acao-${sufixo}`,
       `casa-acao-${sufixo}-2`,
     ]);
-    expect(rows[0]?.cnpj).toBe("13579246000101");
+    expect(rows[0]?.cnpj).toBe(CNPJ);
     expect(rows[0]?.horario).toEqual([
       { dia: 2, abre: "11:00", fecha: "15:00" },
     ]);
@@ -188,7 +204,7 @@ describe("funções do servidor do admin contra o banco e o Auth locais", () => 
     expect(gerado.data.instrucoes).toContain(
       "http://127.0.0.1:54321/functions/v1/receber-envio"
     );
-    expect((await enviar(gerado.data.token, envelope([]))).status).toBe(200);
+    expect((await enviar(gerado.data.token, envelopeV2([]))).status).toBe(200);
   });
 
   it("'em 24 h': o antigo e o novo valem juntos; revogar para os dois", async () => {
@@ -197,11 +213,19 @@ describe("funções do servidor do admin contra o banco e o Auth locais", () => 
     if (!novo.ok || !novo.data) throw new Error("não gerou o token");
     segredos.push(novo.data.token);
     await envelhecerSinal(banco, casaA);
-    expect((await enviar(antigo, envelope([]))).status).toBe(200);
+    await banco.query(
+      "update public.cargas_scc set publicada_em = now() - interval '21 seconds' where restaurante_id=$1 and estado='publicada'",
+      [casaA]
+    );
+    expect((await enviar(antigo, envelopeV2([]))).status).toBe(200);
     await envelhecerSinal(banco, casaA);
-    expect((await enviar(novo.data.token, envelope([]))).status).toBe(200);
+    await banco.query(
+      "update public.cargas_scc set publicada_em = now() - interval '21 seconds' where restaurante_id=$1 and estado='publicada'",
+      [casaA]
+    );
+    expect((await enviar(novo.data.token, envelopeV2([]))).status).toBe(200);
     expect(await revogarTokensAction(casaA)).toEqual({ ok: true });
-    expect((await enviar(novo.data.token, envelope([]))).status).toBe(401);
+    expect((await enviar(novo.data.token, envelopeV2([]))).status).toBe(401);
     expect(await revogarTokensAction(casaA)).toEqual({
       ok: false,
       error: "Esta casa não tem token válido para revogar.",

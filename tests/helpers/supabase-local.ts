@@ -291,6 +291,24 @@ export function envelope(
   };
 }
 
+let sequenciaV2 = 0;
+export function envelopeV2(dados: unknown[]) {
+  return {
+    versao_formato: 2,
+    tipo_envio: "entradas",
+    versao_scc: "teste-1.0",
+    enviado_em: "2026-10-10T02:00:00Z",
+    id_envio: randomUUID(),
+    sequencia: String(++sequenciaV2),
+    natureza: "scc",
+    modo: "janela",
+    janela: { desde: "2026-10-09", ate: "2026-10-10" },
+    pagina: { numero: 1, total: 1 },
+    total_registros: dados.length,
+    dados,
+  };
+}
+
 export function entrada(
   codEntrada: number,
   parcial: Record<string, unknown> = {}
