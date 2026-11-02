@@ -17,7 +17,7 @@ const encoder = new TextEncoder();
 
 // jsonb::text acrescenta um espaço após cada separador estrutural. Contar
 // somente fora das strings evita confundir vírgulas, dois-pontos e aspas escapadas.
-function tamanhos(valor: unknown): { http: number; banco: number } {
+export function tamanhos(valor: unknown): { http: number; banco: number } {
   const json = JSON.stringify(valor);
   let dentro = false;
   let escapado = false;
