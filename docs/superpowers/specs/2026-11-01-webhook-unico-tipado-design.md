@@ -1,8 +1,11 @@
 # Webhook único e tipado da SCC — desenho
 
-**Data:** 01/11/2026  
-**Status:** aprovado por Lucas Ferreira  
-**Decisão:** D-71  
+**Data:** 01/11/2026
+
+**Status:** aprovado por Lucas Ferreira
+
+**Decisão:** D-71
+
 **Substitui:** a separação de recepção definida em `2026-10-28-seis-relatorios-design.md` §1, item 6
 
 ## 1. Objetivo
