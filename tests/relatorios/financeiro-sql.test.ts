@@ -15,7 +15,7 @@ import {
   it,
 } from "vitest";
 import { z } from "zod";
-import type { LinhaFinanceiro } from "../../supabase/functions/_shared/relatorios/schemas";
+import type { LinhaFinanceiro } from "../../supabase/functions/_shared/scc/relatorios-legado";
 import { type Fixture, conectarBanco } from "../helpers/supabase-local";
 import {
   identidade,

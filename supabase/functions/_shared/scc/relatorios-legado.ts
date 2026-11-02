@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { MAX_LINHAS_CARGA, MAX_LINHAS_PAGINA, MAX_PAGINAS } from "./limites.ts";
+import {
+  MAX_LINHAS_CARGA,
+  MAX_LINHAS_PAGINA,
+  MAX_PAGINAS,
+} from "./limites-relatorios-legado.ts";
 
 export const RELATORIOS = [
   "financeiro",
@@ -29,7 +33,7 @@ import {
   linhaNotaSchema,
   linhaProdutosSchema,
   sequenciaSchema,
-} from "../scc/schemas.ts";
+} from "./schemas.ts";
 export {
   codigoSchema,
   dataCivilSchema,
@@ -47,7 +51,7 @@ export {
   type LinhaNota,
   type LinhaFinanceiro,
   type LinhaRelatorio,
-} from "../scc/schemas.ts";
+} from "./schemas.ts";
 
 export const recursosPorRelatorio: Record<Relatorio, readonly string[]> = {
   produtos: ["pdv", "grupo", "garcom", "mesa"],

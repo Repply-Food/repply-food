@@ -6,9 +6,9 @@ export {
   type Manifesto,
   type PedidoRelatorios,
   type Relatorio,
-} from "../../supabase/functions/_shared/relatorios/schemas";
+} from "../../supabase/functions/_shared/scc/relatorios-legado";
 
-import { pedidoRelatoriosSchema } from "../../supabase/functions/_shared/relatorios/schemas";
+import { pedidoRelatoriosSchema } from "../../supabase/functions/_shared/scc/relatorios-legado";
 
 export function validarPedidoRelatorios(entrada: unknown) {
   return pedidoRelatoriosSchema.safeParse(entrada);

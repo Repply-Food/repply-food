@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
   LinhaProdutos,
   PedidoPagina,
-} from "../../supabase/functions/_shared/relatorios/schemas";
+} from "../../supabase/functions/_shared/scc/relatorios-legado";
 import {
   type Fixture,
   conectarBanco,

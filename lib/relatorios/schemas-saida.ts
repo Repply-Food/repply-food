@@ -10,7 +10,7 @@ import {
   linhaNotaSchema as nota,
   linhaProdutosSchema as produtos,
   recursosPorRelatorio,
-} from "../../supabase/functions/_shared/relatorios/schemas";
+} from "../../supabase/functions/_shared/scc/relatorios-legado";
 import { instanteSchema } from "../../supabase/functions/_shared/scc/schemas";
 import { revisaoSchema } from "./filtros";
 

@@ -10,7 +10,7 @@ import {
   MAX_REQUISICOES_MINUTO,
   TIPOS_ENVIO,
 } from "../../lib/validators/recepcao";
-import { linhaProdutosSchema } from "../../supabase/functions/_shared/relatorios/schemas";
+import { linhaProdutosSchema } from "../../supabase/functions/_shared/scc/relatorios-legado";
 import { fixtures } from "./fixtures-v2";
 
 describe("contrato SCC v2", () => {

@@ -6,12 +6,12 @@
 |---|---|---|
 | [`decisoes.md`](decisoes.md) | As decisões numeradas (D-01…). Decisão nova vai no fim | Todos |
 | [`metricas.md`](metricas.md) | Definição exata de cada métrica, com exemplo de conta que vira teste | Dev, SCC |
-| [`integracao-scc/contrato-de-dados.md`](integracao-scc/contrato-de-dados.md) | Como o SCC envia os dados: envelope, regras, respostas | **Pedro (SCC)**, dev |
+| [`integracao-scc/contrato-de-dados.md`](integracao-scc/contrato-de-dados.md) | Contrato SCC v2: tipos, páginas, limites e respostas | **Pedro (SCC)**, dev |
 | [`arquitetura/modelo-de-dados.md`](arquitetura/modelo-de-dados.md) | As 10 tabelas (inclui `tentativas_de_login`) e a visão do admin, com o SQL de referência | Dev |
 | [`arquitetura/recepcao-de-dados.md`](arquitetura/recepcao-de-dados.md) | Como `receber-envio` funciona; testes; gerador de dados fictícios; vigia | Dev |
 | [`arquitetura/seguranca-e-isolamento.md`](arquitetura/seguranca-e-isolamento.md) | RLS, regras absolutas, login, LGPD, checklist de tabela nova | Dev |
 | [`operacao/cadastrar-restaurante.md`](operacao/cadastrar-restaurante.md) | Roteiro para colocar um cliente no ar | Equipe Repply |
-| [`operacao/relatorios.md`](operacao/relatorios.md) | Uso local, importação fictícia e checklist de homologação dos seis relatórios SCC | Dev, Repply, SCC |
+| [`operacao/relatorios.md`](operacao/relatorios.md) | Histórico substituído; veja o roteiro de smoke v2 | Dev, Repply, SCC |
 | [`operacao/publicar.md`](operacao/publicar.md) | Como publicar banco, funções e painel no piloto | Dev |
 | [`operacao/migrar-para-pro.md`](operacao/migrar-para-pro.md) | O que fazer no 1º cliente pagante (D-09) | Lucas Ferreira, dev |
 | [`../identidade-visual/`](../identidade-visual/README.md) | Marca: brandbook, logos, ícones do app, fontes, gerador | Todos |

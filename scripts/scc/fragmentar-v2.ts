@@ -9,7 +9,7 @@ import {
   type EnvioSccV2,
   envioSccV2Schema,
 } from "../../supabase/functions/_shared/scc/schemas";
-import { tamanhos } from "../relatorios/fragmentar";
+import { tamanhos } from "./tamanhos";
 
 export function fragmentarV2(entrada: unknown): EnvioSccV2[] {
   if (
