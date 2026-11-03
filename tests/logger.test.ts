@@ -74,6 +74,14 @@ describe("logger", () => {
     erro.mockRestore();
   });
 
+  it("aceita os códigos da cartilha do mentor de IA", () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const codigos = ["falha_leitura_cartilha", "falha_salvar_cartilha"];
+    for (const codigo of codigos) logError(codigo);
+    expect(erro.mock.calls.map((chamada) => chamada[1])).toEqual(codigos);
+    erro.mockRestore();
+  });
+
   it("aceita os códigos do cérebro do mentor de IA", () => {
     const erro = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const codigos = [

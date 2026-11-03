@@ -33,9 +33,11 @@ const abertas = [
     anon: false,
     authenticated: true,
   },
-  // Security invoker: o dono só mexe no uso do mentor da casa dele (RLS de
-  // mentor_uso). mentor_cartilha_ativa() é só do service_role e por isso nem
-  // aparece nesta lista.
+  // Security definer (20261030120000): é a única porta de escrita de
+  // mentor_uso e confere por dentro que o dono tem acesso à casa (o admin
+  // leva 42501). mentor_cartilha_ativa(), mentor_devolver_uso(uuid) e
+  // limpar_conversas_mentor() são só do service_role e por isso nem aparecem
+  // nesta lista.
   { funcao: "mentor_registrar_uso(uuid)", anon: false, authenticated: true },
   // Métricas do painel (security invoker: o isolamento é a RLS de entradas).
   {

@@ -18,6 +18,8 @@ const codigosErro = [
   "falha_leitura_relatorios",
   "falha_ferramenta_mentor",
   "falha_leitura_mentor",
+  "falha_leitura_cartilha",
+  "falha_salvar_cartilha",
   "falha_mentor_provedor",
   "falha_mentor_limite",
   "falha_mentor_geral",

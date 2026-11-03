@@ -58,9 +58,11 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 ## 5. O limite diário por casa
 
 - **50 usos por casa por dia de operação** (`TETO_DIARIO`, em `lib/mentor/limite.ts`). Um "uso" é uma pergunta enviada ao mentor.
-- O contador vive **no banco** (tabela `mentor_uso`, uma linha por casa e dia), não em memória (lição da Vercel, como a trava de senha, D-64). Só avança pela função `mentor_registrar_uso`, chamada com o login do dono: ele não consegue zerar o próprio contador, e o admin em modo leitura não gasta o limite do cliente.
+- O contador vive **no banco** (tabela `mentor_uso`, uma linha por casa e dia), não em memória (lição da Vercel, como a trava de senha, D-64). Só anda por duas funções do banco: `mentor_registrar_uso` soma 1, chamada com o login do dono (ele não consegue zerar o próprio contador, e o admin em modo leitura não gasta o limite do cliente), e `mentor_devolver_uso` tira 1, **só o servidor executa** (se o dono pudesse, baixaria o próprio contador).
 - O **dia é o dia de operação da casa** (fuso e hora de virada dela), não o do servidor.
-- **No v1 uma tentativa barrada também conta.** Se o contador falhar, o mentor fecha ("indisponível"); nunca libera por falta de resposta.
+- **O uso é contado antes de chamar a IA** (é o que impede dois pedidos ao mesmo tempo de furar o teto). Se o contador falhar, o mentor fecha ("indisponível"); nunca libera por falta de resposta.
+- **Uma tentativa barrada pelo teto conta.**
+- **Uma tentativa em que a IA não foi alcançada não consome a cota.** Provedor fora do ar, sem resposta ou com resposta vazia (`falha_mentor_provedor`): o servidor devolve o uso que acabou de contar e o dono pode tentar de novo, em vez de travar o dia por uma falha nossa. Falha de outro tipo (a IA respondeu e a conversa não pôde ser concluída) mantém o uso contado, porque a IA gastou. Se a própria devolução falhar, a tentativa fica contada e o log leva `falha_mentor_limite`.
 - **Para mudar o teto:** trocar a constante e publicar. O banco não guarda teto por casa.
 - A tabela `mentor_uso` é o único lugar para ver o consumo (o admin lê de todas as casas).
 

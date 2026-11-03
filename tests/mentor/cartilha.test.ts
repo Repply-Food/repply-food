@@ -79,7 +79,8 @@ describe("cartilhaAtiva", () => {
 
     await expect(cartilhaAtiva()).rejects.toThrow("falha_leitura_cartilha");
 
-    expect(JSON.stringify(log.mock.calls)).toContain("falha_admin");
+    expect(JSON.stringify(log.mock.calls)).toContain("falha_leitura_cartilha");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("falha_admin");
     expect(JSON.stringify(log.mock.calls)).not.toContain("segredo");
     log.mockRestore();
   });
@@ -152,7 +153,8 @@ describe("historicoCartilhas", () => {
       "falha_leitura_cartilha"
     );
 
-    expect(JSON.stringify(log.mock.calls)).toContain("falha_admin");
+    expect(JSON.stringify(log.mock.calls)).toContain("falha_leitura_cartilha");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("falha_admin");
     expect(JSON.stringify(log.mock.calls)).not.toContain("segredo");
     log.mockRestore();
   });

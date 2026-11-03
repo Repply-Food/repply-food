@@ -198,7 +198,8 @@ describe("salvarCartilhaAction · quando o banco falha", () => {
         "Não foi possível salvar a cartilha agora. Tente de novo em instantes.",
     });
     expect(banco.update).not.toHaveBeenCalled();
-    expect(JSON.stringify(log.mock.calls)).toContain("falha_admin");
+    expect(JSON.stringify(log.mock.calls)).toContain("falha_salvar_cartilha");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("falha_admin");
     expect(JSON.stringify(log.mock.calls)).not.toContain("segredo");
     expect(JSON.stringify(log.mock.calls)).not.toContain("Seja breve");
     log.mockRestore();
@@ -215,7 +216,8 @@ describe("salvarCartilhaAction · quando o banco falha", () => {
 
     expect(r).toEqual({ ok: true });
     expect(revalidatePath).toHaveBeenCalledWith("/admin/mentor");
-    expect(JSON.stringify(log.mock.calls)).toContain("falha_admin");
+    expect(JSON.stringify(log.mock.calls)).toContain("falha_salvar_cartilha");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("falha_admin");
     expect(JSON.stringify(log.mock.calls)).not.toContain("segredo");
     log.mockRestore();
   });

@@ -4,7 +4,7 @@ import { logError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { FERRAMENTAS, executarFerramentas } from "./ferramentas";
-import { dentroDoLimite } from "./limite";
+import { dentroDoLimite, devolverUso } from "./limite";
 import {
   type MensagemIA,
   type ProvedorIA,
@@ -23,8 +23,10 @@ import { TRILHOS } from "./trilhos";
  * SEGURANÇA E ISOLAMENTO
  * - `restauranteId` vem da sessão (`exigirCasa`), nunca do corpo da requisição
  *   nem do modelo. Vai para as ferramentas e para todo filtro daqui.
- * - Conversas, mensagens e uso passam pelo cliente do DONO (a RLS é a trava).
- *   O cliente de serviço só lê a cartilha, que o dono não pode enxergar.
+ * - Conversas, mensagens e a contagem do uso passam pelo cliente do DONO (a RLS
+ *   é a trava). O cliente de serviço só faz duas coisas que o dono não pode:
+ *   ler a cartilha e DEVOLVER o uso quando a IA não foi alcançada (se o dono
+ *   pudesse baixar o próprio contador, furaria o teto de custo).
  * - O número vem sempre de ferramenta; aqui nada é calculado nem inventado.
  * - Todo erro vira uma frase do produto. O log leva só um código: nunca a
  *   pergunta do dono, nem a mensagem de erro do banco ou do provedor (D-29).
@@ -279,20 +281,62 @@ async function gravar(
 
 type EntradaDoProvedor = Parameters<ProvedorIA["responder"]>[0];
 
+/**
+ * Devolve o uso contado quando a IA não foi alcançada. Uma devolução que falha
+ * NÃO esconde a falha original nem derruba a conversa: vai para o log (o
+ * contador falhou) e a tentativa fica contada, o lado seguro para o teto.
+ */
+async function devolverUsoSemEsconderAFalha(
+  restauranteId: string
+): Promise<void> {
+  try {
+    await devolverUso(restauranteId);
+  } catch {
+    logError("falha_mentor_limite");
+  }
+}
+
 async function conversar(args: {
   restauranteId: string;
   conversaId: string | null;
   pergunta: string;
   provedor: ProvedorIA;
 }): Promise<ResultadoDoMentor> {
-  const { restauranteId, conversaId, pergunta, provedor } = args;
+  const { restauranteId } = args;
 
   // 1. Limite primeiro: barrado, o provedor nem é chamado. Erro no contador
-  // falha fechado (nunca vira "liberado").
+  // falha fechado (nunca vira "liberado"). O uso é contado AQUI, antes de
+  // qualquer chamada à IA: é o incremento atômico que segura o teto.
   const liberado = await classificando("falha_mentor_limite", () =>
     dentroDoLimite(restauranteId)
   );
   if (!liberado) return { ok: false, error: FRASE_LIMITE };
+
+  // Daqui em diante o uso desta pergunta está contado. Se a IA não for
+  // alcançada (falha_mentor_provedor), a falha é nossa e o uso volta; o dono
+  // não perde cota por isso. Qualquer outra falha (a IA respondeu e gastou, ou
+  // o banco falhou ao gravar) mantém o uso contado.
+  try {
+    return await responderComUsoContado(args);
+  } catch (erro) {
+    if (
+      erro instanceof FalhaDoMentor &&
+      erro.codigo === "falha_mentor_provedor"
+    ) {
+      await devolverUsoSemEsconderAFalha(restauranteId);
+    }
+    throw erro;
+  }
+}
+
+/** Do passo 2 em diante: a pergunta já passou pelo limite e o uso está contado. */
+async function responderComUsoContado(args: {
+  restauranteId: string;
+  conversaId: string | null;
+  pergunta: string;
+  provedor: ProvedorIA;
+}): Promise<ResultadoDoMentor> {
+  const { restauranteId, conversaId, pergunta, provedor } = args;
   const perguntaEm = Date.now();
 
   // 2. A conversa continuada tem de ser desta casa. Só se grava no fim.

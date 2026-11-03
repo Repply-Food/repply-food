@@ -961,6 +961,9 @@ isOneToOne: false
 "mentor_cartilha_ativa":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"mentor_devolver_uso":
+{ Args: { "p_restaurante_id": string }; Returns: number
+                           },
 "mentor_registrar_uso":
 { Args: { "p_restaurante_id": string }; Returns: number
                            },

@@ -61,7 +61,7 @@ export async function salvarCartilhaAction(texto: string): Promise<Resultado> {
     .select("id, criada_em")
     .single();
   if (erroDoInsert || !nova) {
-    logError("falha_admin");
+    logError("falha_salvar_cartilha");
     return { ok: false, error: FALHA };
   }
 
@@ -77,7 +77,7 @@ export async function salvarCartilhaAction(texto: string): Promise<Resultado> {
     .update({ ativa: false })
     .eq("ativa", true)
     .lt("criada_em", nova.criada_em);
-  if (erroDaLimpeza) logError("falha_admin");
+  if (erroDaLimpeza) logError("falha_salvar_cartilha");
 
   revalidatePath("/admin/mentor");
   return { ok: true };

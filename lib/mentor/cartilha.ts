@@ -40,7 +40,7 @@ export async function cartilhaAtiva(): Promise<CartilhaAtiva | null> {
     .limit(1)
     .maybeSingle();
   if (error) {
-    logError("falha_admin");
+    logError("falha_leitura_cartilha");
     throw new Error("falha_leitura_cartilha");
   }
   return data
@@ -72,7 +72,7 @@ export async function historicoCartilhas(): Promise<VersaoDaCartilha[]> {
     .order("id", { ascending: false })
     .limit(LIMITE_DO_HISTORICO);
   if (error || !data) {
-    logError("falha_admin");
+    logError("falha_leitura_cartilha");
     throw new Error("falha_leitura_cartilha");
   }
   return data.map((linha) => ({
