@@ -17,6 +17,7 @@ const codigosErro = [
   "falha_leitura_ajustes",
   "falha_leitura_relatorios",
   "falha_ferramenta_mentor",
+  "falha_leitura_mentor",
   "falha_mentor_provedor",
   "falha_mentor_limite",
   "falha_mentor_geral",
