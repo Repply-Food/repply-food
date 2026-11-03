@@ -22,8 +22,10 @@ export type MensagemDoChat = {
   texto: string;
 };
 
+// Transparência (LGPD): diz as duas coisas que acontecem com a conversa. A
+// equipe lê no suporte (D-72, admin só leitura) e ela ajuda a melhorar a IA.
 const AVISO =
-  "Esta conversa pode ser utilizada para aprimorar a inteligência artificial.";
+  "A equipe da Repply pode ler esta conversa para dar suporte, e ela também ajuda a melhorar a inteligência artificial.";
 const FRASE_INDISPONIVEL = "o mentor está indisponível agora, tente de novo";
 const TAMANHO_MAXIMO_DA_PERGUNTA = 4000;
 

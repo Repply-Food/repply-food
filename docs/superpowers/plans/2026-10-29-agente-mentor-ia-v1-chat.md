@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Renumerado (03/11/2026):** este plano foi escrito prevendo as decisões do mentor como D-71 (escopo) e D-72 (provedor). O D-71 ficou com o webhook único da SCC (v2, do Lucas Duarte), então o mentor virou **D-72** (escopo, cartilha, leitura das conversas, 12 meses) e **D-73** (provedor). Onde o plano diz D-71/D-72 para o mentor, leia D-72/D-73; as referências abaixo já foram corrigidas.
+
 **Goal:** um mentor de IA no painel do dono que conversa em português, lê os números reais da casa (tool-use nas `metrica_*`) e interpreta + aconselha, com os trilhos de segurança; controlado por uma cartilha global da Repply, que também lê as conversas.
 
 **Architecture:** o dono conversa numa aba nova ("Mentor"). Uma função do servidor (o "cérebro") monta cartilha + trilhos + histórico + ferramentas, chama o **provedor de IA (Gemini, trocável por uma interface)**, executa os pedidos de ferramenta rodando as `metrica_*` **com o `restaurante_id` da sessão** (nunca do modelo), repete até a resposta e grava tudo. A Repply, no admin, edita a cartilha e lê as conversas (só leitura). Isolamento por RLS em todas as tabelas.
@@ -52,7 +54,7 @@
 - `app/admin/mentor/conversas/` — lista e leitura das conversas (admin, só leitura).
 - Menu: `components/painel/moldura-painel.tsx` (ou onde vivem os destinos) — adicionar o 4º item "Mentor".
 
-**Docs/decisões:** `docs/operacao/mentor.md`, `docs/decisoes.md` (D-71+), `README.md`, `SPEC.md`, `docs/divida-tecnica.md`.
+**Docs/decisões:** `docs/operacao/mentor.md`, `docs/decisoes.md` (D-72+), `README.md`, `SPEC.md`, `docs/divida-tecnica.md`.
 
 ---
 
@@ -243,13 +245,13 @@
 
 **Files:**
 - Create: `supabase/migrations/<ts>_mentor_retencao.sql`, `docs/operacao/mentor.md`
-- Modify: `docs/decisoes.md` (D-71+), `README.md`, `SPEC.md`, `docs/divida-tecnica.md`
+- Modify: `docs/decisoes.md` (D-72+), `README.md`, `SPEC.md`, `docs/divida-tecnica.md`
 - Test: `tests/mentor/retencao.test.ts` (opcional: afirma que a função de limpeza apaga +12 meses e preserva o resto)
 
 - [ ] **Step 1: Teste da retenção (falha)** — a função de limpeza apaga conversas/mensagens com `criada_em < now() - interval '12 months'` e preserva as recentes.
 - [ ] **Step 2: Rode e veja falhar.**
 - [ ] **Step 3: Migration de retenção** — função + `cron.schedule` diário (padrão das outras retenções do projeto).
-- [ ] **Step 4: Docs e decisões** — `docs/operacao/mentor.md` (o que é, como a Repply edita a cartilha, onde lê as conversas, o provedor/env, o limite); em `docs/decisoes.md` registre **D-71** (mentor de IA: público/escopo/cartilha global/Repply lê para aprimorar a IA/guarda 12 meses) e **D-72** (provedor Gemini como padrão do piloto, código trocável; a IA do produto é conta separada do Claude Code); atualize `README.md`/`SPEC.md` (mentor em construção, Fase 2); anote em `docs/divida-tecnica.md` o que fica para a v2 (avisos proativos: e-mail+app, WhatsApp depois; cartilha por restaurante; relatórios como ferramenta).
+- [ ] **Step 4: Docs e decisões** — `docs/operacao/mentor.md` (o que é, como a Repply edita a cartilha, onde lê as conversas, o provedor/env, o limite); em `docs/decisoes.md` registre **D-72** (mentor de IA: público/escopo/cartilha global/Repply lê para aprimorar a IA/guarda 12 meses) e **D-73** (provedor Gemini como padrão do piloto, código trocável; a IA do produto é conta separada do Claude Code); atualize `README.md`/`SPEC.md` (mentor em construção, Fase 2); anote em `docs/divida-tecnica.md` o que fica para a v2 (avisos proativos: e-mail+app, WhatsApp depois; cartilha por restaurante; relatórios como ferramenta).
 - [ ] **Step 5: Rode tudo** — `npx tsc --noEmit`, `npm run check`, `npm run test`, `npm run build`.
 - [ ] **Step 6: Commit** ("Fecha o mentor v1: retenção de 12 meses, docs e decisões").
 
@@ -257,7 +259,7 @@
 
 ## Self-Review
 
-**1. Cobertura do spec:** §1 decisões → Tasks 1–9 + D-71/72 (Task 9). §2 fluxo/segurança → Tasks 4 (restaurante da sessão) e 5 (laço). §3 componentes → o mapa de arquivos cobre todos. §4 trilhos → `lib/mentor/trilhos.ts` (Task 5). §5 modelo de dados → Tasks 1–2 + retenção (9). §6 privacidade → Tasks 4/5 (só número ao modelo), 1 (RLS), 6 (aviso), 9 (12 meses). §7 erro → Task 5. §8 fora de escopo → anotado na Task 9. §9 testes → cada task é TDD; isolamento na Task 1. §10 a confirmar → envs `MENTOR_IA_*` (Task 3), valor do limite (Task 2), streaming (decidir na Task 6). Sem lacunas.
+**1. Cobertura do spec:** §1 decisões → Tasks 1–9 + D-72/73 (Task 9). §2 fluxo/segurança → Tasks 4 (restaurante da sessão) e 5 (laço). §3 componentes → o mapa de arquivos cobre todos. §4 trilhos → `lib/mentor/trilhos.ts` (Task 5). §5 modelo de dados → Tasks 1–2 + retenção (9). §6 privacidade → Tasks 4/5 (só número ao modelo), 1 (RLS), 6 (aviso), 9 (12 meses). §7 erro → Task 5. §8 fora de escopo → anotado na Task 9. §9 testes → cada task é TDD; isolamento na Task 1. §10 a confirmar → envs `MENTOR_IA_*` (Task 3), valor do limite (Task 2), streaming (decidir na Task 6). Sem lacunas.
 
 **2. Placeholders:** nenhum "TBD/implementar depois"; os poucos pontos abertos do §10 do spec são padrões configuráveis por env com valor-padrão.
 

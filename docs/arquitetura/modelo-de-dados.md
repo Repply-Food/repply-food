@@ -12,7 +12,15 @@
 
 ## Tabelas
 
-São **10 tabelas** e uma visão (`restaurantes_no_admin`, a lista do admin).
+Esta página descreve as **tabelas do núcleo**: `restaurantes`, `acessos`, `admins_repply`, `tokens_envio`, `envios`, `sinal_de_vida`, `incidentes_sinal`, `alertas_sinal`, `entradas`, `metas`, `registro_admin` e `tentativas_de_login`; e a visão `restaurantes_no_admin` (a lista do admin).
+
+O banco tem outras tabelas, que nasceram com cada área e são explicadas nos documentos dela, não aqui:
+
+- **webhook v2 da SCC** (D-71): `cargas_scc`, `paginas_scc`, `produtos_scc` e as demais `*_scc`, na migration `20261101120000_webhook_v2_tabelas.sql`; veja o [contrato](../integracao-scc/contrato-de-dados.md);
+- **cache dos relatórios**: as `relatorio_*`, na migration `20261028120000_relatorios_cache.sql`;
+- **mentor de IA** (D-72): `mentor_conversas`, `mentor_mensagens`, `mentor_cartilhas` e `mentor_uso`; veja [`operacao/mentor.md`](../operacao/mentor.md).
+
+Esta documentação não fixa o total de tabelas, porque cada área nova muda a conta (em 03/11/2026 eram 36 tabelas e 1 visão). A lista de verdade são as migrations e `types/database.types.ts`.
 
 ### `restaurantes`
 

@@ -20,7 +20,7 @@ vi.mock("@/lib/mentor/enviar-action", () => ({ enviarMensagemAction }));
 import { ChatMentor } from "@/components/painel/mentor/chat-mentor";
 
 const AVISO =
-  "Esta conversa pode ser utilizada para aprimorar a inteligência artificial.";
+  "A equipe da Repply pode ler esta conversa para dar suporte, e ela também ajuda a melhorar a inteligência artificial.";
 const CONVERSA = "22222222-2222-4222-8222-222222222222";
 
 const MENSAGENS = [
@@ -73,9 +73,17 @@ describe("chat do mentor: o que a tela mostra", () => {
     ).toBeTruthy();
   });
 
-  it("mostra o aviso da inteligência artificial com o texto exato", () => {
+  it("mostra o aviso de privacidade com o texto exato", () => {
     render(tela());
     expect(screen.getByText(AVISO)).toBeTruthy();
+  });
+
+  it("o aviso diz as duas coisas: a equipe lê no suporte e a conversa ajuda a melhorar a IA", () => {
+    render(tela());
+    const aviso = screen.getByText(AVISO).textContent ?? "";
+    expect(aviso).toMatch(/equipe da Repply pode ler/);
+    expect(aviso).toMatch(/dar suporte/);
+    expect(aviso).toMatch(/melhorar a inteligência artificial/);
   });
 
   it("mostra a conversa salva sem o estado vazio, com o rótulo de quem falou", () => {

@@ -7,8 +7,8 @@ export const metadata = { title: "Conversas do mentor · admin · repply food." 
 /**
  * As conversas dos donos com o mentor, de todas as casas, para o suporte (D-38:
  * o admin só lê). Só o admin chega aqui: a página e a leitura conferem cada uma
- * por conta própria. Fica alcançável pelo endereço; o caminho até ela no menu
- * do admin é uma decisão de produto ainda aberta.
+ * por conta própria. O caminho até ela: o cartão "Mentor" da home do admin leva
+ * à cartilha, e a faixa de cima (`NavegacaoDoMentor`) liga as duas telas.
  */
 export default async function PaginaConversasDoMentor() {
   await exigirAdmin();

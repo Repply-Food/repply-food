@@ -14,14 +14,14 @@ Como funciona por baixo:
 - **O `restaurante_id` vem da sessão**, nunca do que o modelo diz. A RLS é a segunda camada.
 - **Só vão para o provedor de IA** a cartilha, os trilhos, as mensagens do dono e os números devolvidos pelas ferramentas. Nenhum dado pessoal de cliente do restaurante existe no banco (D-29, D-51).
 - **Trilhos fixos no código** (`lib/mentor/trilhos.ts`), enviados a cada chamada, acima da cartilha: fica no assunto do restaurante; separa fato (vem de ferramenta) de conselho (rotulado como sugestão); não faz papel de advogado nem de contador; se não tem o dado, diz que não tem.
-- **Erros nunca viram texto técnico para o dono.** Provedor fora do ar ou sem chave: "o mentor está indisponível agora, tente de novo". Passou do limite do dia: "você já usou bastante o mentor hoje; ele volta amanhã". O motivo real vai para o log só como código (`falha_mentor_provedor`, `falha_mentor_limite`, `falha_mentor_geral`, `falha_ferramenta_mentor`, `falha_leitura_mentor`).
-- O chat mostra ao dono o aviso: *"Esta conversa pode ser utilizada para aprimorar a inteligência artificial."*
+- **Erros nunca viram texto técnico para o dono.** Provedor fora do ar ou sem chave: "o mentor está indisponível agora, tente de novo". Passou do limite do dia: "você já usou bastante o mentor hoje; ele volta amanhã". O motivo real vai para o log só como código (`falha_mentor_provedor`, `falha_mentor_limite`, `falha_mentor_geral`, `falha_ferramenta_mentor`, `falha_leitura_mentor`). Na tela da cartilha do admin há mais dois: `falha_leitura_cartilha` (não leu a cartilha ativa nem o histórico; a tela cai na tela de erro, nunca mostra a lista vazia por engano) e `falha_salvar_cartilha` (não gravou a versão nova, ou gravou e não conseguiu desativar a anterior; neste caso a nova já vale e o próximo salvamento limpa a sobra).
+- O chat mostra ao dono, abaixo do campo, o aviso: *"A equipe da Repply pode ler esta conversa para dar suporte, e ela também ajuda a melhorar a inteligência artificial."* (transparência, LGPD: as duas coisas que acontecem com a conversa). O admin que abre o chat do cliente em modo leitura não vê o campo nem o aviso.
 
 ## 2. Como a Repply edita a cartilha
 
 A cartilha é o texto que afina o jeito do mentor responder. **É uma só, global** (vale para todas as casas), e o dono nunca a vê.
 
-- **Onde:** `/admin/mentor`, logado como admin da Repply.
+- **Onde:** `/admin/mentor`, logado como admin da Repply. Chegue pelo cartão **Mentor** da home do admin (`/admin`), logo abaixo da lista de restaurantes (§3).
 - **Como:** editar o texto e salvar. Cada salvamento **cria uma versão nova ativa** e desativa a anterior; as versões antigas ficam guardadas na própria tela (só leitura, para conferir e copiar de volta). Nada é sobrescrito.
 - **Vale a partir da próxima resposta** do mentor, em qualquer casa.
 - **Sem cartilha ativa**, o mentor responde só com os trilhos fixos.
@@ -38,7 +38,13 @@ A cartilha **afina**; os trilhos **mandam**. Não tente relaxar um trilho pela c
 - **Para quê:** suporte ("o mentor respondeu errado para a casa X") e melhorar a cartilha (D-72).
 - Conversa sem nenhuma mensagem (a gravação faz a conversa e as mensagens em dois comandos) não aparece.
 
-> **Como chegar nessas telas hoje: só digitando o endereço.** Não há link no menu nem no topo do admin para `/admin/mentor` nem para `/admin/mentor/conversas` (as telas só têm "voltar" para `/admin`). Onde colocar o acesso é decisão de produto pendente, anotada em [`divida-tecnica.md`](../divida-tecnica.md) (item 67). Até lá, guarde os dois endereços.
+**Como chegar nessas telas:**
+
+1. Na home do admin (`/admin`), abaixo da lista de restaurantes, está o cartão **Mentor** ("Cartilha e conversas dos donos com o mentor"). Ele leva ao editor da cartilha (`/admin/mentor`). O topo do admin não mudou.
+2. As duas telas têm, no alto, uma faixa com "‹ Restaurantes" (volta à home do admin) e o link para a tela irmã: da cartilha vai-se às conversas ("Conversas do mentor ›"), e das conversas volta-se à cartilha ("Cartilha do mentor ›").
+3. Dentro de uma conversa, "‹ Conversas do mentor" volta à lista, e o nome da casa leva ao detalhe do restaurante.
+
+Os endereços diretos continuam valendo. Resolveu o item 67 de [`divida-tecnica.md`](../divida-tecnica.md).
 
 ## 4. O provedor de IA e as variáveis de ambiente
 
@@ -52,7 +58,7 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 
 - O provedor é uma interface trocável (`lib/mentor/provedor/`): trocar para Claude ou GPT é escrever outra implementação e mudar `MENTOR_IA_PROVEDOR`, sem mexer no resto (D-73).
 - **A conta de IA do produto é separada da conta do Claude Code** que usamos para desenvolver. É uma conta nova, paga por uso, em nome da Repply.
-- Hoje o código fala com a **API do Gemini por chave** (`@google/genai`). O desenho preferia o Vertex AI em São Paulo (dado processado no Brasil, D-50); isso **não está implementado** e está anotado em [`divida-tecnica.md`](../divida-tecnica.md) (item 69). Confirmar nos termos do provedor que a API paga não treina com os nossos dados.
+- Hoje o código fala com a **API do Gemini por chave** (`@google/genai`), e **no piloto é assim que segue** (decisão confirmada pelo Lucas Ferreira em 03/11/2026, D-73): os números do negócio vão para a Google. O desenho preferia o Vertex AI em São Paulo (dado processado no Brasil, D-50); ele fica **adiado, como melhoria futura**, e **não bloqueia a publicação** ([`divida-tecnica.md`](../divida-tecnica.md), item 69). Confirmar nos termos do provedor que a API paga não treina com os nossos dados.
 - **Nunca rode teste com a chave real.** Os testes usam um provedor dublê; a API do Gemini nunca é chamada pela suíte.
 
 ## 5. O limite diário por casa
@@ -91,7 +97,9 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 | O que o provedor de IA recebe? | A cartilha, os trilhos, as perguntas do dono e os números de negócio das ferramentas. Nenhum dado pessoal de cliente do restaurante |
 | Quem lê as conversas? | O dono da casa (as dele) e o admin da Repply (todas, só leitura, para suporte e para melhorar o mentor, D-72) |
 | Por quanto tempo? | 12 meses (§6) |
-| O dono é avisado? | Do uso para "aprimorar a inteligência artificial", sim. **Do fato de a equipe Repply poder ler a conversa no suporte, ainda não**: pendência de produto, [`divida-tecnica.md`](../divida-tecnica.md) item 68 |
+| O dono é avisado? | Sim, no chat, abaixo do campo: a equipe da Repply pode ler a conversa para dar suporte, e ela ajuda a melhorar a inteligência artificial (§1; resolveu o item 68 de [`divida-tecnica.md`](../divida-tecnica.md)). Fica por decidir, sem pressa, se entra também uma linha na política de privacidade |
+| O dono vê a cartilha? | Não na tela (ela não existe para o dono e o banco barra a leitura), mas isso é garantia da **interface e da RLS, não da saída do modelo**: um dono insistente poderia fazer o mentor repetir o texto da cartilha. Ela é guia de tom, sem segredo e sem dado de outra casa; não ponha nela nada que a Repply não aceitaria ver vazar (nota na D-72) |
+| Para onde vão os dados na IA? | Para a API do Gemini (Google), por chave, no piloto: a cartilha, os trilhos, as perguntas e os números de negócio vão para fora do Brasil, sem dado pessoal. O Vertex AI em São Paulo fica adiado, como melhoria futura (D-73, item 69) |
 | Uma casa vê a conversa de outra? | Não. RLS em `mentor_conversas` e `mentor_mensagens`, com teste de isolamento, e a mensagem só entra em conversa da mesma casa |
 
 ## 8. Antes de publicar
@@ -101,6 +109,6 @@ Nada abaixo foi feito. Cada passo na nuvem pede o ok do Lucas Ferreira na hora (
 1. **Aplicar as migrations do mentor na nuvem, ANTES do deploy do painel:** `20261030100000_mentor_conversas.sql`, `20261030110000_mentor_cartilha_uso.sql`, `20261030120000_mentor_limite_protegido.sql` e `20261103120000_mentor_retencao.sql`. Sem elas, toda pergunta cai em `falha_mentor_limite` (o mentor fecha, educadamente, mas fica fora do ar).
 2. **Conta de IA e chave:** criar a conta do produto no provedor e pôr `MENTOR_IA_CHAVE`, e `MENTOR_IA_MODELO` com um modelo concreto, nas variáveis da Vercel.
 3. **Teste manual com o Gemini de verdade** (a suíte não chama a API): conferir uma pergunta com ferramenta, uma pergunta fora do assunto, uma pergunta fiscal, o limite e o tempo de resposta.
-4. **Decidir e fazer** os dois itens de produto pendentes do mentor v1 (acesso do admin às telas e aviso de privacidade do dono): [`divida-tecnica.md`](../divida-tecnica.md) itens 67 e 68.
+4. Os dois itens de produto que estavam pendentes (acesso do admin às telas e aviso de privacidade do dono) **foram feitos em 03/11/2026**: [`divida-tecnica.md`](../divida-tecnica.md) itens 67 e 68, em "Resolvidos". Nada a fazer aqui. O Vertex AI em São Paulo **não** é pré-requisito: o Lucas Ferreira confirmou o Gemini no piloto (D-73, item 69).
 5. Conferir no celular (390 px) e no computador, com tema claro e escuro, o chat vazio e o chat com conversa.
 6. Conferir que a rotina `rf-limpa-mentor` aparece no `cron.job` da nuvem (consulta do §6).

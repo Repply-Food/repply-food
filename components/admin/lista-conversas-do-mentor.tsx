@@ -1,3 +1,4 @@
+import { NavegacaoDoMentor } from "@/components/admin/navegacao-do-mentor";
 import { momentoNaCasa } from "@/lib/admin/datas";
 import type { ConversaParaAdmin } from "@/lib/mentor/leitura";
 import { cn } from "@/lib/utils";
@@ -29,12 +30,7 @@ export function ListaConversasDoMentor({
   const agora = new Date(agoraIso);
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-      <Link
-        href="/admin"
-        className="inline-flex min-h-11 w-fit items-center text-sm underline underline-offset-4"
-      >
-        ‹ Restaurantes
-      </Link>
+      <NavegacaoDoMentor atual="conversas" />
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">Conversas do mentor</h1>
         <p className="text-quiet">

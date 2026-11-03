@@ -96,7 +96,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 
 ## 5. Dados
 
-- Um banco para todos os restaurantes, com chave (restaurante, código original) e RLS (D-01). São 10 tabelas e a visão do admin: [`modelo-de-dados.md`](docs/arquitetura/modelo-de-dados.md).
+- Um banco para todos os restaurantes, com chave (restaurante, código original) e RLS (D-01). As tabelas do núcleo e a visão do admin estão em [`modelo-de-dados.md`](docs/arquitetura/modelo-de-dados.md); o webhook v2 da SCC (D-71), os relatórios e o mentor (D-72) somaram as suas, descritas nos documentos de cada área. Não há número fixo de tabelas aqui: a lista é o que as migrations criam.
 - Histórico: tudo que o SCC tiver (D-21).
 - Dados pessoais de clientes do restaurante (nome, RG, telefone, sexo): **não guardados** (D-29).
 - Métricas: definição exata, com exemplo de conta, em [`metricas.md`](docs/metricas.md).
@@ -115,7 +115,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 
 ### MVP (o que precisa existir para a demonstração e o piloto)
 
-- [x] Banco com as 10 tabelas, RLS e testes de isolamento
+- [x] Banco com as tabelas do núcleo (restaurantes, envios, entradas e afins), RLS e testes de isolamento
 - [x] `receber-envio` + `processar_envio` (modo A, janela por data) + testes da §4 de `recepcao-de-dados.md`
 - [x] Gerador de dados fictícios enviando pelo mesmo caminho
 - [x] Login, troca de senha obrigatória, "esqueci a senha"

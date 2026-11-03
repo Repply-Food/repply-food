@@ -1,10 +1,10 @@
 import { FormularioCartilha } from "@/components/admin/formulario-cartilha";
+import { NavegacaoDoMentor } from "@/components/admin/navegacao-do-mentor";
 import { VersoesDaCartilha } from "@/components/admin/versoes-da-cartilha";
 import { momentoNaCasa } from "@/lib/admin/datas";
 import { FUSO_PADRAO } from "@/lib/admin/fusos";
 import { exigirAdmin } from "@/lib/auth/sessao";
 import { cartilhaAtiva, historicoCartilhas } from "@/lib/mentor/cartilha";
-import Link from "next/link";
 
 export const metadata = { title: "Cartilha do mentor · admin · repply food." };
 
@@ -22,12 +22,7 @@ export default async function PaginaCartilhaDoMentor() {
   ]);
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <Link
-        href="/admin"
-        className="inline-flex min-h-11 w-fit items-center text-sm underline underline-offset-4"
-      >
-        ‹ Restaurantes
-      </Link>
+      <NavegacaoDoMentor atual="cartilha" />
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">Cartilha do mentor</h1>
         <p className="text-quiet">
