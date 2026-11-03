@@ -18,6 +18,8 @@
 
 > **Relatórios SCC (28/10/2026): implementação local em andamento, ainda sem homologação.** O código prevê Financeiro, Produtos, Comissão, Caixa, Auditoria e Notas assinadas, com filtros de período e exportação em PDF. A SCC ainda precisa adaptar/confirmar a origem dos dados; as migrations e consultas SQL novas não foram executadas no PostgreSQL local neste ambiente. A funcionalidade não está declarada como publicada. Veja [uso local e homologação](docs/operacao/relatorios.md).
 
+> **Mentor de IA (Fase 2): v1 (chat) construído e testado no banco local, ainda não publicado.** Um chat para o dono dentro do painel (4º item do menu) que consulta os números reais da casa na hora e aconselha, dentro de trilhos fixos e com uma cartilha global que a Repply edita no admin. A Repply lê as conversas (só leitura) e elas são apagadas depois de 12 meses. Para publicar faltam: as migrations na nuvem, a conta de IA e a chave na Vercel, o teste com o Gemini de verdade e duas decisões de produto (como o admin chega às telas do mentor e o aviso de privacidade do dono; itens 67 e 68 de [`docs/divida-tecnica.md`](docs/divida-tecnica.md)). Como opera: [`docs/operacao/mentor.md`](docs/operacao/mentor.md). Decisões D-72 e D-73.
+
 ## Roteiro das etapas (plano do MVP)
 
 | # | Etapa | Estado |
@@ -35,6 +37,7 @@
 | 10 | Ensaio geral (casa de demonstração, kit do vendedor, acabamentos) | ✅ **feito (24/10/2026)** |
 | 11 | Piloto com a SCC e um cliente real | 🟡 **em andamento (24/10/2026)** |
 | — | Relatórios SCC — seis consultas, filtros e PDFs | 🟡 **código local; banco, origem SCC e apresentação visual pendentes de homologação** |
+| — | Mentor de IA (Fase 2) — chat com o dono | 🟡 **v1 construído e testado no banco local; não publicado** |
 
 > **O que falta, em detalhe:** [`docs/divida-tecnica.md`](docs/divida-tecnica.md) e os planos em [`docs/superpowers/plans/`](docs/superpowers/plans/). **Como foi publicado:** [`docs/operacao/publicar.md`](docs/operacao/publicar.md).
 
@@ -185,6 +188,7 @@ O script Node gera em diretório temporário exclusivo junto ao destino, valida 
 | Painel | Next.js + React + TypeScript, Tailwind 4, shadcn, Recharts |
 | Banco, login, funções | Supabase: Postgres com RLS, Auth, Edge Functions, pg_cron |
 | E-mail | Resend |
+| IA do mentor | Gemini (Google), atrás de uma interface trocável (D-73) |
 | Hospedagem (piloto) | Supabase Free + Vercel Hobby |
 
 ## Como os dados chegam

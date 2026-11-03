@@ -12,6 +12,7 @@
 | [`arquitetura/seguranca-e-isolamento.md`](arquitetura/seguranca-e-isolamento.md) | RLS, regras absolutas, login, LGPD, checklist de tabela nova | Dev |
 | [`operacao/cadastrar-restaurante.md`](operacao/cadastrar-restaurante.md) | Roteiro para colocar um cliente no ar | Equipe Repply |
 | [`operacao/relatorios.md`](operacao/relatorios.md) | Histórico substituído; veja o roteiro de smoke v2 | Dev, Repply, SCC |
+| [`operacao/mentor.md`](operacao/mentor.md) | Mentor de IA: cartilha, conversas, provedor e variáveis, limite diário, retenção de 12 meses | Equipe Repply, dev |
 | [`operacao/publicar.md`](operacao/publicar.md) | Como publicar banco, funções e painel no piloto | Dev |
 | [`operacao/migrar-para-pro.md`](operacao/migrar-para-pro.md) | O que fazer no 1º cliente pagante (D-09) | Lucas Ferreira, dev |
 | [`../identidade-visual/`](../identidade-visual/README.md) | Marca: brandbook, logos, ícones do app, fontes, gerador | Todos |

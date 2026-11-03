@@ -949,6 +949,9 @@ isOneToOne: false
 "limpar_cargas_scc_v2":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"limpar_conversas_mentor":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "limpar_tentativas":
 { Args: { "p_email": string }; Returns: undefined
                            },
