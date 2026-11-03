@@ -1,9 +1,6 @@
 import { ListaConversasDoMentor } from "@/components/admin/lista-conversas-do-mentor";
 import { exigirAdmin } from "@/lib/auth/sessao";
-import {
-  MAXIMO_DE_CONVERSAS_NO_ADMIN,
-  conversasParaAdmin,
-} from "@/lib/mentor/leitura";
+import { conversasParaAdmin } from "@/lib/mentor/leitura";
 
 export const metadata = { title: "Conversas do mentor · admin · repply food." };
 
@@ -15,12 +12,12 @@ export const metadata = { title: "Conversas do mentor · admin · repply food." 
  */
 export default async function PaginaConversasDoMentor() {
   await exigirAdmin();
-  const conversas = await conversasParaAdmin();
+  const { conversas, haMais } = await conversasParaAdmin();
   return (
     <ListaConversasDoMentor
       conversas={conversas}
       agoraIso={new Date().toISOString()}
-      limite={MAXIMO_DE_CONVERSAS_NO_ADMIN}
+      haMais={haMais}
     />
   );
 }

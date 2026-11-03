@@ -9,20 +9,22 @@ import Link from "next/link";
  * hora; no computador viram três colunas. A hora vai no fuso de CADA casa
  * (CLAUDE.md §5), porque é o relógio em que o dono perguntou.
  *
- * Sem nenhum botão nem campo: quem chega aqui acompanha, não responde. `limite`
- * é o teto da leitura: se a lista o atingiu, pode haver conversa mais antiga
- * fora dela, e a tela diz isso em vez de parecer completa.
+ * Sem nenhum botão nem campo: quem chega aqui acompanha, não responde. `haMais`
+ * vem da leitura, que sabe se sobrou conversa mais antiga fora do teto: nesse
+ * caso a tela diz isso em vez de parecer completa (e não avisa à toa quando a
+ * lista tem exatamente o teto).
  */
 export function ListaConversasDoMentor({
   conversas,
   agoraIso,
-  limite,
+  haMais,
 }: {
   /** Da mais recente para a mais antiga. */
   conversas: readonly ConversaParaAdmin[];
   /** Momento da leitura, para o "hoje 21:03" (no fuso de cada casa). */
   agoraIso: string;
-  limite: number;
+  /** Há conversa mais antiga que ficou fora desta lista. */
+  haMais: boolean;
 }) {
   const agora = new Date(agoraIso);
   return (
@@ -70,10 +72,10 @@ export function ListaConversasDoMentor({
               </li>
             ))}
           </ul>
-          {conversas.length >= limite ? (
+          {haMais ? (
             <p className="text-sm text-quiet">
-              Mostrando as {limite} conversas mais recentes. As anteriores ficam
-              de fora desta lista.
+              Mostrando as {conversas.length} conversas mais recentes. As
+              anteriores ficam de fora desta lista.
             </p>
           ) : null}
         </>

@@ -20,13 +20,11 @@ const AGORA = "2026-11-03T15:00:00+00:00";
 
 const SAO_PAULO = {
   id: "casa-sp",
-  slug: "casa-sp",
   nome: "Bar do Zé",
   fuso: "America/Sao_Paulo",
 };
 const MANAUS = {
   id: "casa-am",
-  slug: "casa-am",
   nome: "Churrasco do Norte",
   fuso: "America/Manaus",
 };
@@ -53,7 +51,7 @@ const SEM_TITULO: ConversaParaAdmin = {
 describe("ListaConversasDoMentor", () => {
   it("sem conversa nenhuma, diz isso em vez de mostrar uma lista vazia", () => {
     render(
-      <ListaConversasDoMentor conversas={[]} agoraIso={AGORA} limite={100} />
+      <ListaConversasDoMentor conversas={[]} agoraIso={AGORA} haMais={false} />
     );
 
     expect(
@@ -70,7 +68,7 @@ describe("ListaConversasDoMentor", () => {
       <ListaConversasDoMentor
         conversas={[DE_SP, DE_AM, SEM_TITULO]}
         agoraIso={AGORA}
-        limite={100}
+        haMais={false}
       />
     );
 
@@ -91,7 +89,7 @@ describe("ListaConversasDoMentor", () => {
       <ListaConversasDoMentor
         conversas={[DE_SP, DE_AM]}
         agoraIso={AGORA}
-        limite={100}
+        haMais={false}
       />
     );
 
@@ -110,31 +108,34 @@ describe("ListaConversasDoMentor", () => {
       <ListaConversasDoMentor
         conversas={[SEM_TITULO]}
         agoraIso={AGORA}
-        limite={100}
+        haMais={false}
       />
     );
 
     expect(screen.getByText("Conversa sem título")).toBeTruthy();
   });
 
-  it("avisa quando a lista bateu no limite, e só então", () => {
+  it("avisa que as anteriores ficam de fora quando a leitura diz que há mais, e só então", () => {
     const { rerender } = render(
       <ListaConversasDoMentor
         conversas={[DE_SP, DE_AM]}
         agoraIso={AGORA}
-        limite={2}
+        haMais
       />
     );
     expect(screen.getByText(/2 conversas mais recentes/i)).toBeTruthy();
+    expect(screen.getByText(/anteriores ficam de fora/i)).toBeTruthy();
 
+    // Uma lista cheia, mas sem conversa de fora (exatamente o teto), não avisa.
     rerender(
       <ListaConversasDoMentor
         conversas={[DE_SP, DE_AM]}
         agoraIso={AGORA}
-        limite={100}
+        haMais={false}
       />
     );
     expect(screen.queryByText(/conversas mais recentes/i)).toBeNull();
+    expect(screen.queryByText(/ficam de fora/i)).toBeNull();
   });
 
   it("é só leitura: nenhum botão, nenhum campo, nenhum formulário", () => {
@@ -142,7 +143,7 @@ describe("ListaConversasDoMentor", () => {
       <ListaConversasDoMentor
         conversas={[DE_SP, DE_AM]}
         agoraIso={AGORA}
-        limite={100}
+        haMais={false}
       />
     );
 

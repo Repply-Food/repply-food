@@ -25,10 +25,15 @@ import { conectarBanco } from "../helpers/supabase-local";
 // conversas): as conversas deste teste ficam em 2099, para ocupar o topo da
 // lista, e as afirmações olham só os ids semeados aqui.
 
-const { sessao, clientes } = vi.hoisted(() => ({
-  sessao: { recusar: false, chamadas: 0 },
-  clientes: { atual: null as unknown },
-}));
+const { sessao, clientes, createClient, logError } = vi.hoisted(() => {
+  const clientes = { atual: null as unknown };
+  return {
+    sessao: { recusar: false, chamadas: 0 },
+    clientes,
+    createClient: vi.fn(async () => clientes.atual),
+    logError: vi.fn(),
+  };
+});
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth/sessao", () => ({
@@ -38,11 +43,16 @@ vi.mock("@/lib/auth/sessao", () => ({
     return { userId: "admin", ehAdmin: true };
   },
 }));
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: async () => clientes.atual,
-}));
+vi.mock("@/lib/supabase/server", () => ({ createClient }));
+// O log de verdade imprime no console: aqui ele é espiado, e a regra "log só com
+// o código" (D-29) passa a ser afirmada em vez de só aparecer na saída.
+vi.mock("@/lib/logger", () => ({ logError }));
 
-import { conversaParaAdmin, conversasParaAdmin } from "@/lib/mentor/leitura";
+import {
+  MAXIMO_DE_CONVERSAS_NO_ADMIN,
+  conversaParaAdmin,
+  conversasParaAdmin,
+} from "@/lib/mentor/leitura";
 
 const opcoes = { auth: { persistSession: false, autoRefreshToken: false } };
 const sufixo = randomUUID().slice(0, 8);
@@ -66,13 +76,43 @@ function clienteQueFalha() {
   });
 }
 
+/**
+ * Um cliente de mentira que devolve `quantas` conversas (já na ordem do banco)
+ * e guarda o teto que a leitura pediu: assim o teste prova o "um a mais" sem
+ * semear 100 conversas num banco compartilhado.
+ */
+function clienteComConversas(quantas: number) {
+  const tetosPedidos: number[] = [];
+  const linhas = Array.from({ length: quantas }, (_, i) => ({
+    id: `conversa-${i}`,
+    titulo: `Conversa ${i}`,
+    ultima_em: "2099-06-01T12:00:00Z",
+    restaurantes: { id: "casa", nome: "Casa", fuso: "America/Sao_Paulo" },
+    mentor_mensagens: [{ id: `mensagem-${i}` }],
+  }));
+  const consulta = {
+    select: () => consulta,
+    order: () => consulta,
+    // O `.limit(n)` do pai guarda o teto; o `.limit(1, { referencedTable })` da
+    // tabela filha é o último da cadeia da leitura e é quem responde.
+    limit: (teto: number, opcoesDoLimite?: object) => {
+      if (!opcoesDoLimite) {
+        tetosPedidos.push(teto);
+        return consulta;
+      }
+      return Promise.resolve({ data: linhas, error: null });
+    },
+  };
+  return { cliente: { from: () => consulta }, tetosPedidos };
+}
+
 let banco: Client;
 let casaA = "";
 let casaB = "";
 let conversaAntigaDeA = "";
-let conversaRecenteDeB = "";
+let conversaDoMeioDeB = "";
 let conversaOrfaDeA = "";
-let conversaDoMeioDeA = "";
+let conversaRecenteDeA = "";
 
 beforeAll(async () => {
   banco = await conectarBanco();
@@ -146,39 +186,41 @@ beforeAll(async () => {
     "2099-01-01T12:00:05Z"
   );
 
-  // A conversa da casa B fica no MEIO: o admin lê as duas casas numa ordem só.
-  conversaRecenteDeB = await conversa(
+  // A conversa da casa B fica no MEIO, entre duas da casa A (A, B, A no
+  // tempo): um agrupamento por casa daria A, A, B e quebraria o teste. O admin
+  // lê as duas casas numa ordem só, a do tempo.
+  conversaDoMeioDeB = await conversa(
     casaB,
-    "Recente da casa B",
-    "2099-01-03T12:00:05Z"
+    "Do meio da casa B",
+    "2099-01-02T12:00:05Z"
   );
   await mensagem(
-    conversaRecenteDeB,
+    conversaDoMeioDeB,
     casaB,
     "dono",
     "pergunta da casa B",
-    "2099-01-03T12:00:00Z"
+    "2099-01-02T12:00:00Z"
   );
 
-  conversaDoMeioDeA = await conversa(
+  conversaRecenteDeA = await conversa(
     casaA,
-    "Do meio da casa A",
-    "2099-01-02T12:00:05Z"
+    "Recente da casa A",
+    "2099-01-03T12:00:05Z"
   );
   // Inseridas fora de ordem de propósito: a leitura ordena por criada_em.
   await mensagem(
-    conversaDoMeioDeA,
+    conversaRecenteDeA,
     casaA,
     "mentor",
     "segunda fala",
-    "2099-01-02T12:00:05Z"
+    "2099-01-03T12:00:05Z"
   );
   await mensagem(
-    conversaDoMeioDeA,
+    conversaRecenteDeA,
     casaA,
     "dono",
     "primeira fala",
-    "2099-01-02T12:00:00Z"
+    "2099-01-03T12:00:00Z"
   );
 
   // A mais recente de todas, mas sem nenhuma mensagem: sobra de gravação pela metade.
@@ -192,6 +234,8 @@ beforeAll(async () => {
 beforeEach(() => {
   sessao.recusar = false;
   sessao.chamadas = 0;
+  createClient.mockClear();
+  logError.mockClear();
 });
 
 afterAll(async () => {
@@ -212,41 +256,36 @@ afterAll(async () => {
 
 describe("conversasParaAdmin", () => {
   it("lê as conversas de AMBAS as casas, da mais recente para a mais antiga, sem a órfã", async () => {
-    const lista = await conversasParaAdmin();
+    const { conversas } = await conversasParaAdmin();
     const meus = new Set([
       conversaAntigaDeA,
-      conversaRecenteDeB,
+      conversaDoMeioDeB,
       conversaOrfaDeA,
-      conversaDoMeioDeA,
+      conversaRecenteDeA,
     ]);
 
-    expect(lista.map((c) => c.id).filter((id) => meus.has(id))).toEqual([
-      conversaRecenteDeB,
-      conversaDoMeioDeA,
+    // B no meio, entre duas de A: só uma ordem pelo tempo (e não por casa) passa.
+    expect(conversas.map((c) => c.id).filter((id) => meus.has(id))).toEqual([
+      conversaRecenteDeA,
+      conversaDoMeioDeB,
       conversaAntigaDeA,
     ]);
-    expect(lista.map((c) => c.id)).not.toContain(conversaOrfaDeA);
+    expect(conversas.map((c) => c.id)).not.toContain(conversaOrfaDeA);
   });
 
-  it("traz a casa de cada conversa, para a tela mostrar de quem é", async () => {
-    const lista = await conversasParaAdmin();
-    const deB = lista.find((c) => c.id === conversaRecenteDeB);
-    const deA = lista.find((c) => c.id === conversaDoMeioDeA);
+  it("traz a casa de cada conversa (só o que a tela usa), para mostrar de quem é", async () => {
+    const { conversas } = await conversasParaAdmin();
+    const deB = conversas.find((c) => c.id === conversaDoMeioDeB);
+    const deA = conversas.find((c) => c.id === conversaRecenteDeA);
 
     expect(deB).toEqual({
-      id: conversaRecenteDeB,
-      titulo: "Recente da casa B",
+      id: conversaDoMeioDeB,
+      titulo: "Do meio da casa B",
       ultima_em: expect.any(String),
-      casa: {
-        id: casaB,
-        slug: `admin-b-${sufixo}`,
-        nome: "Casa B do admin",
-        fuso: "America/Manaus",
-      },
+      casa: { id: casaB, nome: "Casa B do admin", fuso: "America/Manaus" },
     });
     expect(deA?.casa).toEqual({
       id: casaA,
-      slug: `admin-a-${sufixo}`,
       nome: "Casa A do admin",
       fuso: "America/Sao_Paulo",
     });
@@ -255,12 +294,18 @@ describe("conversasParaAdmin", () => {
   it("confere que quem pede é admin, antes de ler", async () => {
     await conversasParaAdmin();
     expect(sessao.chamadas).toBe(1);
-
-    sessao.recusar = true;
-    await expect(conversasParaAdmin()).rejects.toThrow("NEXT_REDIRECT");
   });
 
-  it("falha de leitura vira erro, nunca lista vazia", async () => {
+  it("quem não é admin é barrado ANTES de tocar o banco", async () => {
+    sessao.recusar = true;
+
+    await expect(conversasParaAdmin()).rejects.toThrow("NEXT_REDIRECT");
+    expect(sessao.chamadas).toBe(1);
+    // Sem cliente do banco criado, a leitura nem começou.
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it("falha de leitura vira erro, nunca lista vazia, e o log leva só o código", async () => {
     const bom = clientes.atual;
     clientes.atual = clienteQueFalha();
     try {
@@ -270,23 +315,68 @@ describe("conversasParaAdmin", () => {
     } finally {
       clientes.atual = bom;
     }
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith("falha_leitura_mentor");
+  });
+
+  describe("o teto da lista", () => {
+    const comClienteDeMentira = async (quantas: number) => {
+      const { cliente, tetosPedidos } = clienteComConversas(quantas);
+      const bom = clientes.atual;
+      clientes.atual = cliente;
+      try {
+        return { ...(await conversasParaAdmin()), tetosPedidos };
+      } finally {
+        clientes.atual = bom;
+      }
+    };
+
+    it("pede ao banco UMA a mais que o teto, para saber se há conversas fora da lista", async () => {
+      const { tetosPedidos } = await comClienteDeMentira(0);
+
+      expect(tetosPedidos).toEqual([MAXIMO_DE_CONVERSAS_NO_ADMIN + 1]);
+    });
+
+    it("com exatamente o teto de conversas, devolve todas e NÃO diz que há mais", async () => {
+      const { conversas, haMais } = await comClienteDeMentira(
+        MAXIMO_DE_CONVERSAS_NO_ADMIN
+      );
+
+      expect(conversas).toHaveLength(MAXIMO_DE_CONVERSAS_NO_ADMIN);
+      expect(haMais).toBe(false);
+    });
+
+    it("com uma a mais que o teto, devolve só o teto (as mais recentes) e diz que há mais", async () => {
+      const { conversas, haMais } = await comClienteDeMentira(
+        MAXIMO_DE_CONVERSAS_NO_ADMIN + 1
+      );
+
+      expect(conversas).toHaveLength(MAXIMO_DE_CONVERSAS_NO_ADMIN);
+      expect(conversas[0]?.id).toBe("conversa-0");
+      expect(conversas.at(-1)?.id).toBe(
+        `conversa-${MAXIMO_DE_CONVERSAS_NO_ADMIN - 1}`
+      );
+      expect(haMais).toBe(true);
+    });
+
+    it("com poucas conversas, não diz que há mais", async () => {
+      const { conversas, haMais } = await comClienteDeMentira(3);
+
+      expect(conversas).toHaveLength(3);
+      expect(haMais).toBe(false);
+    });
   });
 });
 
 describe("conversaParaAdmin", () => {
   it("devolve a conversa com a casa e as mensagens em ordem de criação", async () => {
-    const detalhe = await conversaParaAdmin(conversaDoMeioDeA);
+    const detalhe = await conversaParaAdmin(conversaRecenteDeA);
 
     expect(detalhe).toEqual({
-      id: conversaDoMeioDeA,
-      titulo: "Do meio da casa A",
+      id: conversaRecenteDeA,
+      titulo: "Recente da casa A",
       ultima_em: expect.any(String),
-      casa: {
-        id: casaA,
-        slug: `admin-a-${sufixo}`,
-        nome: "Casa A do admin",
-        fuso: "America/Sao_Paulo",
-      },
+      casa: { id: casaA, nome: "Casa A do admin", fuso: "America/Sao_Paulo" },
       mensagens: [
         {
           id: expect.any(String),
@@ -305,7 +395,7 @@ describe("conversaParaAdmin", () => {
   });
 
   it("lê a conversa da casa B com a casa dela, não a de outra", async () => {
-    const detalhe = await conversaParaAdmin(conversaRecenteDeB);
+    const detalhe = await conversaParaAdmin(conversaDoMeioDeB);
 
     expect(detalhe?.casa.id).toBe(casaB);
     expect(detalhe?.mensagens.map((m) => [m.papel, m.texto])).toEqual([
@@ -325,22 +415,38 @@ describe("conversaParaAdmin", () => {
     expect(await conversaParaAdmin("nao-e-um-uuid")).toBeNull();
   });
 
-  it("confere que quem pede é admin, antes de ler", async () => {
+  it("quem não é admin é barrado ANTES de tocar o banco", async () => {
     sessao.recusar = true;
-    await expect(conversaParaAdmin(conversaDoMeioDeA)).rejects.toThrow(
+
+    await expect(conversaParaAdmin(conversaRecenteDeA)).rejects.toThrow(
       "NEXT_REDIRECT"
     );
+    expect(sessao.chamadas).toBe(1);
+    expect(createClient).not.toHaveBeenCalled();
   });
 
-  it("falha de leitura vira erro, nunca conversa vazia", async () => {
+  it("quem não é admin é barrado mesmo com um id que não é uuid, nunca recebe 'não encontrada'", async () => {
+    sessao.recusar = true;
+
+    // O atalho do id inválido devolveria nulo (a página viraria 404); o guarda
+    // tem de vir antes dele.
+    await expect(conversaParaAdmin("nao-e-um-uuid")).rejects.toThrow(
+      "NEXT_REDIRECT"
+    );
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it("falha de leitura vira erro, nunca conversa vazia, e o log leva só o código", async () => {
     const bom = clientes.atual;
     clientes.atual = clienteQueFalha();
     try {
-      await expect(conversaParaAdmin(conversaDoMeioDeA)).rejects.toThrow(
+      await expect(conversaParaAdmin(conversaRecenteDeA)).rejects.toThrow(
         "falha_leitura_mentor"
       );
     } finally {
       clientes.atual = bom;
     }
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith("falha_leitura_mentor");
   });
 });

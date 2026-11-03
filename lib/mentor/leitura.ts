@@ -113,15 +113,27 @@ export async function mensagensDaConversa(
 // login a quem não é admin (um dono com a URL na mão veria a lista da casa dele
 // na tela do suporte, em vez de ser barrado). Mesma falha fechada do resto.
 
-/** A casa da conversa, o bastante para a tela dizer "de quem é". */
+/**
+ * A casa da conversa, o bastante para a tela dizer "de quem é" e mostrar a hora
+ * no relógio dela. Sem o `slug`: nenhuma das telas o usa (o link da casa leva o
+ * `id`), e o que não se usa não precisa trafegar.
+ */
 export type CasaDaConversa = {
   id: string;
-  slug: string;
   nome: string;
   fuso: string;
 };
 
 export type ConversaParaAdmin = ConversaDaLista & { casa: CasaDaConversa };
+
+/**
+ * A lista do admin: as conversas (no máximo `MAXIMO_DE_CONVERSAS_NO_ADMIN`) e se
+ * existem outras, mais antigas, fora dela.
+ */
+export type ConversasParaAdmin = {
+  conversas: ConversaParaAdmin[];
+  haMais: boolean;
+};
 
 export type DetalheDaConversaParaAdmin = ConversaParaAdmin & {
   mensagens: MensagemDaConversa[];
@@ -133,32 +145,38 @@ const idSchema = z.uuid();
  * As conversas de TODAS as casas, da mais recente para a mais antiga, cada uma
  * com a casa. Ignora a conversa sem mensagem, pelo mesmo motivo e do mesmo jeito
  * da lista do dono (`!inner` + `limit(1)` na tabela filha).
+ *
+ * Pede UMA a mais que o teto e devolve só o teto: se a extra veio, `haMais` é
+ * verdadeiro (há conversa mais antiga fora da lista). Com exatamente o teto de
+ * conversas, a tela não pode avisar de uma falta que não existe.
  */
-export async function conversasParaAdmin(): Promise<ConversaParaAdmin[]> {
+export async function conversasParaAdmin(): Promise<ConversasParaAdmin> {
   await exigirAdmin();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("mentor_conversas")
     .select(
-      "id, titulo, ultima_em, restaurantes!inner(id, slug, nome, fuso), mentor_mensagens!inner(id)"
+      "id, titulo, ultima_em, restaurantes!inner(id, nome, fuso), mentor_mensagens!inner(id)"
     )
     .order("ultima_em", { ascending: false })
     .order("id", { ascending: false })
-    .limit(MAXIMO_DE_CONVERSAS_NO_ADMIN)
+    .limit(MAXIMO_DE_CONVERSAS_NO_ADMIN + 1)
     .limit(1, { referencedTable: "mentor_mensagens" });
   if (error || !data) falhaNaLeitura();
 
-  return data.map(({ id, titulo, ultima_em, restaurantes }) => ({
-    id,
-    titulo,
-    ultima_em,
-    casa: {
-      id: restaurantes.id,
-      slug: restaurantes.slug,
-      nome: restaurantes.nome,
-      fuso: restaurantes.fuso,
-    },
-  }));
+  const conversas = data
+    .slice(0, MAXIMO_DE_CONVERSAS_NO_ADMIN)
+    .map(({ id, titulo, ultima_em, restaurantes }) => ({
+      id,
+      titulo,
+      ultima_em,
+      casa: {
+        id: restaurantes.id,
+        nome: restaurantes.nome,
+        fuso: restaurantes.fuso,
+      },
+    }));
+  return { conversas, haMais: data.length > MAXIMO_DE_CONVERSAS_NO_ADMIN };
 }
 
 /**
@@ -178,7 +196,7 @@ export async function conversaParaAdmin(
   const [conversa, mensagens] = await Promise.all([
     supabase
       .from("mentor_conversas")
-      .select("id, titulo, ultima_em, restaurantes!inner(id, slug, nome, fuso)")
+      .select("id, titulo, ultima_em, restaurantes!inner(id, nome, fuso)")
       .eq("id", id)
       .maybeSingle(),
     supabase
@@ -197,7 +215,6 @@ export async function conversaParaAdmin(
     ultima_em,
     casa: {
       id: restaurantes.id,
-      slug: restaurantes.slug,
       nome: restaurantes.nome,
       fuso: restaurantes.fuso,
     },
