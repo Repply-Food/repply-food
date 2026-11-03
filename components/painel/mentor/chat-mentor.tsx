@@ -1,16 +1,14 @@
 "use client";
 
 import { useHidratado } from "@/components/forms/use-hidratado";
+import { Fala } from "@/components/painel/mentor/fala";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { enviarMensagemAction } from "@/lib/mentor/enviar-action";
-import { cn } from "@/lib/utils";
 import { SendHorizontal } from "lucide-react";
 import {
   type FormEvent,
   type KeyboardEvent,
-  type ReactNode,
-  type RefObject,
   useEffect,
   useId,
   useRef,
@@ -28,8 +26,6 @@ const AVISO =
   "Esta conversa pode ser utilizada para aprimorar a inteligência artificial.";
 const FRASE_INDISPONIVEL = "o mentor está indisponível agora, tente de novo";
 const TAMANHO_MAXIMO_DA_PERGUNTA = 4000;
-
-const ROTULO = { dono: "Você", mentor: "Mentor" } as const;
 
 /**
  * O chat do dono com o mentor (v1: sem streaming). A resposta vem inteira
@@ -245,41 +241,5 @@ export function ChatMentor({
         </form>
       )}
     </div>
-  );
-}
-
-/**
- * Uma fala. O dono fica à direita, com fundo da marca; o mentor, à esquerda,
- * em superfície neutra. Só a cor e a posição não bastam: cada fala leva o nome
- * de quem falou. `whitespace-pre-wrap` preserva as quebras de linha da resposta.
- */
-function Fala({
-  papel,
-  referencia,
-  children,
-}: {
-  papel: MensagemDoChat["papel"];
-  referencia?: RefObject<HTMLLIElement | null>;
-  children: ReactNode;
-}) {
-  const doDono = papel === "dono";
-  return (
-    <li
-      ref={referencia}
-      className={cn(
-        "flex scroll-mt-28 flex-col gap-1",
-        doDono ? "items-end" : "items-start"
-      )}
-    >
-      <span className="label-mono text-quiet">{ROTULO[papel]}</span>
-      <p
-        className={cn(
-          "max-w-[88%] whitespace-pre-wrap break-words rounded-lg px-3 py-2 md:max-w-[80%]",
-          doDono ? "bg-primary text-primary-foreground" : "brand-surface"
-        )}
-      >
-        {children}
-      </p>
-    </li>
   );
 }
