@@ -47,3 +47,38 @@ export async function cartilhaAtiva(): Promise<CartilhaAtiva | null> {
     ? { id: data.id, texto: data.texto, criada_em: data.criada_em }
     : null;
 }
+
+/** Uma versão da cartilha, como a lista do histórico precisa dela. */
+export type VersaoDaCartilha = CartilhaAtiva & { ativa: boolean };
+
+/** Quantas versões a tela do histórico traz (da mais nova para trás). */
+const LIMITE_DO_HISTORICO = 20;
+
+/**
+ * As versões da cartilha, da mais nova para a mais antiga (mesmo critério de
+ * ordem de `cartilhaAtiva()`), com a marca de qual está ativa. Serve à lista
+ * só de leitura do editor: o admin confere e copia o texto de volta à mão.
+ * Mesmas travas de `cartilhaAtiva()`: `exigirAdmin()` primeiro, leitura pelo
+ * cliente do admin (a RLS é a segunda trava) e falha fechada, nunca lista vazia
+ * por erro. Não resolve quem criou cada versão (`criada_por`): fora do escopo.
+ */
+export async function historicoCartilhas(): Promise<VersaoDaCartilha[]> {
+  await exigirAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("mentor_cartilhas")
+    .select("id, texto, criada_em, ativa")
+    .order("criada_em", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(LIMITE_DO_HISTORICO);
+  if (error || !data) {
+    logError("falha_admin");
+    throw new Error("falha_leitura_cartilha");
+  }
+  return data.map((linha) => ({
+    id: linha.id,
+    texto: linha.texto,
+    criada_em: linha.criada_em,
+    ativa: linha.ativa,
+  }));
+}

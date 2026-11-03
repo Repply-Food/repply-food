@@ -23,13 +23,14 @@ import { z } from "zod";
  */
 
 const FRASE_VAZIA = "Escreva o texto da cartilha.";
-const FRASE_LONGA =
-  "A cartilha ficou longa demais; resuma em até 20.000 caracteres.";
 const FALHA =
   "Não foi possível salvar a cartilha agora. Tente de novo em instantes.";
 
 /** A cartilha vai inteira ao modelo a cada pergunta de cada dono: tem teto. */
 const TAMANHO_MAXIMO = 20_000;
+
+// O número da frase sai da constante do limite: os dois nunca desandam.
+const FRASE_LONGA = `A cartilha ficou longa demais; resuma em até ${TAMANHO_MAXIMO.toLocaleString("pt-BR")} caracteres.`;
 
 const textoSchema = z
   .string({ error: FRASE_VAZIA })

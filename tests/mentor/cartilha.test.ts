@@ -15,7 +15,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth/sessao", () => ({ exigirAdmin }));
 vi.mock("@/lib/supabase/server", () => ({ createClient }));
 
-import { cartilhaAtiva } from "@/lib/mentor/cartilha";
+import { cartilhaAtiva, historicoCartilhas } from "@/lib/mentor/cartilha";
 
 /** from().select().eq().order().order().limit().maybeSingle() */
 function leituraFalsa(resposta: { data: unknown; error: unknown }) {
@@ -78,6 +78,79 @@ describe("cartilhaAtiva", () => {
     leituraFalsa({ data: null, error: { message: "segredo interno" } });
 
     await expect(cartilhaAtiva()).rejects.toThrow("falha_leitura_cartilha");
+
+    expect(JSON.stringify(log.mock.calls)).toContain("falha_admin");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("segredo");
+    log.mockRestore();
+  });
+});
+
+/** from().select().order().order().limit() */
+function historicoFalso(resposta: { data: unknown; error: unknown }) {
+  const limit = vi.fn(() => Promise.resolve(resposta));
+  const order = vi.fn(() => ({ order, limit }));
+  const select = vi.fn(() => ({ order }));
+  const from = vi.fn(() => ({ select }));
+  createClient.mockResolvedValue({ from });
+  return { from, select, order, limit };
+}
+
+describe("historicoCartilhas", () => {
+  it("recusa quem não é admin sem tocar no banco", async () => {
+    exigirAdmin.mockRejectedValue(new Error("REDIRECT:/r/casa-x/hoje"));
+
+    await expect(historicoCartilhas()).rejects.toThrow("REDIRECT");
+
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it("devolve as versões da mais nova para a mais antiga (desempate pelo id), com teto, e marca qual é a ativa", async () => {
+    const linhas = [
+      {
+        id: "c3",
+        texto: "Terceira.",
+        criada_em: "2026-11-02T10:00:00+00:00",
+        ativa: true,
+      },
+      {
+        id: "c2",
+        texto: "Segunda.",
+        criada_em: "2026-10-31T10:00:00+00:00",
+        ativa: false,
+      },
+      {
+        id: "c1",
+        texto: "Primeira.",
+        criada_em: "2026-10-30T10:00:00+00:00",
+        ativa: false,
+      },
+    ];
+    const banco = historicoFalso({ data: linhas, error: null });
+
+    expect(await historicoCartilhas()).toEqual(linhas);
+
+    expect(banco.from).toHaveBeenCalledWith("mentor_cartilhas");
+    expect(banco.select).toHaveBeenCalledWith("id, texto, criada_em, ativa");
+    expect(banco.order).toHaveBeenNthCalledWith(1, "criada_em", {
+      ascending: false,
+    });
+    expect(banco.order).toHaveBeenNthCalledWith(2, "id", { ascending: false });
+    expect(banco.limit).toHaveBeenCalledWith(20);
+  });
+
+  it("sem nenhuma versão devolve lista vazia (a tela não mostra o histórico)", async () => {
+    historicoFalso({ data: [], error: null });
+
+    expect(await historicoCartilhas()).toEqual([]);
+  });
+
+  it("erro de leitura falha fechado: lança, não devolve lista vazia, e o log leva só o código", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    historicoFalso({ data: null, error: { message: "segredo interno" } });
+
+    await expect(historicoCartilhas()).rejects.toThrow(
+      "falha_leitura_cartilha"
+    );
 
     expect(JSON.stringify(log.mock.calls)).toContain("falha_admin");
     expect(JSON.stringify(log.mock.calls)).not.toContain("segredo");
