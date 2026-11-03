@@ -207,6 +207,7 @@ describe("opções reais isoladas por restaurante no PostgreSQL local", () => {
         },
         {
           ...linhasRelatorios.caixa,
+          codigo_lancamento: "L2",
           codigo_operador: "O1",
           operador: "Operador fictício",
           tipo: "debito",

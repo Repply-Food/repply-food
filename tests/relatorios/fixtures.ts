@@ -1,4 +1,4 @@
-import type { Relatorio } from "../../supabase/functions/_shared/relatorios/schemas";
+import type { Relatorio } from "../../supabase/functions/_shared/scc/relatorios-legado";
 
 export function paginaProdutos() {
   return {

@@ -85,7 +85,7 @@ describe("dispatcher real de relatórios no PostgreSQL local", () => {
       const resultado = consultar(relatorio);
       await expect(resultado).resolves.toMatchObject({
         situacao: "completo",
-        revisao: "0",
+        revisao: "1",
         cobertura: {
           esperados: 1,
           recebidos: 1,
@@ -113,10 +113,6 @@ describe("dispatcher real de relatórios no PostgreSQL local", () => {
       recursos: recursos.produtos,
       linhas: [{ ...linhasRelatorios.produtos, codigo_produto: "P1" }],
     });
-    await banco.query(
-      "insert into public.relatorio_versoes(restaurante_id,revisao) values ($1,1)",
-      [fixture.restauranteA]
-    );
     await identidade(banco, fixture.usuarioA);
     const primeira = await consultar("produtos", filtrosDoisDias, 1, 1);
     expect(primeira).toMatchObject({
@@ -131,10 +127,6 @@ describe("dispatcher real de relatórios no PostgreSQL local", () => {
       recursos: recursos.produtos,
       linhas: [{ ...linhasRelatorios.produtos, codigo_produto: "P2" }],
     });
-    await banco.query(
-      "update public.relatorio_versoes set revisao = revisao + 1 where restaurante_id = $1",
-      [fixture.restauranteA]
-    );
     await identidade(banco, fixture.usuarioA);
     await expect(
       consultar("produtos", filtrosDoisDias, 2, 1, "1")
@@ -151,13 +143,13 @@ describe("dispatcher real de relatórios no PostgreSQL local", () => {
       recursos: recursos.produtos,
       linhas: [{ ...linhasRelatorios.produtos, codigo_produto: "P2" }],
     });
-    await banco.query(
-      "insert into public.relatorio_versoes(restaurante_id,revisao) values ($1,9)",
-      [fixture.restauranteB]
-    );
+    await publicarFixture(banco, fixture.restauranteB, {
+      recursos: recursos.produtos,
+      linhas: [linhasRelatorios.produtos],
+    });
     await identidade(banco, fixture.usuarioA);
     await expect(consultar("produtos")).resolves.toMatchObject({
-      revisao: "0",
+      revisao: "2",
       paginacao: { totalLinhas: 1 },
     });
   });

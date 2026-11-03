@@ -15,7 +15,7 @@ import {
   it,
 } from "vitest";
 import { z } from "zod";
-import type { LinhaCaixa } from "../../supabase/functions/_shared/relatorios/schemas";
+import type { LinhaCaixa } from "../../supabase/functions/_shared/scc/relatorios-legado";
 import { type Fixture, conectarBanco } from "../helpers/supabase-local";
 import {
   filtrosDoisDias,
@@ -163,7 +163,7 @@ describe("caixa nas fotografias reais do PostgreSQL local", () => {
         {
           diaMovimento: "2026-02-14",
           diaCivil: "2026-02-15",
-          momento: "2026-02-15T01:00:00-03:00",
+          momento: "2026-02-15T04:00:00+00:00",
         },
       ],
       resumo: { creditos: "50.00" },

@@ -10,7 +10,8 @@ import {
   linhaNotaSchema as nota,
   linhaProdutosSchema as produtos,
   recursosPorRelatorio,
-} from "../../supabase/functions/_shared/relatorios/schemas";
+} from "../../supabase/functions/_shared/scc/relatorios-legado";
+import { instanteSchema } from "../../supabase/functions/_shared/scc/schemas";
 import { revisaoSchema } from "./filtros";
 
 // Somas podem exceder numeric(20,6) da origem; nunca converter decimais em number.
@@ -85,7 +86,7 @@ export const linhaCaixaSaidaSchema = z
     codigoLancamento: caixa.shape.codigo_lancamento,
     diaMovimento: dataCivilSchema,
     diaCivil: dataCivilSchema,
-    momento: caixa.shape.momento,
+    momento: instanteSchema,
     codigoOperador: caixa.shape.codigo_operador,
     operador: caixa.shape.operador,
     tipo: caixa.shape.tipo,
@@ -125,7 +126,7 @@ export const resumoCaixaSchema = z
 export const linhaAuditoriaSaidaSchema = z
   .object({
     tipo: auditoria.shape.tipo,
-    momento: auditoria.shape.momento,
+    momento: instanteSchema,
     codigoOperador: auditoria.shape.codigo_operador,
     operador: auditoria.shape.operador,
     cartaoAnterior: auditoria.shape.cartao_anterior,

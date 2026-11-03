@@ -9,3 +9,5 @@ export {
   validarEnvelope,
   type Envelope,
 } from "../../supabase/functions/_shared/recepcao.ts";
+export * from "../../supabase/functions/_shared/scc/schemas.ts";
+export * from "../../supabase/functions/_shared/scc/limites.ts";

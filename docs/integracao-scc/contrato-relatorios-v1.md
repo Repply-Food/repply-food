@@ -1,3 +1,5 @@
+> **Histórico — substituído pelo [contrato SCC v2](../integracao-scc/contrato-de-dados.md) e pelo [roteiro local v2](../integracao-scc/smoke-webhook-v2-local.md).** Os comandos e o receptor separados abaixo foram aposentados; não os execute.
+
 # Contrato de relatórios SCC → Food, versão 1
 
 **Contrato definido para implementação agora.** É um endpoint novo; não substitui a versão 1 do recebimento de entradas. Dados/exemplos são fictícios. A SCC adaptará a extração ao contrato; não é necessário copiar as chaves físicas das tabelas para o Food.

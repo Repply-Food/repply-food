@@ -85,7 +85,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 | **Recepção** (`receber-envio`) | Recebe os envios do SCC: autentica pelo token, valida, descarta dados pessoais, grava sem duplicar, reconcilia o que sumiu | [`recepcao-de-dados.md`](docs/arquitetura/recepcao-de-dados.md), [contrato](docs/integracao-scc/contrato-de-dados.md) |
 | **Hoje** | Faturamento até agora × mesmo dia da semana até o mesmo horário, taxa separada, curva, mesas abertas, pessoas, por pessoa, contas esquecidas (até 3 + "ver todas"), meta (D-33) | [`telas/hoje.html`](docs/telas/hoje.html), [`metricas.md`](docs/metricas.md) |
 | **Resultados** | Período e comparação; abas Vendas · Horários · Equipe · Descontos; PDF (D-34, D-20) | [`telas/resultados.html`](docs/telas/resultados.html) |
-| **Relatórios SCC** | Seis consultas históricas ou do dia on-line (Financeiro, Produtos, Comissão, Caixa, Auditoria e Notas assinadas), filtros próprios e PDF completo por consulta. Implementação local; a conferência do banco e da origem SCC ainda não foi homologada | [uso e homologação](docs/operacao/relatorios.md), [contrato v1](docs/integracao-scc/contrato-relatorios-v1.md) |
+| **Relatórios SCC** | Seis consultas históricas ou do dia on-line (Financeiro, Produtos, Comissão, Caixa, Auditoria e Notas assinadas), filtros próprios e PDF completo por consulta. Implementação local; a conferência do banco e da origem SCC ainda não foi homologada | [roteiro local](docs/integracao-scc/smoke-webhook-v2-local.md), [contrato v2](docs/integracao-scc/contrato-de-dados.md) |
 | **Ajustes** | Meta, turnos, senha e tema (o dono edita); dados do restaurante só para leitura (D-35) | [`telas/ajustes.html`](docs/telas/ajustes.html) |
 | **Primeiro acesso** | Login → troca de senha → guia da tela inicial (**só no celular**, uma vez por aparelho, nunca no app instalado) (D-36, D-39) | [`telas/primeiro-acesso.html`](docs/telas/primeiro-acesso.html) |
 | **Admin** | Restaurantes e estado do envio, cadastro, token (troca na hora ou em 24 h), acesso do cliente, últimos envios, ver o painel do cliente, pedir reenvio (D-32, D-38) | [`telas/admin.html`](docs/telas/admin.html), [`cadastrar-restaurante.md`](docs/operacao/cadastrar-restaurante.md) |
@@ -128,7 +128,7 @@ Caixa do restaurante (SCC) ──a cada ~5 min──▶ nuvem da Repply ──�
 - [x] Casa de demonstração marcada (não alarma; só para demonstrar, D-69) + kit do vendedor — etapa 10, feito (24/10)
 - [x] Publicação no piloto (Supabase Free + Vercel Hobby, D-09)
 
-**Extensão local de relatórios (28/10/2026):** há código local para os seis relatórios SCC e seus PDFs, sem declarar publicação ou homologação. A integração precisa executar as mudanças no PostgreSQL em ambiente de teste, receber os dados pelo contrato próprio e conferir os resultados com a SCC. As métricas oficiais ainda não fornecidas permanecem não informadas; o código do cliente não substitui o nome, e o público é somente agregado. Veja [o estado e o roteiro de homologação](docs/operacao/relatorios.md).
+**Extensão local de relatórios (28/10/2026):** há código local para os seis relatórios SCC e seus PDFs, sem declarar publicação ou homologação. A integração precisa executar as mudanças no PostgreSQL em ambiente de teste, receber os dados pelo webhook único tipado conforme o [contrato v2](docs/integracao-scc/contrato-de-dados.md) e conferir os resultados com a SCC. As métricas oficiais ainda não fornecidas permanecem não informadas; o código do cliente não substitui o nome, e o público é somente agregado. Veja o [roteiro local](docs/integracao-scc/smoke-webhook-v2-local.md).
 
 ### Fase 2 (depois do piloto)
 
@@ -184,7 +184,7 @@ E a verificação obrigatória passa: tipos, lint, testes e build.
 
 ## 11. Pendências com a SCC
 
-As perguntas técnicas abertas (blocos B e H) estão no [contrato de dados §11](docs/integracao-scc/contrato-de-dados.md) e na pauta da reunião (`_descoberta/pauta-reuniao-scc.md`, fora do repositório). Até as respostas, as métricas usam as regras provisórias de [`metricas.md`](docs/metricas.md).
+As perguntas técnicas abertas (blocos B e H) estão no banco de perguntas (`_descoberta/2026-10-05-banco-de-perguntas.md`) e na pauta da reunião (`_descoberta/pauta-reuniao-scc.md`), fora do repositório. O [contrato de dados v2](docs/integracao-scc/contrato-de-dados.md#campos-por-tipo) descreve os campos por tipo. Até as respostas, as métricas usam as regras provisórias de [`metricas.md`](docs/metricas.md).
 
 ---
 

@@ -6,7 +6,7 @@ import {
   inteiroPositivoSchema,
   linhaAuditoriaSchema,
   linhaCaixaSchema,
-} from "../../supabase/functions/_shared/relatorios/schemas";
+} from "../../supabase/functions/_shared/scc/relatorios-legado";
 import { REGISTRO_RELATORIOS } from "./registro";
 import type { ConsultaRelatorio } from "./tipos";
 

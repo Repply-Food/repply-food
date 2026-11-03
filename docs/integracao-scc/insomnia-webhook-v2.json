@@ -1,0 +1,831 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-01T00:00:00.000Z",
+  "__export_source": "repply-food",
+  "resources": [
+    {
+      "_id": "wrk_scc_v2",
+      "_type": "workspace",
+      "name": "Smoke SCC v2 local"
+    },
+    {
+      "_id": "env_scc_v2",
+      "_type": "environment",
+      "parentId": "wrk_scc_v2",
+      "name": "Local",
+      "data": {
+        "base_url": "http://127.0.0.1:54321/functions/v1/receber-envio",
+        "token": ""
+      }
+    },
+    {
+      "_id": "fld_0",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "00 Preparação"
+    },
+    {
+      "_id": "fld_1",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "01 Sucesso on-line"
+    },
+    {
+      "_id": "fld_2",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "02 Fechamento histórico"
+    },
+    {
+      "_id": "fld_3",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "03 Idempotência"
+    },
+    {
+      "_id": "fld_4",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "04 Correção"
+    },
+    {
+      "_id": "fld_5",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "05 Paginação incompleta"
+    },
+    {
+      "_id": "fld_6",
+      "_type": "request_group",
+      "parentId": "wrk_scc_v2",
+      "name": "06 Erros 401-409-422"
+    },
+    {
+      "_id": "req_9",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "entradas",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174001\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"tipo_envio\": \"entradas\",\n  \"modo\": \"janela\",\n  \"janela\": {\n    \"desde\": \"2026-11-01\",\n    \"ate\": \"2026-11-01\"\n  },\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"DataEntrada\": \"2026-11-01\",\n      \"HoraEntrada\": \"12:00:00\",\n      \"DataSaida\": \"2026-11-01\",\n      \"HoraSaida\": \"14:00:00\",\n      \"ValorAcrescimos\": \"0.00\",\n      \"Complemento\": \"0.00\",\n      \"Pago\": true,\n      \"NumeroOcupantes\": 2,\n      \"TipoOcupacao\": \"Mesa\",\n      \"TipoCartao\": \"Mesa\",\n      \"codEntrada\": 1,\n      \"ValorItens\": \"66.00\",\n      \"ValorDescontos\": \"0.00\",\n      \"TaxaServico\": \"6.60\",\n      \"ValorConsumido\": \"72.60\",\n      \"codCartaoMesa\": 1,\n      \"CodGarcon\": 1,\n      \"codOperadorHab\": 1,\n      \"codOperadorDesab\": 1,\n      \"codCliente\": null\n    },\n    {\n      \"DataEntrada\": \"2026-11-01\",\n      \"HoraEntrada\": \"12:00:00\",\n      \"DataSaida\": \"2026-11-01\",\n      \"HoraSaida\": \"14:00:00\",\n      \"ValorAcrescimos\": \"0.00\",\n      \"Complemento\": \"0.00\",\n      \"Pago\": true,\n      \"NumeroOcupantes\": 2,\n      \"TipoOcupacao\": \"Mesa\",\n      \"TipoCartao\": \"Mesa\",\n      \"codEntrada\": 2,\n      \"ValorItens\": \"43.00\",\n      \"ValorDescontos\": \"3.00\",\n      \"TaxaServico\": \"4.00\",\n      \"ValorConsumido\": \"44.00\",\n      \"codCartaoMesa\": 2,\n      \"CodGarcon\": 2,\n      \"codOperadorHab\": 2,\n      \"codOperadorDesab\": 2,\n      \"codCliente\": 1\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_10",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "cadastro_produtos",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174002\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"tipo_envio\": \"cadastro_produtos\",\n  \"modo\": \"incremental\",\n  \"total_registros\": 3,\n  \"dados\": [\n    {\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"preco_custo_atual\": \"10.00\",\n      \"ativo\": true,\n      \"alterado_em\": \"2026-11-01T10:00:00-03:00\"\n    },\n    {\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"preco_custo_atual\": \"3.00\",\n      \"ativo\": true,\n      \"alterado_em\": \"2026-11-01T10:00:00-03:00\"\n    },\n    {\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"preco_custo_atual\": \"5.00\",\n      \"ativo\": true,\n      \"alterado_em\": \"2026-11-01T10:00:00-03:00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_11",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "itens_vendidos",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_12",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "comissoes",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174004\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"comissoes\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"66.00\",\n      \"comissao_oficial\": \"6.60\"\n    },\n    {\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"40.00\",\n      \"comissao_oficial\": \"4.00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "movimentos_caixa",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174005\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"movimentos_caixa\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_lancamento\": \"C1\",\n      \"momento\": \"2026-11-01T14:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"tipo\": \"credito\",\n      \"codigo_categoria\": \"VENDA\",\n      \"categoria\": \"Venda\",\n      \"valor\": \"106.00\"\n    },\n    {\n      \"codigo_lancamento\": \"D1\",\n      \"momento\": \"2026-11-01T14:10:00-03:00\",\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"tipo\": \"debito\",\n      \"codigo_categoria\": \"DESPESA\",\n      \"categoria\": \"Despesa\",\n      \"valor\": \"12.50\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "eventos_auditoria",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174006\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"eventos_auditoria\",\n  \"total_registros\": 6,\n  \"dados\": [\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"perda_cartao\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": null,\n      \"produto\": null,\n      \"quantidade\": null,\n      \"valor_unitario\": null,\n      \"total\": null,\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"alteracao_limites\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": \"0.00\",\n      \"limite_minimo_novo\": \"5.00\",\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"exclusao_taxa_servico\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"transferencia_produtos\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": \"2\",\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "notas_assinadas",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174007\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"notas_assinadas\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"codigo_nota\": \"N1\",\n      \"codigo_entrada\": \"2\",\n      \"codigo_cliente\": \"1\",\n      \"valor\": \"20.00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_1",
+      "name": "financeiro",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174008\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"financeiro\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"componentes\": {\n        \"consumo\": \"106.00\",\n        \"servico\": \"10.60\",\n        \"complemento\": \"0.00\",\n        \"taxas_entrada\": \"0.00\",\n        \"produto_embutido\": \"0.00\",\n        \"flyers\": \"0.00\"\n      },\n      \"totais_oficiais\": {\n        \"projetado\": \"116.60\",\n        \"recebido\": \"96.60\",\n        \"notas_assinadas\": \"20.00\",\n        \"descontos\": \"3.00\"\n      },\n      \"entradas\": {\n        \"habilitados\": 2,\n        \"reabilitados\": 0,\n        \"encerrados\": 2,\n        \"abertos\": 0\n      },\n      \"meios\": [\n        {\n          \"codigo\": \"DIN\",\n          \"rotulo\": \"Dinheiro\",\n          \"classe\": \"dinheiro\",\n          \"valor\": \"50.00\"\n        },\n        {\n          \"codigo\": \"PIX\",\n          \"rotulo\": \"Pix\",\n          \"classe\": \"pix\",\n          \"valor\": \"46.60\"\n        },\n        {\n          \"codigo\": \"NOTA\",\n          \"rotulo\": \"Nota assinada\",\n          \"classe\": \"nota_assinada\",\n          \"valor\": \"20.00\"\n        }\n      ],\n      \"publico\": [\n        {\n          \"sexo\": \"nao_informado\",\n          \"categoria\": \"pagante\",\n          \"quantidade\": 4\n        }\n      ]\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_2",
+      "name": "itens_vendidos",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_18",
+      "_type": "request",
+      "parentId": "fld_2",
+      "name": "comissoes",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175004\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"comissoes\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"66.00\",\n      \"comissao_oficial\": \"6.60\"\n    },\n    {\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"40.00\",\n      \"comissao_oficial\": \"4.00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_19",
+      "_type": "request",
+      "parentId": "fld_2",
+      "name": "movimentos_caixa",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175005\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"movimentos_caixa\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_lancamento\": \"C1\",\n      \"momento\": \"2026-11-01T14:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"tipo\": \"credito\",\n      \"codigo_categoria\": \"VENDA\",\n      \"categoria\": \"Venda\",\n      \"valor\": \"106.00\"\n    },\n    {\n      \"codigo_lancamento\": \"D1\",\n      \"momento\": \"2026-11-01T14:10:00-03:00\",\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"tipo\": \"debito\",\n      \"codigo_categoria\": \"DESPESA\",\n      \"categoria\": \"Despesa\",\n      \"valor\": \"12.50\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_20",
+      "_type": "request",
+      "parentId": "fld_2",
+      "name": "eventos_auditoria",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175006\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"eventos_auditoria\",\n  \"total_registros\": 6,\n  \"dados\": [\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"perda_cartao\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": null,\n      \"produto\": null,\n      \"quantidade\": null,\n      \"valor_unitario\": null,\n      \"total\": null,\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"alteracao_limites\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": \"0.00\",\n      \"limite_minimo_novo\": \"5.00\",\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"exclusao_taxa_servico\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"transferencia_produtos\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": \"2\",\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_21",
+      "_type": "request",
+      "parentId": "fld_2",
+      "name": "notas_assinadas",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175007\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"notas_assinadas\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"codigo_nota\": \"N1\",\n      \"codigo_entrada\": \"2\",\n      \"codigo_cliente\": \"1\",\n      \"valor\": \"20.00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_22",
+      "_type": "request",
+      "parentId": "fld_2",
+      "name": "financeiro",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175008\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"financeiro\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"componentes\": {\n        \"consumo\": \"106.00\",\n        \"servico\": \"10.60\",\n        \"complemento\": \"0.00\",\n        \"taxas_entrada\": \"0.00\",\n        \"produto_embutido\": \"0.00\",\n        \"flyers\": \"0.00\"\n      },\n      \"totais_oficiais\": {\n        \"projetado\": \"116.60\",\n        \"recebido\": \"96.60\",\n        \"notas_assinadas\": \"20.00\",\n        \"descontos\": \"3.00\"\n      },\n      \"entradas\": {\n        \"habilitados\": 2,\n        \"reabilitados\": 0,\n        \"encerrados\": 2,\n        \"abertos\": 0\n      },\n      \"meios\": [\n        {\n          \"codigo\": \"DIN\",\n          \"rotulo\": \"Dinheiro\",\n          \"classe\": \"dinheiro\",\n          \"valor\": \"50.00\"\n        },\n        {\n          \"codigo\": \"PIX\",\n          \"rotulo\": \"Pix\",\n          \"classe\": \"pix\",\n          \"valor\": \"46.60\"\n        },\n        {\n          \"codigo\": \"NOTA\",\n          \"rotulo\": \"Nota assinada\",\n          \"classe\": \"nota_assinada\",\n          \"valor\": \"20.00\"\n        }\n      ],\n      \"publico\": [\n        {\n          \"sexo\": \"nao_informado\",\n          \"categoria\": \"pagante\",\n          \"quantidade\": 4\n        }\n      ]\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_23",
+      "_type": "request",
+      "parentId": "fld_3",
+      "name": "Reenvio idêntico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_24",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "entradas",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174011\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"tipo_envio\": \"entradas\",\n  \"modo\": \"janela\",\n  \"janela\": {\n    \"desde\": \"2026-11-01\",\n    \"ate\": \"2026-11-01\"\n  },\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"DataEntrada\": \"2026-11-01\",\n      \"HoraEntrada\": \"12:00:00\",\n      \"DataSaida\": \"2026-11-01\",\n      \"HoraSaida\": \"14:00:00\",\n      \"ValorAcrescimos\": \"0.00\",\n      \"Complemento\": \"0.00\",\n      \"Pago\": true,\n      \"NumeroOcupantes\": 2,\n      \"TipoOcupacao\": \"Mesa\",\n      \"TipoCartao\": \"Mesa\",\n      \"codEntrada\": 1,\n      \"ValorItens\": \"66.00\",\n      \"ValorDescontos\": \"0.00\",\n      \"TaxaServico\": \"6.60\",\n      \"ValorConsumido\": \"72.60\",\n      \"codCartaoMesa\": 1,\n      \"CodGarcon\": 1,\n      \"codOperadorHab\": 1,\n      \"codOperadorDesab\": 1,\n      \"codCliente\": null\n    },\n    {\n      \"DataEntrada\": \"2026-11-01\",\n      \"HoraEntrada\": \"12:00:00\",\n      \"DataSaida\": \"2026-11-01\",\n      \"HoraSaida\": \"14:00:00\",\n      \"ValorAcrescimos\": \"0.00\",\n      \"Complemento\": \"0.00\",\n      \"Pago\": true,\n      \"NumeroOcupantes\": 2,\n      \"TipoOcupacao\": \"Mesa\",\n      \"TipoCartao\": \"Mesa\",\n      \"codEntrada\": 2,\n      \"ValorItens\": \"43.00\",\n      \"ValorDescontos\": \"5.00\",\n      \"TaxaServico\": \"3.80\",\n      \"ValorConsumido\": \"41.80\",\n      \"codCartaoMesa\": 2,\n      \"CodGarcon\": 2,\n      \"codOperadorHab\": 2,\n      \"codOperadorDesab\": 2,\n      \"codCliente\": 1\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_25",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "cadastro_produtos",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174012\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"tipo_envio\": \"cadastro_produtos\",\n  \"modo\": \"incremental\",\n  \"total_registros\": 3,\n  \"dados\": [\n    {\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"preco_custo_atual\": \"10.00\",\n      \"ativo\": true,\n      \"alterado_em\": \"2026-11-01T10:00:00-03:00\"\n    },\n    {\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"preco_custo_atual\": \"3.00\",\n      \"ativo\": true,\n      \"alterado_em\": \"2026-11-01T10:00:00-03:00\"\n    },\n    {\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"preco_custo_atual\": \"5.00\",\n      \"ativo\": true,\n      \"alterado_em\": \"2026-11-01T10:00:00-03:00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_26",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "itens_vendidos",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174013\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"14.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_27",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "comissoes",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174014\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"comissoes\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"66.00\",\n      \"comissao_oficial\": \"6.60\"\n    },\n    {\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"38.00\",\n      \"comissao_oficial\": \"3.80\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_28",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "movimentos_caixa",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174015\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"movimentos_caixa\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_lancamento\": \"C1\",\n      \"momento\": \"2026-11-01T14:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"tipo\": \"credito\",\n      \"codigo_categoria\": \"VENDA\",\n      \"categoria\": \"Venda\",\n      \"valor\": \"94.40\"\n    },\n    {\n      \"codigo_lancamento\": \"D1\",\n      \"momento\": \"2026-11-01T14:10:00-03:00\",\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"tipo\": \"debito\",\n      \"codigo_categoria\": \"DESPESA\",\n      \"categoria\": \"Despesa\",\n      \"valor\": \"12.50\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_29",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "eventos_auditoria",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174016\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"eventos_auditoria\",\n  \"total_registros\": 6,\n  \"dados\": [\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"perda_cartao\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": null,\n      \"produto\": null,\n      \"quantidade\": null,\n      \"valor_unitario\": null,\n      \"total\": null,\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"alteracao_limites\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": \"0.00\",\n      \"limite_minimo_novo\": \"5.00\",\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"exclusao_taxa_servico\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"transferencia_produtos\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": \"2\",\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_30",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "notas_assinadas",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174017\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"notas_assinadas\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"codigo_nota\": \"N1\",\n      \"codigo_entrada\": \"2\",\n      \"codigo_cliente\": \"1\",\n      \"valor\": \"20.00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_31",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "financeiro",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174018\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"financeiro\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"componentes\": {\n        \"consumo\": \"104.00\",\n        \"servico\": \"10.40\",\n        \"complemento\": \"0.00\",\n        \"taxas_entrada\": \"0.00\",\n        \"produto_embutido\": \"0.00\",\n        \"flyers\": \"0.00\"\n      },\n      \"totais_oficiais\": {\n        \"projetado\": \"114.40\",\n        \"recebido\": \"94.40\",\n        \"notas_assinadas\": \"20.00\",\n        \"descontos\": \"5.00\"\n      },\n      \"entradas\": {\n        \"habilitados\": 2,\n        \"reabilitados\": 0,\n        \"encerrados\": 2,\n        \"abertos\": 0\n      },\n      \"meios\": [\n        {\n          \"codigo\": \"DIN\",\n          \"rotulo\": \"Dinheiro\",\n          \"classe\": \"dinheiro\",\n          \"valor\": \"50.00\"\n        },\n        {\n          \"codigo\": \"PIX\",\n          \"rotulo\": \"Pix\",\n          \"classe\": \"pix\",\n          \"valor\": \"44.40\"\n        },\n        {\n          \"codigo\": \"NOTA\",\n          \"rotulo\": \"Nota assinada\",\n          \"classe\": \"nota_assinada\",\n          \"valor\": \"20.00\"\n        }\n      ],\n      \"publico\": [\n        {\n          \"sexo\": \"nao_informado\",\n          \"categoria\": \"pagante\",\n          \"quantidade\": 4\n        }\n      ]\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_32",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "itens_vendidos histórico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175013\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"14.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_33",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "comissoes histórico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175014\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"comissoes\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"66.00\",\n      \"comissao_oficial\": \"6.60\"\n    },\n    {\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"funcao\": \"Garçom\",\n      \"vendas_elegiveis\": \"38.00\",\n      \"comissao_oficial\": \"3.80\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_34",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "movimentos_caixa histórico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175015\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"movimentos_caixa\",\n  \"total_registros\": 2,\n  \"dados\": [\n    {\n      \"codigo_lancamento\": \"C1\",\n      \"momento\": \"2026-11-01T14:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"tipo\": \"credito\",\n      \"codigo_categoria\": \"VENDA\",\n      \"categoria\": \"Venda\",\n      \"valor\": \"94.40\"\n    },\n    {\n      \"codigo_lancamento\": \"D1\",\n      \"momento\": \"2026-11-01T14:10:00-03:00\",\n      \"codigo_operador\": \"2\",\n      \"operador\": \"Operador 2\",\n      \"tipo\": \"debito\",\n      \"codigo_categoria\": \"DESPESA\",\n      \"categoria\": \"Despesa\",\n      \"valor\": \"12.50\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_35",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "eventos_auditoria histórico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175016\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"eventos_auditoria\",\n  \"total_registros\": 6,\n  \"dados\": [\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"cancelamento_produto\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"perda_cartao\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": null,\n      \"produto\": null,\n      \"quantidade\": null,\n      \"valor_unitario\": null,\n      \"total\": null,\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"alteracao_limites\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": \"0.00\",\n      \"limite_minimo_novo\": \"5.00\",\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"exclusao_taxa_servico\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": null,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    },\n    {\n      \"tipo\": \"transferencia_produtos\",\n      \"momento\": \"2026-11-01T13:00:00-03:00\",\n      \"codigo_operador\": \"1\",\n      \"operador\": \"Operador 1\",\n      \"cartao_anterior\": \"1\",\n      \"cartao_novo\": \"2\",\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"valor_unitario\": \"25.00\",\n      \"total\": \"25.00\",\n      \"limite_minimo_anterior\": null,\n      \"limite_minimo_novo\": null,\n      \"limite_maximo_anterior\": null,\n      \"limite_maximo_novo\": null\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_36",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "notas_assinadas histórico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175017\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"notas_assinadas\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"codigo_nota\": \"N1\",\n      \"codigo_entrada\": \"2\",\n      \"codigo_cliente\": \"1\",\n      \"valor\": \"20.00\"\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_37",
+      "_type": "request",
+      "parentId": "fld_4",
+      "name": "financeiro histórico",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614175018\",\n  \"sequencia\": \"2\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"historico\",\n  \"recursos\": [],\n  \"tipo_envio\": \"financeiro\",\n  \"total_registros\": 1,\n  \"dados\": [\n    {\n      \"componentes\": {\n        \"consumo\": \"104.00\",\n        \"servico\": \"10.40\",\n        \"complemento\": \"0.00\",\n        \"taxas_entrada\": \"0.00\",\n        \"produto_embutido\": \"0.00\",\n        \"flyers\": \"0.00\"\n      },\n      \"totais_oficiais\": {\n        \"projetado\": \"114.40\",\n        \"recebido\": \"94.40\",\n        \"notas_assinadas\": \"20.00\",\n        \"descontos\": \"5.00\"\n      },\n      \"entradas\": {\n        \"habilitados\": 2,\n        \"reabilitados\": 0,\n        \"encerrados\": 2,\n        \"abertos\": 0\n      },\n      \"meios\": [\n        {\n          \"codigo\": \"DIN\",\n          \"rotulo\": \"Dinheiro\",\n          \"classe\": \"dinheiro\",\n          \"valor\": \"50.00\"\n        },\n        {\n          \"codigo\": \"PIX\",\n          \"rotulo\": \"Pix\",\n          \"classe\": \"pix\",\n          \"valor\": \"44.40\"\n        },\n        {\n          \"codigo\": \"NOTA\",\n          \"rotulo\": \"Nota assinada\",\n          \"classe\": \"nota_assinada\",\n          \"valor\": \"20.00\"\n        }\n      ],\n      \"publico\": [\n        {\n          \"sexo\": \"nao_informado\",\n          \"categoria\": \"pagante\",\n          \"quantidade\": 4\n        }\n      ]\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_38",
+      "_type": "request",
+      "parentId": "fld_5",
+      "name": "Página 1 de 2",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614176001\",\n  \"sequencia\": \"3\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 2\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_39",
+      "_type": "request",
+      "parentId": "fld_6",
+      "name": "401 sem token",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_40",
+      "_type": "request",
+      "parentId": "fld_6",
+      "name": "401 token inválido",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}x"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_41",
+      "_type": "request",
+      "parentId": "fld_6",
+      "name": "409 mesmo ID divergente",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 3,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_42",
+      "_type": "request",
+      "parentId": "fld_6",
+      "name": "409 sequência antiga",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614176002\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_43",
+      "_type": "request",
+      "parentId": "fld_6",
+      "name": "422 campo desconhecido",
+      "url": "{{ _.base_url }}",
+      "method": "POST",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"versao_formato\": 2,\n  \"versao_scc\": \"smoke-v2\",\n  \"enviado_em\": \"2026-11-01T15:00:00-03:00\",\n  \"id_envio\": \"123e4567-e89b-42d3-a456-426614174003\",\n  \"sequencia\": \"1\",\n  \"natureza\": \"simulacao\",\n  \"pagina\": {\n    \"numero\": 1,\n    \"total\": 1\n  },\n  \"modo\": \"fotografia\",\n  \"dia_movimento\": \"2026-11-01\",\n  \"fonte\": \"online\",\n  \"recursos\": [],\n  \"tipo_envio\": \"itens_vendidos\",\n  \"total_registros\": 4,\n  \"dados\": [\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"49.00\",\n      \"custos\": \"20.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"1\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P300\",\n      \"produto\": \"Sobremesa\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"17.00\",\n      \"custos\": \"5.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"1\",\n      \"garcom\": \"Operador 1\",\n      \"mesa\": 1\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 1,\n      \"codigo_produto\": \"P100\",\n      \"produto\": \"Prato\",\n      \"quantidade\": \"1\",\n      \"vendas\": \"24.00\",\n      \"custos\": \"10.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    },\n    {\n      \"codigo_entrada\": \"2\",\n      \"ordinal\": 2,\n      \"codigo_produto\": \"P200\",\n      \"produto\": \"Bebida\",\n      \"quantidade\": \"2\",\n      \"vendas\": \"16.00\",\n      \"custos\": \"6.00\",\n      \"codigo_pdv\": \"PDV1\",\n      \"pdv\": \"Salão\",\n      \"codigo_grupo\": \"G1\",\n      \"grupo\": \"Produtos\",\n      \"codigo_garcom\": \"2\",\n      \"garcom\": \"Operador 2\",\n      \"mesa\": 2\n    }\n  ],\n  \"campo_desconhecido\": true\n}"
+      }
+    }
+  ]
+}

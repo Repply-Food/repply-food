@@ -339,6 +339,21 @@ const PRIVILEGIOS: Record<string, { anon: string[]; authenticated: string[] }> =
   {
     acessos: SO_RLS,
     admins_repply: SO_RLS,
+    cargas_scc: { anon: [], authenticated: [] },
+    paginas_scc: { anon: [], authenticated: [] },
+    cursores_scc: { anon: [], authenticated: [] },
+    limites_requisicao_scc: { anon: [], authenticated: [] },
+    fotografias_scc: { anon: [], authenticated: ["SELECT"] },
+    revisoes_scc: { anon: [], authenticated: ["SELECT"] },
+    produtos_scc: { anon: [], authenticated: ["SELECT"] },
+    itens_vendidos_scc: { anon: [], authenticated: ["SELECT"] },
+    comissoes_scc: { anon: [], authenticated: ["SELECT"] },
+    movimentos_caixa_scc: { anon: [], authenticated: ["SELECT"] },
+    eventos_auditoria_scc: { anon: [], authenticated: ["SELECT"] },
+    notas_assinadas_scc: { anon: [], authenticated: ["SELECT"] },
+    financeiro_scc: { anon: [], authenticated: ["SELECT"] },
+    financeiro_meios_scc: { anon: [], authenticated: ["SELECT"] },
+    financeiro_publico_scc: { anon: [], authenticated: ["SELECT"] },
     // Caixa interna do alarme: só as funções privilegiadas e a Edge Function
     // (service_role) operam. Nem dono nem admin Repply a expõem pela API.
     alertas_sinal: { anon: [], authenticated: [] },

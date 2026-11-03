@@ -5,7 +5,7 @@ import { ErroRelatorio } from "@/lib/relatorios/leitura";
 import { obterOpcoes } from "@/lib/relatorios/opcoes";
 import type { FiltrosRelatorio } from "@/lib/relatorios/tipos";
 import type { Relatorio } from "@/lib/validators/relatorios";
-import { RELATORIOS } from "@/supabase/functions/_shared/relatorios/schemas";
+import { RELATORIOS } from "@/supabase/functions/_shared/scc/relatorios-legado";
 import { z } from "zod";
 
 export async function obterOpcoesAction(

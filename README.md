@@ -191,7 +191,7 @@ O script Node gera em diretório temporário exclusivo junto ao destino, valida 
 
 O sistema SCC envia as contas para a função `receber-envio` a cada ~5 minutos, com um token por restaurante. Um **gerador de dados fictícios** simula o envio pelo mesmo caminho enquanto a integração não existe.
 
-Os seis novos relatórios têm contrato e recepção separados, em `receber-relatorios`; eles não alteram o envio de contas. O estado de implementação e o procedimento local estão em [`docs/operacao/relatorios.md`](docs/operacao/relatorios.md). A importação da amostra pode ser validada sem banco com `--dry-run`; isso não comprova importação HTTP nem homologação.
+Os seis relatórios e as contas usam o mesmo receptor SCC, com envios tipados. Consulte o [contrato v2](docs/integracao-scc/contrato-de-dados.md) e o [roteiro local de smoke](docs/integracao-scc/smoke-webhook-v2-local.md). A implementação local não comprova publicação ou homologação com a SCC.
 
 ## Gerador de dados fictícios
 

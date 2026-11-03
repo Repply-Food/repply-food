@@ -20,7 +20,10 @@
     "supabase:reset": "npx supabase db reset",
     "functions:serve": "npx supabase functions serve",
     "gerador": "tsx scripts/gerador-dados-ficticios.ts",
-    "local:acesso": "node --env-file=.env.local --import tsx scripts/acesso-local.ts"
+    "local:acesso": "node --env-file=.env.local --import tsx scripts/acesso-local.ts",
+    "smoke:scc:preparar": "node --env-file-if-exists=.env.smoke-local --import tsx scripts/preparar-smoke-scc-local.ts",
+    "smoke:scc:gerar": "tsx scripts/scc/gerar-smoke-v2.ts",
+    "smoke:scc:enviar": "node --env-file-if-exists=.env.smoke-local --import tsx scripts/scc/enviar-v2.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

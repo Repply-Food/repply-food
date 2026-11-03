@@ -1,5 +1,5 @@
 import type { Client } from "pg";
-import type { PedidoRelatorios } from "../../supabase/functions/_shared/relatorios/schemas";
+import type { PedidoRelatorios } from "../../supabase/functions/_shared/scc/relatorios-legado";
 
 /** Chama as RPCs reais que serão criadas na tarefa de ingestão. */
 export async function publicarDireto(

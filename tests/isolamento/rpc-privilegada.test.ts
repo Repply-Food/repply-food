@@ -9,6 +9,9 @@ import {
 } from "../helpers/supabase-local";
 
 const funcoesReservadas = [
+  "public.receber_pagina_scc_v2(uuid,jsonb)",
+  "public.consumir_limite_scc(uuid)",
+  "public.limpar_cargas_scc_v2()",
   "public.validar_linha_relatorio(text,jsonb)",
   "public.processar_envio(uuid,jsonb,text[])",
   "public.recalcular_dia_operacao(uuid)",
@@ -78,6 +81,10 @@ describe("RPCs reservadas", () => {
 
   it("recusa execução real para anon e authenticated, inclusive admin", async () => {
     const chamadas = [
+      "select public.receber_pagina_scc_v2(null::uuid, null::jsonb)",
+      "select public.consumir_limite_scc(null::uuid)",
+      "select public.validar_pagina_scc_v2(null::jsonb)",
+      "select public.limpar_cargas_scc_v2()",
       "select public.validar_linha_relatorio(null::text, null::jsonb)",
       "select public.processar_envio(null::uuid, null::jsonb)",
       "select public.recalcular_dia_operacao(null::uuid)",

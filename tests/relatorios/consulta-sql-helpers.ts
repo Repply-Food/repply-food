@@ -43,48 +43,47 @@ export async function publicarFixture(
     linhas?: Record<string, unknown>[];
   } = {}
 ) {
-  const carga = randomUUID();
-  await banco.query(
-    `insert into public.relatorio_cargas
-      (restaurante_id,id,relatorio,dia_movimento,fonte,sequencia,capturado_em,
-       natureza,recursos,total_paginas,total_linhas,estado)
-     values ($1,$2,$3,$4,$5,1,$6,$7,$8,1,$9,'publicada')`,
-    [
-      casa,
-      carga,
-      relatorio,
-      dia,
-      fonte,
-      capturadoEm,
-      natureza,
-      recursos,
-      linhas.length,
-    ]
+  const tipos: Record<string, string> = {
+    produtos: "itens_vendidos",
+    comissao: "comissoes",
+    caixa: "movimentos_caixa",
+    auditoria: "eventos_auditoria",
+    "notas-assinadas": "notas_assinadas",
+    financeiro: "financeiro",
+  };
+  const tipo = tipos[relatorio];
+  if (!tipo) throw new Error(`Relatório desconhecido: ${relatorio}`);
+  const { rows } = await banco.query<{ sequencia: string }>(
+    `select (coalesce(max(sequencia),0)+1)::text as sequencia
+       from public.cursores_scc
+      where restaurante_id=$1 and tipo_envio=$2 and chave_escopo=$3`,
+    [casa, tipo, `${dia}|${fonte}`]
   );
-  await banco.query(
-    `insert into public.relatorio_publicacoes
-      (restaurante_id,carga_id,relatorio,dia_movimento,fonte,sequencia,
-       capturado_em,natureza,recursos,quantidade)
-     values ($1,$2,$3,$4,$5,1,$6,$7,$8,$9)`,
-    [
-      casa,
-      carga,
-      relatorio,
-      dia,
-      fonte,
-      capturadoEm,
-      natureza,
-      recursos,
-      linhas.length,
-    ]
+  const dados = linhas.map((linha, indice) =>
+    relatorio === "produtos"
+      ? { codigo_entrada: "fixture", ordinal: indice + 1, ...linha }
+      : linha
   );
-  for (const [indice, linha] of linhas.entries())
-    await banco.query(
-      `insert into public.relatorio_linhas
-        (restaurante_id,relatorio,dia_movimento,fonte,posicao,dados)
-       values ($1,$2,$3,$4,$5,$6::jsonb)`,
-      [casa, relatorio, dia, fonte, indice + 1, JSON.stringify(linha)]
-    );
+  const envelope = {
+    versao_formato: 2,
+    versao_scc: "fixture",
+    enviado_em: capturadoEm,
+    id_envio: randomUUID(),
+    sequencia: rows[0]?.sequencia ?? "1",
+    natureza,
+    tipo_envio: tipo,
+    modo: "fotografia",
+    dia_movimento: dia,
+    fonte,
+    recursos,
+    pagina: { numero: 1, total: 1 },
+    total_registros: dados.length,
+    dados,
+  };
+  await banco.query("select public.receber_pagina_scc_v2($1,$2::jsonb)", [
+    casa,
+    JSON.stringify(envelope),
+  ]);
 }
 
 /** Erro esperado não aborta a transação externa nem mascara erro diferente. */

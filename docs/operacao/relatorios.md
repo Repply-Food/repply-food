@@ -1,3 +1,5 @@
+> **Histórico — substituído pelo [contrato SCC v2](../integracao-scc/contrato-de-dados.md) e pelo [roteiro local v2](../integracao-scc/smoke-webhook-v2-local.md).** Os comandos e o receptor separados abaixo foram aposentados; não os execute.
+
 # Relatórios SCC: uso local e homologação
 
 Esta funcionalidade acrescenta Financeiro, Produtos, Comissão, Caixa, Auditoria e Notas assinadas ao painel. O código, o importador fictício e os PDFs existem no repositório local. **Isso não confirma que a mudança foi publicada, que as migrations foram aplicadas em algum banco ou que os números foram homologados com a SCC.** A execução real das migrations no PostgreSQL local continua pendente porque o Supabase não iniciou neste ambiente.

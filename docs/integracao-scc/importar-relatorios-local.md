@@ -1,3 +1,5 @@
+> **Histórico — substituído pelo [contrato SCC v2](../integracao-scc/contrato-de-dados.md) e pelo [roteiro local v2](../integracao-scc/smoke-webhook-v2-local.md).** Os comandos e o receptor separados abaixo foram aposentados; não os execute.
+
 # Importar relatórios fictícios no ambiente local
 
 Os scripts geram somente fantasia e nunca leem os exemplos anexados do cliente.

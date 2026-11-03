@@ -189,6 +189,21 @@ export async function limparFixture(
     // não apaga em cascata quando uma casa é removida. A fixture precisa limpar
     // essas tabelas técnicas explicitamente antes de excluir o restaurante.
     for (const tabela of [
+      "financeiro_meios_scc",
+      "financeiro_publico_scc",
+      "financeiro_scc",
+      "itens_vendidos_scc",
+      "comissoes_scc",
+      "movimentos_caixa_scc",
+      "eventos_auditoria_scc",
+      "notas_assinadas_scc",
+      "fotografias_scc",
+      "paginas_scc",
+      "cursores_scc",
+      "cargas_scc",
+      "revisoes_scc",
+      "limites_requisicao_scc",
+      "produtos_scc",
       "relatorio_linhas",
       "relatorio_publicacoes",
       "relatorio_paginas",
@@ -273,6 +288,24 @@ export function envelope(
     janela: { desde, ate },
     lote: { numero: 1, total: 1 },
     entradas,
+  };
+}
+
+let sequenciaV2 = 0;
+export function envelopeV2(dados: unknown[]) {
+  return {
+    versao_formato: 2,
+    tipo_envio: "entradas",
+    versao_scc: "teste-1.0",
+    enviado_em: "2026-10-10T02:00:00Z",
+    id_envio: randomUUID(),
+    sequencia: String(++sequenciaV2),
+    natureza: "scc",
+    modo: "janela",
+    janela: { desde: "2026-10-09", ate: "2026-10-10" },
+    pagina: { numero: 1, total: 1 },
+    total_registros: dados.length,
+    dados,
   };
 }
 

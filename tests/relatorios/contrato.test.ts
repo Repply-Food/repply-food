@@ -12,7 +12,7 @@ import {
   MAX_LINHAS_CARGA,
   MAX_LINHAS_PAGINA,
   MAX_PAGINAS,
-} from "../../supabase/functions/_shared/relatorios/limites";
+} from "../../supabase/functions/_shared/scc/limites-relatorios-legado";
 import {
   casosLinhasInvalidas,
   casosLinhasValidas,

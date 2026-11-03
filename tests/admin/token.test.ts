@@ -7,7 +7,7 @@ import {
   type Fixture,
   conectarBanco,
   criarFixture,
-  envelope,
+  envelopeV2,
   enviar,
   limparFixture,
 } from "../helpers/supabase-local";
@@ -63,7 +63,7 @@ describe("token gerado pelo admin entra na recepção de verdade", () => {
       "insert into public.tokens_envio (restaurante_id, hash, prefixo) values ($1, $2, $3)",
       [fixture.restauranteA, hashDoToken(token), prefixoDoToken(token)]
     );
-    const resposta = await enviar(token, envelope([]));
+    const resposta = await enviar(token, envelopeV2([]));
     expect(resposta.status).toBe(200);
   });
 });
