@@ -210,14 +210,37 @@ describe("ConversaDoMentor", () => {
     expect(screen.queryByText(/Você/)).toBeNull();
   });
 
-  it("preserva as quebras de linha da resposta", () => {
+  it("renderiza a resposta do mentor como markdown, com as quebras preservadas", () => {
     render(<ConversaDoMentor conversa={DETALHE} agoraIso={AGORA} />);
 
-    const resposta = screen.getByText(/A semana fechou em alta\./);
-    expect(resposta.textContent).toBe(
-      "A semana fechou em alta.\nO sábado foi o melhor dia."
-    );
-    expect(resposta.className).toContain("whitespace-pre-wrap");
+    const doMentor = within(
+      screen.getByRole("list", { name: "Mensagens da conversa" })
+    ).getAllByRole("listitem")[1] as HTMLElement;
+    // As duas linhas aparecem, separadas por uma quebra de verdade (<br>).
+    expect(within(doMentor).getByText("A semana fechou em alta.")).toBeTruthy();
+    expect(
+      within(doMentor).getByText("O sábado foi o melhor dia.")
+    ).toBeTruthy();
+    expect(doMentor.querySelector("br")).not.toBeNull();
+  });
+
+  it("renderiza negrito do markdown como <strong>, sem o '**' cru", () => {
+    const comNegrito: DetalheDaConversaParaAdmin = {
+      ...DETALHE,
+      mensagens: [
+        {
+          id: "m1",
+          papel: "mentor",
+          texto: "Ontem fechou com **R$ 6.101,90**.",
+          criada_em: "2026-11-03T13:30:00+00:00",
+        },
+      ],
+    };
+    render(<ConversaDoMentor conversa={comNegrito} agoraIso={AGORA} />);
+
+    const forte = screen.getByText("R$ 6.101,90");
+    expect(forte.tagName).toBe("STRONG");
+    expect(document.body.textContent).not.toContain("**");
   });
 
   it("conversa sem mensagem diz isso, em vez de uma tela em branco", () => {
