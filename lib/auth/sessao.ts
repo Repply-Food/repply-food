@@ -12,6 +12,7 @@ export type CasaDoLogin = {
   nome: string;
   situacao: "ativo" | "suspenso";
   fuso: string;
+  modulos: string[]; // módulos opcionais ligados (ver lib/painel/modulos.ts)
 };
 
 export type Sessao = {
@@ -33,6 +34,7 @@ function paraCasa(c: {
   nome: string;
   situacao: string;
   fuso: string;
+  modulos: string[] | null;
 }): CasaDoLogin {
   return {
     id: c.id,
@@ -40,6 +42,7 @@ function paraCasa(c: {
     nome: c.nome,
     fuso: c.fuso,
     situacao: c.situacao === "suspenso" ? "suspenso" : "ativo",
+    modulos: c.modulos ?? [],
   };
 }
 
@@ -76,7 +79,7 @@ export const obterSessao = cache(async (): Promise<Sessao | null> => {
     supabase.rpc("eh_admin_repply"),
     supabase
       .from("restaurantes")
-      .select("id, slug, nome, situacao, fuso, acessos!inner(user_id)")
+      .select("id, slug, nome, situacao, fuso, modulos, acessos!inner(user_id)")
       .eq("acessos.user_id", user.id)
       .order("nome"),
   ]);
@@ -111,7 +114,7 @@ const casaPeloEndereco = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("restaurantes")
-      .select("id, slug, nome, situacao, fuso")
+      .select("id, slug, nome, situacao, fuso, modulos")
       .eq("slug", slug)
       .maybeSingle();
     if (error) falhaNaSessao();
