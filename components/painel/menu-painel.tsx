@@ -15,11 +15,17 @@ const ITENS = [
   { tela: "hoje", rotulo: "Hoje", Icone: LayoutDashboard },
   { tela: "resultados", rotulo: "Resultados", Icone: ChartColumn },
   { tela: "ajustes", rotulo: "Ajustes", Icone: Settings },
-  { tela: "mentor", rotulo: "Mentor", Icone: MessageCircle, modulo: "mentor" },
+  {
+    tela: "mentor",
+    rotulo: "Mentor",
+    Icone: MessageCircle,
+    modulo: "mentor" satisfies ModuloOpcional,
+  },
 ] as const;
 
 /**
- * Hoje · Resultados · Ajustes · Mentor. "lateral" é a barra escura do
+ * Hoje · Resultados · Ajustes, mais Mentor só quando a casa tem o módulo
+ * "mentor" (então são 3 ou 4 abas). "lateral" é a barra escura do
  * computador; "inferior" é o menu fixo do celular (alvos de 56 px). A tela
  * atual vai em negrito, com o traço laranja e `aria-current`: não só a cor.
  */
@@ -34,10 +40,10 @@ export function MenuPainel({
 }) {
   const caminho = usePathname();
   const itens = ITENS.filter(
-    (item) =>
-      !("modulo" in item) ||
-      casaTemModulo(modulos, item.modulo as ModuloOpcional)
+    (item) => !("modulo" in item) || casaTemModulo(modulos, item.modulo)
   );
+  // Literais (o Tailwind não enxerga classe interpolada): 3 ou 4 abas.
+  const colunas = itens.length === 4 ? "grid-cols-4" : "grid-cols-3";
   return (
     <nav
       aria-label="Telas da casa"
@@ -45,7 +51,7 @@ export function MenuPainel({
     >
       <ul
         className={
-          variante === "inferior" ? "grid grid-cols-4" : "flex flex-col gap-1"
+          variante === "inferior" ? `grid ${colunas}` : "flex flex-col gap-1"
         }
       >
         {itens.map(({ tela, rotulo, Icone }) => {

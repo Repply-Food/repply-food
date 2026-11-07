@@ -49,6 +49,11 @@ describe("moldura do painel", () => {
       expect(screen.getByRole("link", { name: "Resultados" })).toBeTruthy();
       expect(screen.getByRole("link", { name: "Ajustes" })).toBeTruthy();
       expect(screen.queryByRole("link", { name: "Mentor" })).toBeNull();
+      if (variante === "inferior") {
+        const classes = screen.getByRole("list").className;
+        expect(classes).toContain("grid-cols-3");
+        expect(classes).not.toContain("grid-cols-4");
+      }
     }
   );
 
