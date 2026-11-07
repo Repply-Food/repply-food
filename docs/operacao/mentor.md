@@ -106,7 +106,7 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 
 Nada abaixo foi feito. Cada passo na nuvem pede o ok do Lucas Ferreira na hora (`AGENTS.md` §4).
 
-1. **Aplicar as migrations do mentor na nuvem, ANTES do deploy do painel:** `20261030100000_mentor_conversas.sql`, `20261030110000_mentor_cartilha_uso.sql`, `20261030120000_mentor_limite_protegido.sql` e `20261103120000_mentor_retencao.sql`. Sem elas, toda pergunta cai em `falha_mentor_limite` (o mentor fecha, educadamente, mas fica fora do ar).
+1. **Aplicar as migrations do mentor na nuvem, ANTES do deploy do painel:** `20261030100000_mentor_conversas.sql`, `20261030110000_mentor_cartilha_uso.sql`, `20261030120000_mentor_limite_protegido.sql`, `20261103120000_mentor_retencao.sql` e `20261106120000_modulos_por_casa.sql` (cria `restaurantes.modulos`). Sem as quatro primeiras, toda pergunta cai em `falha_mentor_limite` (o mentor fecha, educadamente, mas fica fora do ar). Sem a última, o cartão "Módulos" do admin e a leitura de `casa.modulos` quebram em produção.
 2. **Conta de IA e chave:** criar a conta do produto no provedor e pôr `MENTOR_IA_CHAVE`, e `MENTOR_IA_MODELO` com um modelo concreto, nas variáveis da Vercel.
 3. **Teste manual com o Gemini de verdade** (a suíte não chama a API): conferir uma pergunta com ferramenta, uma pergunta fora do assunto, uma pergunta fiscal, o limite e o tempo de resposta.
 4. Os dois itens de produto que estavam pendentes (acesso do admin às telas e aviso de privacidade do dono) **foram feitos em 03/11/2026**: [`divida-tecnica.md`](../divida-tecnica.md) itens 67 e 68, em "Resolvidos". Nada a fazer aqui. O Vertex AI em São Paulo **não** é pré-requisito: o Lucas Ferreira confirmou o Gemini no piloto (D-73, item 69).
@@ -120,5 +120,5 @@ Por padrão o mentor vem **desligado em toda casa**, as que já existem e as nov
 Para ligar: admin, abra a casa (detalhe do restaurante), cartão **"Módulos"**, botão **"Ligar o Mentor"**. Vale na hora para aquela casa e só para ela.
 
 - Desligar de novo **não apaga as conversas**: elas ficam guardadas (até os 12 meses do §6) e voltam a aparecer se o mentor for religado.
-- A casa de demonstração é a exceção: já vem com o mentor ligado.
+- A casa de demonstração é a 1ª exceção: ela não vem ligada sozinha; o admin liga o mentor nela na publicação, como em qualquer casa.
 - Esconder a aba é só conforto; a trava de verdade está no servidor, que recusa a pergunta de quem está com o módulo desligado.
