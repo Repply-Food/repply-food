@@ -6,7 +6,7 @@ import { MenuPainel } from "./menu-painel";
 import { SeloDados } from "./selo-dados";
 
 type Props = {
-  casa: { nome: string; slug: string };
+  casa: { nome: string; slug: string; modulos: string[] };
   selo: Selo;
   /** Faixa fixa no topo: o admin vendo o painel do cliente (D-58). */
   faixa?: ReactNode;
@@ -32,7 +32,11 @@ export function MolduraPainel({
     <div className="min-h-dvh">
       <aside className="scheme-ink fixed inset-y-0 left-0 hidden w-60 flex-col gap-6 p-4 md:flex">
         <Logo variante="escuro" className="px-1 pt-2" />
-        <MenuPainel slug={casa.slug} variante="lateral" />
+        <MenuPainel
+          slug={casa.slug}
+          variante="lateral"
+          modulos={casa.modulos}
+        />
         <div className="mt-auto flex flex-col gap-2 px-1 pb-2">
           <strong className="text-sm">{casa.nome}</strong>
           {trocarDeCasa ? (
@@ -81,7 +85,11 @@ export function MolduraPainel({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
-        <MenuPainel slug={casa.slug} variante="inferior" />
+        <MenuPainel
+          slug={casa.slug}
+          variante="inferior"
+          modulos={casa.modulos}
+        />
       </div>
     </div>
   );

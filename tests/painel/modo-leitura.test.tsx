@@ -15,7 +15,7 @@ const selo: Selo = {
   texto: "atualizado há 2 min",
   textoCurto: "há 2 min",
 };
-const casa = { nome: "Casa X", slug: "casa-x" };
+const casa = { nome: "Casa X", slug: "casa-x", modulos: ["mentor"] };
 
 describe("admin vendo o painel do cliente (D-58)", () => {
   it("a faixa diz de quem é o painel, que é só leitura, e volta ao admin", () => {

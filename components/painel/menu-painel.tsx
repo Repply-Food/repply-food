@@ -1,5 +1,6 @@
 "use client";
 
+import { type ModuloOpcional, casaTemModulo } from "@/lib/painel/modulos";
 import { cn } from "@/lib/utils";
 import {
   ChartColumn,
@@ -14,7 +15,7 @@ const ITENS = [
   { tela: "hoje", rotulo: "Hoje", Icone: LayoutDashboard },
   { tela: "resultados", rotulo: "Resultados", Icone: ChartColumn },
   { tela: "ajustes", rotulo: "Ajustes", Icone: Settings },
-  { tela: "mentor", rotulo: "Mentor", Icone: MessageCircle },
+  { tela: "mentor", rotulo: "Mentor", Icone: MessageCircle, modulo: "mentor" },
 ] as const;
 
 /**
@@ -25,11 +26,18 @@ const ITENS = [
 export function MenuPainel({
   slug,
   variante,
+  modulos,
 }: {
   slug: string;
   variante: "lateral" | "inferior";
+  modulos: string[];
 }) {
   const caminho = usePathname();
+  const itens = ITENS.filter(
+    (item) =>
+      !("modulo" in item) ||
+      casaTemModulo(modulos, item.modulo as ModuloOpcional)
+  );
   return (
     <nav
       aria-label="Telas da casa"
@@ -40,7 +48,7 @@ export function MenuPainel({
           variante === "inferior" ? "grid grid-cols-4" : "flex flex-col gap-1"
         }
       >
-        {ITENS.map(({ tela, rotulo, Icone }) => {
+        {itens.map(({ tela, rotulo, Icone }) => {
           const href = `/r/${slug}/${tela}`;
           const atual =
             caminho === href ||

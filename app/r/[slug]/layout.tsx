@@ -44,7 +44,7 @@ export default async function LayoutCasa({
 
   return (
     <MolduraPainel
-      casa={{ nome: casa.nome, slug: casa.slug }}
+      casa={{ nome: casa.nome, slug: casa.slug, modulos: casa.modulos }}
       selo={selo}
       faixa={
         modoAdmin ? (

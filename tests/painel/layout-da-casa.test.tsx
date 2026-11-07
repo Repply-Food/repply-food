@@ -35,6 +35,7 @@ const CASA = {
   nome: "Casa X",
   situacao: "ativo",
   fuso: "America/Fortaleza",
+  modulos: [] as string[],
 };
 
 function sessao(ehAdmin: boolean, casas: unknown[]) {

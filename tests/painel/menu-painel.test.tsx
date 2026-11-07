@@ -17,7 +17,9 @@ describe("moldura do painel", () => {
   it.each(["lateral", "inferior"] as const)(
     "o menu %s leva aos quatro destinos da casa e marca Resultados na rota de relatórios",
     (variante) => {
-      render(<MenuPainel slug="casa-x" variante={variante} />);
+      render(
+        <MenuPainel slug="casa-x" variante={variante} modulos={["mentor"]} />
+      );
       const links = screen.getAllByRole("link");
       expect(links.map((link) => link.getAttribute("href"))).toEqual([
         "/r/casa-x/hoje",
@@ -38,6 +40,24 @@ describe("moldura do painel", () => {
         expect(screen.getByRole("list").className).toContain("grid-cols-4");
     }
   );
+
+  it.each(["lateral", "inferior"] as const)(
+    "o menu %s esconde a aba Mentor quando a casa não tem o módulo",
+    (variante) => {
+      render(<MenuPainel slug="casa-x" variante={variante} modulos={[]} />);
+      expect(screen.getByRole("link", { name: "Hoje" })).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Resultados" })).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Ajustes" })).toBeTruthy();
+      expect(screen.queryByRole("link", { name: "Mentor" })).toBeNull();
+    }
+  );
+
+  it("o menu mostra a aba Mentor quando a casa tem o módulo", () => {
+    render(
+      <MenuPainel slug="casa-x" variante="lateral" modulos={["mentor"]} />
+    );
+    expect(screen.getByRole("link", { name: "Mentor" })).toBeTruthy();
+  });
 
   it("o selo sempre mostra o texto, não só a cor", () => {
     render(
@@ -96,7 +116,10 @@ describe("selo do vigia: texto curto no celular, completo no resto", () => {
 
   it("a moldura usa o curto no cabeçalho do celular e o completo na barra lateral", () => {
     const { container } = render(
-      <MolduraPainel casa={{ nome: "Casa X", slug: "casa-x" }} selo={selo}>
+      <MolduraPainel
+        casa={{ nome: "Casa X", slug: "casa-x", modulos: ["mentor"] }}
+        selo={selo}
+      >
         <p>conteúdo</p>
       </MolduraPainel>
     );
