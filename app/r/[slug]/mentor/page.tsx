@@ -1,6 +1,8 @@
 import { ChatMentor } from "@/components/painel/mentor/chat-mentor";
 import { exigirCasa } from "@/lib/auth/sessao";
 import { conversasDaCasa, mensagensDaConversa } from "@/lib/mentor/leitura";
+import { casaTemModulo } from "@/lib/painel/modulos";
+import { notFound } from "next/navigation";
 
 export const metadata = { title: "Mentor · repply food." };
 
@@ -15,6 +17,7 @@ export default async function PaginaMentor({
 }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { casa, modoAdmin } = await exigirCasa(slug);
+  if (!casaTemModulo(casa.modulos, "mentor")) notFound();
 
   // A conversa de hoje é a mais recente que tem mensagem (a lista já ignora as
   // vazias). Sem nenhuma, o chat abre no estado vazio. Falha de leitura vira a

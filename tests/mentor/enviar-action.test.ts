@@ -22,14 +22,14 @@ const CONVERSA = "22222222-2222-4222-8222-222222222222";
 
 function dono() {
   exigirCasa.mockResolvedValue({
-    casa: { id: CASA },
+    casa: { id: CASA, modulos: ["mentor"] },
     modoAdmin: false,
     sessao: {},
   });
 }
 function admin() {
   exigirCasa.mockResolvedValue({
-    casa: { id: CASA },
+    casa: { id: CASA, modulos: ["mentor"] },
     modoAdmin: true,
     sessao: {},
   });
@@ -107,6 +107,26 @@ describe("enviarMensagemAction", () => {
     expect(r).toEqual({
       ok: false,
       error: "no modo leitura do admin o mentor não responde",
+    });
+    expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+
+  it("recusa quando a casa não tem o módulo mentor, SEM chamar o cérebro", async () => {
+    exigirCasa.mockResolvedValue({
+      casa: { id: CASA, modulos: [] },
+      modoAdmin: false,
+      sessao: {},
+    });
+
+    const r = await enviarMensagemAction(
+      "bar-do-ze",
+      null,
+      "Como foi a semana?"
+    );
+
+    expect(r).toEqual({
+      ok: false,
+      error: "o mentor não está disponível nesta casa",
     });
     expect(responderNoMentor).not.toHaveBeenCalled();
   });

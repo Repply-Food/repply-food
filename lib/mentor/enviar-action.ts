@@ -1,6 +1,7 @@
 "use server";
 
 import { exigirCasa } from "@/lib/auth/sessao";
+import { casaTemModulo } from "@/lib/painel/modulos";
 import { z } from "zod";
 import { responderNoMentor } from "./conversa";
 
@@ -23,6 +24,7 @@ import { responderNoMentor } from "./conversa";
  * Next aplica o da página a toda função do servidor chamada por ela.
  */
 
+const FRASE_SEM_MODULO = "o mentor não está disponível nesta casa";
 const FRASE_ADMIN = "no modo leitura do admin o mentor não responde";
 const FRASE_VAZIA = "escreva sua pergunta para o mentor";
 const FRASE_LONGA =
@@ -47,6 +49,10 @@ export async function enviarMensagemAction(
 ): Promise<Resultado> {
   // Guarda primeiro: o restaurante só pode vir daqui.
   const { casa, modoAdmin } = await exigirCasa(slug);
+  // O menu esconder a aba é só conforto: a trava de verdade é esta.
+  if (!casaTemModulo(casa.modulos, "mentor")) {
+    return { ok: false, error: FRASE_SEM_MODULO };
+  }
   if (modoAdmin) return { ok: false, error: FRASE_ADMIN };
 
   const pergunta = perguntaSchema.safeParse(texto);
