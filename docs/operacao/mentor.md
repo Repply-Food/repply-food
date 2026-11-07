@@ -112,3 +112,13 @@ Nada abaixo foi feito. Cada passo na nuvem pede o ok do Lucas Ferreira na hora (
 4. Os dois itens de produto que estavam pendentes (acesso do admin às telas e aviso de privacidade do dono) **foram feitos em 03/11/2026**: [`divida-tecnica.md`](../divida-tecnica.md) itens 67 e 68, em "Resolvidos". Nada a fazer aqui. O Vertex AI em São Paulo **não** é pré-requisito: o Lucas Ferreira confirmou o Gemini no piloto (D-73, item 69).
 5. Conferir no celular (390 px) e no computador, com tema claro e escuro, o chat vazio e o chat com conversa.
 6. Conferir que a rotina `rf-limpa-mentor` aparece no `cron.job` da nuvem (consulta do §6).
+
+## 9. Ligar o mentor numa casa
+
+Por padrão o mentor vem **desligado em toda casa**, as que já existem e as novas (D-74). Enquanto está desligado, a aba some do menu do dono e o endereço do chat responde 404.
+
+Para ligar: admin, abra a casa (detalhe do restaurante), cartão **"Módulos"**, botão **"Ligar o Mentor"**. Vale na hora para aquela casa e só para ela.
+
+- Desligar de novo **não apaga as conversas**: elas ficam guardadas (até os 12 meses do §6) e voltam a aparecer se o mentor for religado.
+- A casa de demonstração é a exceção: já vem com o mentor ligado.
+- Esconder a aba é só conforto; a trava de verdade está no servidor, que recusa a pergunta de quem está com o módulo desligado.
