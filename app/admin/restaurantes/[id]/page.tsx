@@ -2,6 +2,7 @@ import { CartaoAcesso } from "@/components/admin/cartoes/cartao-acesso";
 import { CartaoDados } from "@/components/admin/cartoes/cartao-dados";
 import { CartaoEnvios } from "@/components/admin/cartoes/cartao-envios";
 import { CartaoHistorico } from "@/components/admin/cartoes/cartao-historico";
+import { CartaoModulos } from "@/components/admin/cartoes/cartao-modulos";
 import { CartaoReenvio } from "@/components/admin/cartoes/cartao-reenvio";
 import { CartaoSituacao } from "@/components/admin/cartoes/cartao-situacao";
 import { CartaoToken } from "@/components/admin/cartoes/cartao-token";
@@ -92,6 +93,7 @@ async function DetalhePane({ id }: { id: string }) {
       <CartaoEnvios detalhe={detalhe} />
       <CartaoReenvio detalhe={detalhe} />
       <CartaoSituacao detalhe={detalhe} />
+      <CartaoModulos detalhe={detalhe} />
       <CartaoHistorico detalhe={detalhe} />
     </>
   );

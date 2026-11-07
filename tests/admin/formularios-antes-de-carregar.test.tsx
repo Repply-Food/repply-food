@@ -41,6 +41,7 @@ const DETALHE: DetalheDoRestaurante = {
     pedidoReenvioDesde: null,
     intervaloEnvioSegundos: 300,
     demonstracao: false,
+    modulos: [],
   },
   sinal: { estado: null, ultimoEnvioOkEm: null },
   tokens: [],

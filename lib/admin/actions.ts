@@ -4,6 +4,7 @@ import "server-only";
 import { AVISO_TROCA } from "@/lib/auth/nucleo";
 import { exigirAdmin } from "@/lib/auth/sessao";
 import { logError } from "@/lib/logger";
+import { MODULOS_OPCIONAIS, type ModuloOpcional } from "@/lib/painel/modulos";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
@@ -646,6 +647,38 @@ export async function mudarSituacaoAction(
     restauranteId,
     acao: situacao === "suspenso" ? "suspendeu" : "reativou",
   });
+  atualizarTelas();
+  return { ok: true };
+}
+
+export async function mudarModuloAction(
+  restauranteId: string,
+  modulo: ModuloOpcional,
+  ligado: boolean
+): Promise<Resultado> {
+  await exigirAdmin();
+  if (!idsValidos(restauranteId) || !MODULOS_OPCIONAIS.includes(modulo)) {
+    return recusa("Pedido inválido.");
+  }
+  const supabase = await createClient();
+  const atual = await supabase
+    .from("restaurantes")
+    .select("modulos")
+    .eq("id", restauranteId)
+    .maybeSingle();
+  if (atual.error) return falha();
+  if (!atual.data) return recusa(NAO_ENCONTRADO);
+
+  const semModulo = (atual.data.modulos ?? []).filter((m) => m !== modulo);
+  const modulos = ligado ? [...semModulo, modulo] : semModulo;
+
+  const { count, error } = await supabase
+    .from("restaurantes")
+    .update({ modulos }, { count: "exact" })
+    .eq("id", restauranteId);
+  if (error) return falha();
+  if (count !== 1) return recusa(NAO_ENCONTRADO);
+
   atualizarTelas();
   return { ok: true };
 }

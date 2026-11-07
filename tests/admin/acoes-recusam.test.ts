@@ -47,6 +47,7 @@ const chamadas: [string, () => Promise<unknown>][] = [
     () => acoes.pedirReenvioAction(ID, { desde: "2026-10-01" }),
   ],
   ["suspender", () => acoes.mudarSituacaoAction(ID, "suspenso")],
+  ["mudar modulo", () => acoes.mudarModuloAction(ID, "mentor", true)],
 ];
 
 const leituras: [string, () => Promise<unknown>][] = [
@@ -102,6 +103,7 @@ describe("toda função do servidor do admin confere por dentro (POST direto)", 
       () => acoes.pedirReenvioAction("x", { desde: "2026-10-01" }),
     ],
     ["suspender", () => acoes.mudarSituacaoAction("x", "suspenso")],
+    ["mudar modulo", () => acoes.mudarModuloAction("x", "mentor", true)],
   ] as const)(
     "%s com id que não é UUID é recusado sem tocar no banco",
     async (_, chamar) => {
@@ -110,6 +112,17 @@ describe("toda função do servidor do admin confere por dentro (POST direto)", 
       expect(createClient).not.toHaveBeenCalled();
     }
   );
+
+  it("mudar módulo com módulo desconhecido é recusado sem tocar no banco", async () => {
+    exigirAdmin.mockResolvedValue({ userId: ID, ehAdmin: true });
+    const r = await acoes.mudarModuloAction(
+      ID,
+      "inexistente" as unknown as import("@/lib/painel/modulos").ModuloOpcional,
+      true
+    );
+    expect(r).toMatchObject({ ok: false });
+    expect(createClient).not.toHaveBeenCalled();
+  });
 
   it("cadastro inválido volta com a frase do campo, sem tocar no banco", async () => {
     exigirAdmin.mockResolvedValue({ userId: ID, ehAdmin: true });

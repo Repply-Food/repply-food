@@ -45,6 +45,7 @@ export type DetalheDoRestaurante = {
     pedidoReenvioDesde: string | null;
     intervaloEnvioSegundos: number;
     demonstracao: boolean;
+    modulos: string[];
   };
   sinal: { estado: EstadoSinal | null; ultimoEnvioOkEm: string | null };
   /** Válidos, o mais novo primeiro. Nunca o hash. */

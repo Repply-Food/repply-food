@@ -31,6 +31,7 @@ function detalhe(
       pedidoReenvioDesde: null,
       intervaloEnvioSegundos: 300,
       demonstracao: false,
+      modulos: [],
     },
     sinal: { estado: "em_dia", ultimoEnvioOkEm: "2026-10-15T00:38:00Z" },
     tokens: [],

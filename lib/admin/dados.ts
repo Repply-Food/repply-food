@@ -129,7 +129,7 @@ export async function detalheDoRestaurante(
       supabase
         .from("restaurantes")
         .select(
-          "id, slug, nome, cnpj, fuso, hora_virada, horario_funcionamento, situacao, pedido_reenvio_desde, intervalo_envio_segundos, demonstracao"
+          "id, slug, nome, cnpj, fuso, hora_virada, horario_funcionamento, situacao, pedido_reenvio_desde, intervalo_envio_segundos, demonstracao, modulos"
         )
         .eq("id", id)
         .maybeSingle(),
@@ -257,6 +257,7 @@ export async function detalheDoRestaurante(
       pedidoReenvioDesde: r.pedido_reenvio_desde,
       intervaloEnvioSegundos: r.intervalo_envio_segundos,
       demonstracao: r.demonstracao,
+      modulos: r.modulos ?? [],
     },
     sinal: {
       estado: estadoDoSinal(sinal.data?.estado),
