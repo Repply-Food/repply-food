@@ -301,4 +301,11 @@ describe("mensagensDaConversa", () => {
   it("conversa sem mensagem devolve lista vazia", async () => {
     expect(await mensagensDaConversa(conversaOrfa, casaA)).toEqual([]);
   });
+
+  it("conversa excluída da própria casa vem vazia (sumiu da vista do dono)", async () => {
+    expect(await mensagensDaConversa(conversaExcluida, casaA)).toEqual([]);
+    expect(await mensagensDaConversa(conversaArquivadaExcluida, casaA)).toEqual(
+      []
+    );
+  });
 });

@@ -553,6 +553,44 @@ describe("continuar uma conversa", () => {
     expect(await mensagensDa(conversaDupla)).toHaveLength(0);
   });
 
+  it("conversa excluída: recusa com a frase, sem gravar nada e sem gastar o dia", async () => {
+    const aberta = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Pergunta da conversa que será excluída",
+      provedor: provedorRoteirizado([texto("Resposta antes de excluir")])
+        .provedor,
+    });
+    expect(aberta.ok).toBe(true);
+    if (!aberta.ok) return;
+
+    // O dono exclui a conversa; uma chamada forjada tenta escrever nela.
+    await banco.query(
+      "update public.mentor_conversas set excluida_em = now() where id = $1",
+      [aberta.conversaId]
+    );
+
+    const usoAntes = await usoDeHoje(casaA);
+    const mensagensAntes = await contar("mentor_mensagens", casaA);
+    const { provedor, responder } = provedorRoteirizado([texto("não deveria")]);
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: aberta.conversaId,
+      mensagemDoDono: "Pergunta forjada na conversa excluída",
+      provedor,
+    });
+
+    expect(resultado).toEqual({ ok: false, error: FRASE_CONVERSA });
+    expect(responder).not.toHaveBeenCalled();
+    expect(logError).not.toHaveBeenCalled();
+    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+    expect(await usoDeHoje(casaA)).toBe(usoAntes);
+    expect((await mensagensDa(aberta.conversaId)).map((m) => m.texto)).toEqual([
+      "Pergunta da conversa que será excluída",
+      "Resposta antes de excluir",
+    ]);
+  });
+
   it("recusa mensagem vazia sem gastar o limite nem chamar o provedor", async () => {
     const usoAntes = await usoDeHoje(casaA);
     const { provedor, responder } = provedorRoteirizado([texto("oi")]);

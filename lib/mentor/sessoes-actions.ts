@@ -42,6 +42,8 @@ const FALHA_ORGANIZAR =
   "não foi possível organizar as conversas agora. Tente de novo em instantes.";
 const FALHA_APAGAR =
   "não foi possível apagar a conversa agora. Tente de novo em instantes.";
+const FRASE_SOMENTE_EXCLUIDA =
+  "só dá para apagar de verdade a conversa que o dono já excluiu";
 
 const CODIGO_NO_LOG = "falha_sessoes_mentor";
 
@@ -191,6 +193,11 @@ export async function excluirConversa(
  * leva elas junto). Só o admin no suporte, com a chave de serviço: o dono
  * nunca alcança este caminho (`exigirAdmin()` é a primeira linha, antes até
  * de olhar o id).
+ *
+ * Só apaga conversa EXCLUÍDA (`excluida_em` não nulo): a tela só mostra o
+ * botão na excluída, e a ação garante o mesmo — sem exclusão do dono, frase
+ * de produto e nenhum DELETE. O DELETE repete o filtro, contra a corrida em
+ * que a conversa deixou de ser excluída entre a leitura e a escrita.
  */
 export async function apagarConversaDeVerdade(
   conversaId: string
@@ -201,10 +208,25 @@ export async function apagarConversaDeVerdade(
   }
 
   const banco = createServiceClient();
+  const atual = await banco
+    .from("mentor_conversas")
+    .select("id, excluida_em")
+    .eq("id", conversaId)
+    .maybeSingle();
+  if (atual.error) {
+    logError(CODIGO_NO_LOG);
+    return { ok: false, error: FALHA_APAGAR };
+  }
+  if (!atual.data) return { ok: false, error: FRASE_CONVERSA };
+  if (atual.data.excluida_em === null) {
+    return { ok: false, error: FRASE_SOMENTE_EXCLUIDA };
+  }
+
   const apagada = await banco
     .from("mentor_conversas")
     .delete()
     .eq("id", conversaId)
+    .not("excluida_em", "is", null)
     .select("id");
   if (apagada.error) {
     logError(CODIGO_NO_LOG);

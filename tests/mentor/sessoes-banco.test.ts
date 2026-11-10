@@ -234,6 +234,25 @@ describe("a trava de quem não é dono", () => {
     expect(noBanco?.arquivada_em).toBeNull();
   });
 
+  it("o dono de B não exclui a conversa de A (zero linhas, continua nula) nem a lê", async () => {
+    const escrita = await donoB
+      .from("mentor_conversas")
+      .update({ excluida_em: new Date().toISOString() })
+      .eq("id", paraArquivar)
+      .select();
+    expect(escrita.error).toBeNull();
+    expect(escrita.data).toHaveLength(0);
+    expect((await conversaNoBanco(paraArquivar))?.excluida_em).toBeNull();
+
+    // SELECT cruzado não vaza: a conversa de A é invisível para B.
+    const leitura = await donoB
+      .from("mentor_conversas")
+      .select("id")
+      .eq("id", paraArquivar);
+    expect(leitura.error).toBeNull();
+    expect(leitura.data).toHaveLength(0);
+  });
+
   it("ninguém apaga a linha direto (DELETE recusado para authenticated)", async () => {
     const apagaA = await donoA
       .from("mentor_conversas")

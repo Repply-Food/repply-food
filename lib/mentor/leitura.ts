@@ -125,12 +125,24 @@ function mensagensValidas(linhas: LinhaDeMensagem[]): MensagemDaConversa[] {
   return mensagens;
 }
 
-/** As mensagens de uma conversa da casa, da mais antiga para a mais recente. */
+/** As mensagens de uma conversa da casa, da mais antiga para a mais recente.
+ * A excluída vem vazia: ela sumiu da vista do dono (defesa em profundidade
+ * junto com a lista, que nem a entrega, e com o cérebro, que recusa escrever
+ * nela). */
 export async function mensagensDaConversa(
   conversaId: string,
   restauranteId: string
 ): Promise<MensagemDaConversa[]> {
   const supabase = await createClient();
+  const conversa = await supabase
+    .from("mentor_conversas")
+    .select("excluida_em")
+    .eq("id", conversaId)
+    .eq("restaurante_id", restauranteId)
+    .maybeSingle();
+  if (conversa.error) falhaNaLeitura();
+  if (conversa.data && conversa.data.excluida_em !== null) return [];
+
   const { data, error } = await supabase
     .from("mentor_mensagens")
     .select("id, papel, texto, criada_em")

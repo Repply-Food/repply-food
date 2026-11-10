@@ -494,4 +494,28 @@ describe("apagar de verdade no admin", () => {
     );
     expect(push).not.toHaveBeenCalled();
   });
+
+  it("erro velho não reaparece: cancelar limpa o erro e reabrir começa limpo", async () => {
+    apagar.mockResolvedValue({
+      ok: false,
+      error:
+        "não foi possível apagar a conversa agora. Tente de novo em instantes.",
+    });
+    render(<ConversaDoMentor conversa={DETALHE_EXCLUIDO} agoraIso={AGORA} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar de verdade" }));
+    await clicar("Continuar");
+    await clicar("Apagar para sempre");
+    expect(await screen.findByRole("alert")).toBeTruthy();
+
+    // Cancelar limpa o erro na hora.
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    // Reabrir começa limpo, sem o erro velho.
+    fireEvent.click(screen.getByRole("button", { name: "Apagar de verdade" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText(/sai da lista do admin/i)).toBeTruthy();
+    expect(apagar).toHaveBeenCalledTimes(1);
+  });
 });

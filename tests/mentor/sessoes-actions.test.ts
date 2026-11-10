@@ -51,6 +51,8 @@ const FALHA_ORGANIZAR =
   "não foi possível organizar as conversas agora. Tente de novo em instantes.";
 const FALHA_APAGAR =
   "não foi possível apagar a conversa agora. Tente de novo em instantes.";
+const FRASE_SOMENTE_EXCLUIDA =
+  "só dá para apagar de verdade a conversa que o dono já excluiu";
 
 type Resposta = { data: unknown; error: unknown };
 
@@ -69,6 +71,7 @@ function bancoFalso(args: { leitura?: Resposta; escrita?: Resposta } = {}) {
   consulta.select = vi.fn(() => consulta);
   consulta.eq = vi.fn(() => consulta);
   consulta.is = vi.fn(() => consulta);
+  consulta.not = vi.fn(() => consulta);
   consulta.update = vi.fn(() => consulta);
   consulta.delete = vi.fn(() => consulta);
   consulta.maybeSingle = vi.fn(() => Promise.resolve(leitura));
@@ -388,9 +391,15 @@ describe("excluirConversa", () => {
 });
 
 describe("apagarConversaDeVerdade", () => {
-  it("o admin apaga pela chave de serviço e atualiza a lista do suporte", async () => {
+  const EXCLUIDA = {
+    data: { id: CONVERSA, excluida_em: "2026-11-01T12:00:00Z" },
+    error: null,
+  };
+
+  it("o admin apaga a EXCLUÍDA pela chave de serviço e atualiza a lista do suporte", async () => {
     admin();
     const banco = bancoFalso({
+      leitura: EXCLUIDA,
       escrita: { data: [{ id: CONVERSA }], error: null },
     });
     createServiceClient.mockReturnValue({ from: banco.from });
@@ -402,9 +411,26 @@ describe("apagarConversaDeVerdade", () => {
     expect(banco.from).toHaveBeenCalledWith("mentor_conversas");
     expect(banco.consulta.delete).toHaveBeenCalledTimes(1);
     expect(banco.consulta.eq).toHaveBeenCalledWith("id", CONVERSA);
+    // Mesmo excluída na leitura, o DELETE exige de novo: corrida em que a
+    // conversa deixou de ser excluída não apaga nada (zero linhas).
+    expect(banco.consulta.not).toHaveBeenCalledWith("excluida_em", "is", null);
     // Chave de serviço: o cliente do dono nunca é tocado.
     expect(createClient).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/admin/mentor/conversas");
+  });
+
+  it("conversa NÃO excluída não é apagada: frase de produto, sem DELETE", async () => {
+    admin();
+    const banco = bancoFalso({
+      leitura: { data: { id: CONVERSA, excluida_em: null }, error: null },
+    });
+    createServiceClient.mockReturnValue({ from: banco.from });
+
+    const r = await apagarConversaDeVerdade(CONVERSA);
+
+    expect(r).toEqual({ ok: false, error: FRASE_SOMENTE_EXCLUIDA });
+    expect(banco.consulta.delete).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("o dono não chama o apagar-de-verdade (barrado antes de tocar no banco)", async () => {
@@ -419,14 +445,15 @@ describe("apagarConversaDeVerdade", () => {
     expect(banco.from).not.toHaveBeenCalled();
   });
 
-  it("conversa que não existe (zero linhas) vira frase de produto", async () => {
+  it("conversa que não existe vira frase de produto, sem DELETE", async () => {
     admin();
-    const banco = bancoFalso({ escrita: { data: [], error: null } });
+    const banco = bancoFalso({ leitura: { data: null, error: null } });
     createServiceClient.mockReturnValue({ from: banco.from });
 
     const r = await apagarConversaDeVerdade(CONVERSA);
 
     expect(r).toEqual({ ok: false, error: FRASE_CONVERSA });
+    expect(banco.consulta.delete).not.toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
@@ -441,9 +468,29 @@ describe("apagarConversaDeVerdade", () => {
     expect(createServiceClient).not.toHaveBeenCalled();
   });
 
-  it("erro do banco vira frase genérica e o log leva só o código", async () => {
+  it("erro do banco na leitura vira frase genérica e o log leva só o código", async () => {
     admin();
     const banco = bancoFalso({
+      leitura: {
+        data: null,
+        error: { code: "XX000", message: "segredo interno do Postgres" },
+      },
+    });
+    createServiceClient.mockReturnValue({ from: banco.from });
+
+    const r = await apagarConversaDeVerdade(CONVERSA);
+
+    expect(r).toEqual({ ok: false, error: FALHA_APAGAR });
+    expect(logError).toHaveBeenCalledWith("falha_sessoes_mentor");
+    expect(JSON.stringify(logError.mock.calls)).not.toContain("segredo");
+    expect(banco.consulta.delete).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("erro do banco no DELETE vira frase genérica e o log leva só o código", async () => {
+    admin();
+    const banco = bancoFalso({
+      leitura: EXCLUIDA,
       escrita: {
         data: null,
         error: { code: "XX000", message: "segredo interno do Postgres" },

@@ -129,7 +129,10 @@ function ApagarDeVerdade({ conversaId }: { conversaId: string }) {
         variant="destructive"
         size="toque"
         className="w-full sm:w-fit md:h-9 md:text-sm"
-        onClick={() => setEtapa("primeira")}
+        onClick={() => {
+          setErro(null);
+          setEtapa("primeira");
+        }}
       >
         Apagar de verdade
       </Button>
@@ -149,7 +152,10 @@ function ApagarDeVerdade({ conversaId }: { conversaId: string }) {
           rotuloConfirmar="Continuar"
           enviando={enviando}
           aoConfirmar={() => setEtapa("segunda")}
-          aoCancelar={() => setEtapa("nada")}
+          aoCancelar={() => {
+            setErro(null);
+            setEtapa("nada");
+          }}
         />
       ) : (
         <Confirmacao
@@ -157,7 +163,10 @@ function ApagarDeVerdade({ conversaId }: { conversaId: string }) {
           rotuloConfirmar="Apagar para sempre"
           enviando={enviando}
           aoConfirmar={apagar}
-          aoCancelar={() => setEtapa("nada")}
+          aoCancelar={() => {
+            setErro(null);
+            setEtapa("nada");
+          }}
         />
       )}
     </>

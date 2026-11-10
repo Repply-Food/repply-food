@@ -35,7 +35,7 @@ Guardar as conversas do dono com o mentor em sessões separadas, cada uma com um
 
 ## Fase 3 — Memória e contexto do mentor
 
-O mentor passa a lembrar do contexto entre conversas (o que a casa já perguntou, preferências), sem reprocessar tudo a cada pergunta. Depende da Fase 2. Respeita a guarda de 12 meses e o isolamento por casa (D-29): a memória de uma casa nunca encosta na de outra.
+O mentor passa a lembrar do contexto entre conversas (o que a casa já perguntou, preferências), sem reprocessar tudo a cada pergunta. Depende da Fase 2. Respeita a guarda de 60 dias se o dono excluir, 12 meses no resto (D-75) e o isolamento por casa (D-29): a memória de uma casa nunca encosta na de outra.
 
 ## Fase 4 — Anexos (arquivos para o mentor analisar)
 

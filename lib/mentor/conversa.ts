@@ -149,7 +149,9 @@ async function lerCartilha(): Promise<string> {
   return data.trim();
 }
 
-/** A conversa existe, é desta casa e o dono a enxerga? Filtra pela casa da sessão. */
+/** A conversa existe, é desta casa e o dono a enxerga? Filtra pela casa da sessão.
+ * A excluída NÃO conta: ela sumiu da vista do dono, e uma chamada forjada não
+ * pode escrever nela (nem gastar o limite do dia com isso). */
 async function conversaDaCasaExiste(
   supabase: Cliente,
   conversaId: string,
@@ -161,6 +163,7 @@ async function conversaDaCasaExiste(
     .select("id")
     .eq("id", conversaId)
     .eq("restaurante_id", restauranteId)
+    .is("excluida_em", null)
     .maybeSingle();
   if (error) throw new FalhaDoMentor("falha_mentor_geral");
   return data !== null;
@@ -241,11 +244,14 @@ async function gravar(
       throw new FalhaDoMentor("falha_mentor_geral");
     }
   } else {
+    // Defesa em profundidade: se a conversa foi excluída entre a checagem e a
+    // gravação, zero linhas falham fechado em vez de ressuscitá-la.
     const atualizada = await supabase
       .from("mentor_conversas")
       .update({ ultima_em: respostaEm })
       .eq("id", conversaId)
       .eq("restaurante_id", dados.restauranteId)
+      .is("excluida_em", null)
       .select("id");
     if (atualizada.error || atualizada.data?.length !== 1) {
       throw new FalhaDoMentor("falha_mentor_geral");
@@ -302,7 +308,19 @@ async function conversar(args: {
   pergunta: string;
   provedor: ProvedorIA;
 }): Promise<ResultadoDoMentor> {
-  const { restauranteId } = args;
+  const { restauranteId, conversaId } = args;
+
+  // 0. A conversa continuada tem de ser desta casa E estar à vista do dono,
+  // ANTES do limite: conversa excluída (ou de outra casa, ou inexistente)
+  // recusa com a frase sem gastar o uso do dia, sem chamar o provedor e sem
+  // gravar nada. A checagem se repete lá dentro (passo 2), contra a corrida em
+  // que o dono exclui entre esta linha e a gravação.
+  if (conversaId !== null) {
+    const antes = await createClient();
+    if (!(await conversaDaCasaExiste(antes, conversaId, restauranteId))) {
+      return { ok: false, error: FRASE_CONVERSA };
+    }
+  }
 
   // 1. Limite primeiro: barrado, o provedor nem é chamado. Erro no contador
   // falha fechado (nunca vira "liberado"). O uso é contado AQUI, antes de
