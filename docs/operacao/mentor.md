@@ -1,6 +1,6 @@
 # Mentor de IA: operação
 
-*Como a equipe Repply opera o mentor: editar a cartilha, ler as conversas, configurar o provedor, entender o limite diário e a retenção. Decisões: D-72 (escopo, cartilha, leitura das conversas, 12 meses) e D-73 (provedor). Desenho: [`2026-10-29-agente-mentor-ia-design.md`](../superpowers/specs/2026-10-29-agente-mentor-ia-design.md); plano: [`2026-10-29-agente-mentor-ia-v1-chat.md`](../superpowers/plans/2026-10-29-agente-mentor-ia-v1-chat.md).*
+*Como a equipe Repply opera o mentor: editar a cartilha, ler as conversas, configurar o provedor, entender o limite diário e a retenção. Decisões: D-72 (escopo, cartilha, leitura das conversas, 12 meses), D-73 (provedor) e D-75 (conversa excluída, 60 dias). Desenho: [`2026-10-29-agente-mentor-ia-design.md`](../superpowers/specs/2026-10-29-agente-mentor-ia-design.md); plano: [`2026-10-29-agente-mentor-ia-v1-chat.md`](../superpowers/plans/2026-10-29-agente-mentor-ia-v1-chat.md).*
 
 > **Estado: v1 (chat) construído e testado no banco local, na branch `mentor-ia`. Ainda não foi publicado** (nem o banco da nuvem nem a Vercel). O que falta para publicar está em "Antes de publicar", no fim. É a **Fase 2** do produto (SPEC §7).
 
@@ -34,7 +34,8 @@ A cartilha **afina**; os trilhos **mandam**. Não tente relaxar um trilho pela c
 
 - **Lista:** `/admin/mentor/conversas`: as conversas de **todas as casas**, da mais recente para a mais antiga, com a casa de cada uma.
 - **Detalhe:** `/admin/mentor/conversas/<id>`: a conversa inteira, com o que o dono perguntou e o que o mentor respondeu.
-- **Só leitura**, como "ver o painel do cliente" (D-38): o admin não escreve conversa nem mensagem (a RLS barra).
+- **Só leitura**, como "ver o painel do cliente" (D-38): o admin não edita conversa nem mensagem (a RLS barra).
+- Conversa excluída pelo dono continua na lista do admin, marcada como **excluída**, enquanto durar a cópia de segurança. No pedido do cliente ao suporte, o admin usa **"Apagar de verdade"** para removê-la na hora.
 - **Para quê:** suporte ("o mentor respondeu errado para a casa X") e melhorar a cartilha (D-72).
 - Conversa sem nenhuma mensagem (a gravação faz a conversa e as mensagens em dois comandos) não aparece.
 
@@ -73,11 +74,14 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 - **Para mudar o teto:** trocar a constante e publicar. O banco não guarda teto por casa.
 - A tabela `mentor_uso` é o único lugar para ver o consumo (o admin lê de todas as casas).
 
-## 6. Retenção: 12 meses
+## 6. Retenção: 60 dias para excluídas, 12 meses para o resto
 
-- As conversas e as mensagens ficam **12 meses** e depois são apagadas (D-72).
+- Quando o dono exclui uma conversa, ela some da lista dele, mas fica como cópia de segurança da empresa por até **60 dias**, para segurança e suporte. A tela avisa esse prazo ao excluir. Depois, a rotina a apaga de verdade sozinha (D-75).
+- Se o cliente pedir pelo suporte, o admin pode usar **"Apagar de verdade"** e removê-la na hora, sem esperar os 60 dias.
+- Arquivar é diferente de excluir: só tira a conversa da lista principal do dono, e ele pode trazê-la de volta.
+- As conversas e mensagens que não foram excluídas pelo dono ficam **12 meses** e depois são apagadas (D-72).
 - **Quem apaga:** a função `public.limpar_conversas_mentor()`, chamada pela rotina `rf-limpa-mentor` do pg_cron, **todo dia às 06:00 UTC** (03:00 em Brasília), depois das outras limpezas (05:00 a 05:45). Migration `20261103120000_mentor_retencao.sql`.
-- **A regra:** cada **mensagem** é apagada pela própria data (`criada_em` com mais de 12 meses). A **conversa** só é apagada quando também tem mais de 12 meses e **ficou sem nenhuma mensagem**. Assim, uma conversa antiga que o dono retomou ontem não perde as mensagens de ontem.
+- **A regra:** conversa excluída pelo dono é apagada inteira ao completar 60 dias. Nas demais, cada **mensagem** é apagada pela própria data (`criada_em` com mais de 12 meses). A **conversa** só é apagada quando também tem mais de 12 meses e **ficou sem nenhuma mensagem**. Assim, uma conversa antiga que o dono retomou ontem não perde as mensagens de ontem.
 - É **global** (todas as casas) e a função é fechada: só o `service_role` executa; o pg_cron roda como `postgres`.
 - **Conferir que está rodando** (é SQL puro, sem `pg_net`, então o `succeeded` aqui vale):
 
@@ -97,7 +101,7 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 |---|---|
 | O que o provedor de IA recebe? | A cartilha, os trilhos, as perguntas do dono e os números de negócio das ferramentas. Nenhum dado pessoal de cliente do restaurante |
 | Quem lê as conversas? | O dono da casa (as dele) e o admin da Repply (todas, só leitura, para suporte e para melhorar o mentor, D-72) |
-| Por quanto tempo? | 12 meses (§6) |
+| Por quanto tempo? | 60 dias quando o dono exclui; 12 meses nos demais casos (§6) |
 | O dono é avisado? | Sim, no chat, abaixo do campo: a equipe da Repply pode ler a conversa para dar suporte, e ela ajuda a melhorar a inteligência artificial (§1; resolveu o item 68 de [`divida-tecnica.md`](../divida-tecnica.md)). Fica por decidir, sem pressa, se entra também uma linha na política de privacidade |
 | O dono vê a cartilha? | Não na tela (ela não existe para o dono e o banco barra a leitura), mas isso é garantia da **interface e da RLS, não da saída do modelo**: um dono insistente poderia fazer o mentor repetir o texto da cartilha. Ela é guia de tom, sem segredo e sem dado de outra casa; não ponha nela nada que a Repply não aceitaria ver vazar (nota na D-72) |
 | Para onde vão os dados na IA? | Para a API do Gemini (Google), por chave, no piloto: a cartilha, os trilhos, as perguntas e os números de negócio vão para fora do Brasil, sem dado pessoal. O Vertex AI em São Paulo fica adiado, como melhoria futura (D-73, item 69) |
