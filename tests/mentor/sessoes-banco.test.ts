@@ -265,6 +265,39 @@ describe("a trava de quem não é dono", () => {
     expect(privilegio.rows[0]).toEqual({ tem: false });
   });
 
+  it("o dono não muda o id da conversa (só título e estado mudam)", async () => {
+    const outroId = "00000000-0000-4000-8000-000000000000";
+    const trocaId = await donoA
+      .from("mentor_conversas")
+      .update({ id: outroId })
+      .eq("id", paraArquivar)
+      .select();
+    expect(trocaId.error).not.toBeNull();
+    expect(trocaId.error?.code).toBe("55000");
+
+    const noBanco = await conversaNoBanco(paraArquivar);
+    expect(noBanco?.id).toBe(paraArquivar);
+  });
+
+  it("o dono atualiza o carimbo de atividade (ultima_em segue mutável)", async () => {
+    const agora = new Date().toISOString();
+    const resposta = await donoA
+      .from("mentor_conversas")
+      .update({ ultima_em: agora })
+      .eq("id", paraArquivar)
+      .select();
+    expect(resposta.error).toBeNull();
+    expect(resposta.data).toHaveLength(1);
+  });
+
+  it("a trava de colunas roda sem search_path (função fechada)", async () => {
+    const conf = await banco.query<{ c: string }>(
+      `select unnest(proconfig) as c from pg_proc
+        where proname = 'travar_colunas_conversa_mentor'`
+    );
+    expect(conf.rows.map((l) => l.c)).toContain('search_path=""');
+  });
+
   it("o dono não muda a casa nem a data de criação da conversa", async () => {
     const trocaCasa = await donoA
       .from("mentor_conversas")
@@ -329,6 +362,31 @@ describe("a faxina apaga de verdade só a excluída há mais de 60 dias", () => 
     expect(await existemMensagens([mensagem])).toEqual([mensagem]);
     // E a excluída de agora há pouco (semana do teste) também continua lá.
     expect(await existemConversas([paraExcluir])).toEqual([paraExcluir]);
+  });
+
+  it("excluída há 10 dias com 13 meses não cai na regra dos 12 meses (fica tudo)", async () => {
+    const conversa = await criarConversa(
+      casaA,
+      "Velha excluída há 10 dias",
+      "13 months",
+      {
+        excluidaHa: "10 days",
+      }
+    );
+    const mensagem = await criarMensagem(
+      casaA,
+      conversa,
+      "pergunta de 13 meses atrás",
+      "13 months"
+    );
+
+    const limpeza = await servico.rpc("limpar_conversas_mentor");
+    expect(limpeza.error).toBeNull();
+
+    // Excluir é apagar com espera de 60 dias (D-75): a regra dos 12 meses não
+    // toca em conversa excluída, nem nas mensagens dela.
+    expect(await existemConversas([conversa])).toEqual([conversa]);
+    expect(await existemMensagens([mensagem])).toEqual([mensagem]);
   });
 
   it("arquivada (não excluída) segue a regra dos 12 meses", async () => {
