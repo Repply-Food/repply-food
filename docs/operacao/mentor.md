@@ -54,12 +54,13 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 |---|---|---|
 | `MENTOR_IA_CHAVE` | Chave da API do provedor (segredo). **Sem ela o mentor não responde**: o dono vê "indisponível agora" e o log registra `falha_mentor_provedor`. Importar o código ou fazer a build sem a chave não quebra nada | nenhum |
 | `MENTOR_IA_PROVEDOR` | Qual provedor usar. Hoje só existe `gemini`. Outro valor falha ao usar, com o motivo no log | `gemini` |
-| `MENTOR_IA_MODELO` | Qual modelo do provedor. **Em produção, fixe um modelo concreto**: o padrão é o apelido `gemini-flash-latest`, que a Google move sozinha, e o comportamento do mentor mudaria sem ninguém mexer | `gemini-flash-latest` |
+| `MENTOR_IA_MODELO` | Qual modelo do provedor. **Em produção, fixe um modelo concreto**: o padrão é o apelido `gemini-flash-latest`, que a Google move sozinha, e o comportamento do mentor mudaria sem ninguém mexer. **No nível grátis do Gemini, o `gemini-flash-latest` vive sobrecarregado e devolve 503 ("high demand") — o dono vê "indisponível"; use `gemini-flash-lite-latest`, que responde** | `gemini-flash-latest` |
 
 - O provedor é uma interface trocável (`lib/mentor/provedor/`): trocar para Claude ou GPT é escrever outra implementação e mudar `MENTOR_IA_PROVEDOR`, sem mexer no resto (D-73).
 - **A conta de IA do produto é separada da conta do Claude Code** que usamos para desenvolver. É uma conta nova, paga por uso, em nome da Repply.
 - Hoje o código fala com a **API do Gemini por chave** (`@google/genai`), e **no piloto é assim que segue** (decisão confirmada pelo Lucas Ferreira em 03/11/2026, D-73): os números do negócio vão para a Google. O desenho preferia o Vertex AI em São Paulo (dado processado no Brasil, D-50); ele fica **adiado, como melhoria futura**, e **não bloqueia a publicação** ([`divida-tecnica.md`](../divida-tecnica.md), item 69). Confirmar nos termos do provedor que a API paga não treina com os nossos dados.
 - **Nunca rode teste com a chave real.** Os testes usam um provedor dublê; a API do Gemini nunca é chamada pela suíte.
+- **Mudou uma variável na Vercel? Faça um _Redeploy_.** A Vercel só injeta as variáveis de runtime num deploy NOVO: adicionar ou alterar uma variável **não** afeta o deploy que já está no ar até você republicar (Deployments → ⋯ → Redeploy). Foi o que derrubou o primeiro teste em produção (10/11/2026): a chave estava na Vercel, mas o `MENTOR_IA_MODELO` foi adicionado **depois** do deploy e, sem redeploy, o mentor seguiu no `gemini-flash-latest` → 503 → "indisponível".
 
 ## 5. O limite diário por casa
 
@@ -107,7 +108,7 @@ O "cérebro" roda no **servidor do painel** (função do servidor do Next), não
 Nada abaixo foi feito. Cada passo na nuvem pede o ok do Lucas Ferreira na hora (`AGENTS.md` §4).
 
 1. **Aplicar as migrations do mentor na nuvem, ANTES do deploy do painel:** `20261030100000_mentor_conversas.sql`, `20261030110000_mentor_cartilha_uso.sql`, `20261030120000_mentor_limite_protegido.sql`, `20261103120000_mentor_retencao.sql` e `20261106120000_modulos_por_casa.sql` (cria `restaurantes.modulos`). Sem as quatro primeiras, toda pergunta cai em `falha_mentor_limite` (o mentor fecha, educadamente, mas fica fora do ar). Sem a última, o cartão "Módulos" do admin e a leitura de `casa.modulos` quebram em produção.
-2. **Conta de IA e chave:** criar a conta do produto no provedor e pôr `MENTOR_IA_CHAVE`, e `MENTOR_IA_MODELO` com um modelo concreto, nas variáveis da Vercel.
+2. **Conta de IA e chave:** criar a conta do produto no provedor e pôr `MENTOR_IA_CHAVE`, e `MENTOR_IA_MODELO` com um modelo concreto (**no grátis, use `gemini-flash-lite-latest`** — o padrão `gemini-flash-latest` dá 503), nas variáveis da Vercel. **Depois de adicionar ou alterar qualquer variável, faça um _Redeploy_** — a Vercel só aplica env novo num deploy novo.
 3. **Teste manual com o Gemini de verdade** (a suíte não chama a API): conferir uma pergunta com ferramenta, uma pergunta fora do assunto, uma pergunta fiscal, o limite e o tempo de resposta.
 4. Os dois itens de produto que estavam pendentes (acesso do admin às telas e aviso de privacidade do dono) **foram feitos em 03/11/2026**: [`divida-tecnica.md`](../divida-tecnica.md) itens 67 e 68, em "Resolvidos". Nada a fazer aqui. O Vertex AI em São Paulo **não** é pré-requisito: o Lucas Ferreira confirmou o Gemini no piloto (D-73, item 69).
 5. Conferir no celular (390 px) e no computador, com tema claro e escuro, o chat vazio e o chat com conversa.
