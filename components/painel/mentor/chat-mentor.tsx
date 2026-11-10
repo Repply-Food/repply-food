@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { enviarMensagemAction } from "@/lib/mentor/enviar-action";
 import { SendHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   type FormEvent,
   type KeyboardEvent,
@@ -52,6 +53,7 @@ export function ChatMentor({
   const idCampo = useId();
   const idAviso = useId();
   const hidratado = useHidratado();
+  const router = useRouter();
   const [mensagens, setMensagens] = useState<MensagemDoChat[]>(
     mensagensIniciais.map(({ id, papel, texto }) => ({ id, papel, texto }))
   );
@@ -109,6 +111,10 @@ export function ChatMentor({
             texto: resultado.data.resposta,
           },
         ]);
+        // A lista ao lado anda junto: a conversa nova aparece nela (e a aberta
+        // volta ao topo). O estado daqui não mexe — a chave só muda de conversa
+        // quando o endereço muda.
+        router.refresh();
       } else {
         falhou(resultado.error);
       }

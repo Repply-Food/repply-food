@@ -17,6 +17,8 @@ const { enviarMensagemAction } = vi.hoisted(() => ({
 
 vi.mock("@/lib/mentor/enviar-action", () => ({ enviarMensagemAction }));
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 import { ChatMentor } from "@/components/painel/mentor/chat-mentor";
 
 const AVISO =
