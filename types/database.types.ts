@@ -1,5 +1,4 @@
 
-// NOTA: coluna `modulos` (restaurantes) adicionada à mão (banco local indisponível). Reconciliar com `npm run types` quando o Supabase local voltar.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -438,14 +437,14 @@ isOneToOne: true
                   ]
                 },"mentor_conversas": {
                   Row: {
-                    "criada_em": string,"id": string,"restaurante_id": string,"titulo": string | null,"ultima_em": string
+                    "arquivada_em": string | null,"criada_em": string,"excluida_em": string | null,"id": string,"restaurante_id": string,"titulo": string | null,"ultima_em": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "criada_em"?: string,"id"?: string,"restaurante_id": string,"titulo"?: string | null,"ultima_em"?: string
+                    "arquivada_em"?: string | null,"criada_em"?: string,"excluida_em"?: string | null,"id"?: string,"restaurante_id": string,"titulo"?: string | null,"ultima_em"?: string
                   }
                   Update: {
-                    "criada_em"?: string,"id"?: string,"restaurante_id"?: string,"titulo"?: string | null,"ultima_em"?: string
+                    "arquivada_em"?: string | null,"criada_em"?: string,"excluida_em"?: string | null,"id"?: string,"restaurante_id"?: string,"titulo"?: string | null,"ultima_em"?: string
                   }
                   Relationships: [
                     {
@@ -784,14 +783,14 @@ isOneToOne: true
                   ]
                 },"restaurantes": {
                   Row: {
-                    "atualizado_em": string,"cnpj": string | null,"criado_em": string,"demonstracao": boolean,"fuso": string,"hora_virada": string,"horario_funcionamento": NonNullable<Json>,"id": string,"intervalo_envio_segundos": number,"limite_conta_esquecida": string,"modulos": string[],"nome": string,"pedido_reenvio_desde": string | null,"situacao": string,"slug": string,"turnos": NonNullable<Json>
+                    "atualizado_em": string,"cnpj": string | null,"criado_em": string,"demonstracao": boolean,"fuso": string,"hora_virada": string,"horario_funcionamento": NonNullable<Json>,"id": string,"intervalo_envio_segundos": number,"limite_conta_esquecida": string,"modulos": (string)[],"nome": string,"pedido_reenvio_desde": string | null,"situacao": string,"slug": string,"turnos": NonNullable<Json>
                   }
                   ComputedFields: never
                   Insert: {
-                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"demonstracao"?: boolean,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"modulos"?: string[],"nome": string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug": string,"turnos"?: NonNullable<Json>
+                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"demonstracao"?: boolean,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"modulos"?: (string)[],"nome": string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug": string,"turnos"?: NonNullable<Json>
                   }
                   Update: {
-                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"demonstracao"?: boolean,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"modulos"?: string[],"nome"?: string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug"?: string,"turnos"?: NonNullable<Json>
+                    "atualizado_em"?: string,"cnpj"?: string | null,"criado_em"?: string,"demonstracao"?: boolean,"fuso"?: string,"hora_virada"?: string,"horario_funcionamento"?: NonNullable<Json>,"id"?: string,"intervalo_envio_segundos"?: number,"limite_conta_esquecida"?: string,"modulos"?: (string)[],"nome"?: string,"pedido_reenvio_desde"?: string | null,"situacao"?: string,"slug"?: string,"turnos"?: NonNullable<Json>
                   }
                   Relationships: [
                     
