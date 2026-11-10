@@ -470,13 +470,14 @@ describe("quando o provedor responde só com texto (os trilhos)", () => {
     ]);
   });
 
-  it("os trilhos cobrem as quatro regras fixas", () => {
+  it("os trilhos cobrem as cinco regras fixas", () => {
     expect(TRILHOS).toMatch(/assunto/i);
     expect(TRILHOS).toMatch(/ferramenta/i);
     expect(TRILHOS).toMatch(/sugest/i);
     expect(TRILHOS).toMatch(/advogado/i);
     expect(TRILHOS).toMatch(/contador/i);
     expect(TRILHOS).toMatch(/invent/i);
+    expect(TRILHOS).toMatch(/rob[oô]|relat[oó]rio/i);
   });
 });
 
