@@ -5,15 +5,64 @@ import type {
   ConversaParaAdmin,
   DetalheDaConversaParaAdmin,
 } from "@/lib/mentor/leitura";
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const {
+  apagar,
+  push,
+  naoEncontrada,
+  exigirAdmin,
+  conversasParaAdmin,
+  conversaParaAdmin,
+} = vi.hoisted(() => ({
+  apagar: vi.fn(),
+  push: vi.fn(),
+  naoEncontrada: vi.fn(() => {
+    throw new Error("NEXT_NOT_FOUND");
+  }),
+  exigirAdmin: vi.fn(),
+  conversasParaAdmin: vi.fn(),
+  conversaParaAdmin: vi.fn(),
+}));
+
+vi.mock("@/lib/mentor/sessoes-actions", () => ({
+  apagarConversaDeVerdade: apagar,
+}));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace: vi.fn(), refresh: vi.fn() }),
+  notFound: naoEncontrada,
+}));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@/lib/auth/sessao", () => ({ exigirAdmin }));
+vi.mock("@/lib/mentor/leitura", () => ({
+  conversasParaAdmin,
+  conversaParaAdmin,
+}));
+
+import PaginaConversa from "@/app/admin/mentor/conversas/[id]/page";
+import PaginaConversas from "@/app/admin/mentor/conversas/page";
 
 // As conversas do mentor na tela do admin: só leitura, de todas as casas, com a
 // hora no fuso de CADA casa. Aqui vale o que a tela decide: o estado vazio, o
 // que cada linha mostra, o rótulo de quem falou (o admin lê a fala de outra
-// pessoa, então nunca "Você") e que não há nenhum botão nem campo.
+// pessoa, então nunca "Você") e que não há nenhum botão nem campo — exceto o
+// "Apagar de verdade" no detalhe da excluída, com confirmação dupla. A
+// excluída aparece marcada na lista e no detalhe (o suporte precisa vê-la para
+// apagar a pedido do cliente).
 
 afterEach(cleanup);
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 // "Hoje" para a tela: 3 de novembro de 2026, 12:00 em São Paulo (UTC-3).
 const AGORA = "2026-11-03T15:00:00+00:00";
@@ -52,6 +101,14 @@ const SEM_TITULO: ConversaParaAdmin = {
   arquivada_em: null,
   excluida: false,
   casa: SAO_PAULO,
+};
+const EXCLUIDA: ConversaParaAdmin = {
+  id: "44444444-4444-4444-8444-444444444444",
+  titulo: "Conversa apagada pelo dono",
+  ultima_em: "2026-11-02T13:30:00+00:00",
+  arquivada_em: null,
+  excluida: true,
+  casa: MANAUS,
 };
 
 describe("ListaConversasDoMentor", () => {
@@ -144,6 +201,23 @@ describe("ListaConversasDoMentor", () => {
     expect(screen.queryByText(/ficam de fora/i)).toBeNull();
   });
 
+  it("a excluída aparece na lista, marcada — a não excluída, sem marca", () => {
+    render(
+      <ListaConversasDoMentor
+        conversas={[DE_SP, EXCLUIDA]}
+        agoraIso={AGORA}
+        haMais={false}
+      />
+    );
+
+    const itens = screen.getAllByRole("listitem");
+    expect(itens).toHaveLength(2);
+    expect(within(itens[0] as HTMLElement).queryByText("Excluída")).toBeNull();
+    const marcada = within(itens[1] as HTMLElement);
+    expect(marcada.getByText("Excluída")).toBeTruthy();
+    expect(marcada.getByText("Conversa apagada pelo dono")).toBeTruthy();
+  });
+
   it("é só leitura: nenhum botão, nenhum campo, nenhum formulário", () => {
     const { container } = render(
       <ListaConversasDoMentor
@@ -156,6 +230,24 @@ describe("ListaConversasDoMentor", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     expect(container.querySelector("form")).toBeNull();
+  });
+});
+
+describe("guarda das telas (só o admin alcança)", () => {
+  beforeEach(() => {
+    exigirAdmin.mockRejectedValue(new Error("NEXT_REDIRECT"));
+  });
+
+  it("a lista nem monta sem o admin", async () => {
+    await expect(PaginaConversas()).rejects.toThrow("NEXT_REDIRECT");
+    expect(conversasParaAdmin).not.toHaveBeenCalled();
+  });
+
+  it("o detalhe nem monta sem o admin", async () => {
+    await expect(
+      PaginaConversa({ params: Promise.resolve({ id: DE_SP.id }) })
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(conversaParaAdmin).not.toHaveBeenCalled();
   });
 });
 
@@ -295,5 +387,111 @@ describe("ConversaDoMentor", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     expect(container.querySelector("form")).toBeNull();
+  });
+});
+
+const DETALHE_EXCLUIDO: DetalheDaConversaParaAdmin = {
+  ...DETALHE,
+  id: EXCLUIDA.id,
+  titulo: "Conversa apagada pelo dono",
+  excluida: true,
+};
+
+async function clicar(nome: string) {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: nome }));
+  });
+}
+
+describe("detalhe da excluída no admin", () => {
+  it("mostra a marca de excluída e o prazo da cópia de segurança", () => {
+    render(<ConversaDoMentor conversa={DETALHE_EXCLUIDO} agoraIso={AGORA} />);
+
+    expect(screen.getByText("Excluída")).toBeTruthy();
+    expect(screen.getByText(/60 dias/)).toBeTruthy();
+  });
+
+  it("sem exclusão, não há marca nem botão de apagar", () => {
+    render(<ConversaDoMentor conversa={DETALHE} agoraIso={AGORA} />);
+
+    expect(screen.queryByText("Excluída")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /apagar de verdade/i })
+    ).toBeNull();
+  });
+});
+
+describe("apagar de verdade no admin", () => {
+  it("pede duas confirmações e só então apaga pela ação e volta para a lista", async () => {
+    apagar.mockResolvedValue({ ok: true });
+    render(<ConversaDoMentor conversa={DETALHE_EXCLUIDO} agoraIso={AGORA} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar de verdade" }));
+    expect(screen.getByText(/sai da lista do admin/i)).toBeTruthy();
+    expect(apagar).not.toHaveBeenCalled();
+
+    await clicar("Continuar");
+    expect(
+      screen.getByText(/some para sempre, inclusive da cópia de segurança/i)
+    ).toBeTruthy();
+    expect(apagar).not.toHaveBeenCalled();
+
+    await clicar("Apagar para sempre");
+    await waitFor(() =>
+      expect(apagar).toHaveBeenCalledWith(DETALHE_EXCLUIDO.id)
+    );
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith("/admin/mentor/conversas")
+    );
+  });
+
+  it("cancelar na primeira confirmação desiste sem chamar o servidor", () => {
+    render(<ConversaDoMentor conversa={DETALHE_EXCLUIDO} agoraIso={AGORA} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar de verdade" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("button", { name: "Continuar" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Apagar de verdade" })
+    ).toBeTruthy();
+    expect(apagar).not.toHaveBeenCalled();
+  });
+
+  it("cancelar na segunda confirmação volta ao começo, sem apagar", () => {
+    render(<ConversaDoMentor conversa={DETALHE_EXCLUIDO} agoraIso={AGORA} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar de verdade" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(
+      screen.getByText(/some para sempre, inclusive da cópia de segurança/i)
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(
+      screen.queryByText(/some para sempre, inclusive da cópia de segurança/i)
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Apagar de verdade" })
+    ).toBeTruthy();
+    expect(apagar).not.toHaveBeenCalled();
+  });
+
+  it("erro do servidor aparece e continua na conversa", async () => {
+    apagar.mockResolvedValue({
+      ok: false,
+      error:
+        "não foi possível apagar a conversa agora. Tente de novo em instantes.",
+    });
+    render(<ConversaDoMentor conversa={DETALHE_EXCLUIDO} agoraIso={AGORA} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar de verdade" }));
+    await clicar("Continuar");
+    await clicar("Apagar para sempre");
+
+    expect((await screen.findByRole("alert")).textContent).toMatch(
+      /não foi possível apagar/i
+    );
+    expect(push).not.toHaveBeenCalled();
   });
 });

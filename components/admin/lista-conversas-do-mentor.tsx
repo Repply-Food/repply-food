@@ -13,7 +13,9 @@ import Link from "next/link";
  * Sem nenhum botão nem campo: quem chega aqui acompanha, não responde. `haMais`
  * vem da leitura, que sabe se sobrou conversa mais antiga fora do teto: nesse
  * caso a tela diz isso em vez de parecer completa (e não avisa à toa quando a
- * lista tem exatamente o teto).
+ * lista tem exatamente o teto). A conversa que o dono excluiu continua aqui,
+ * marcada como "Excluída": o suporte precisa vê-la para apagar de verdade a
+ * pedido do cliente (o detalhe tem o botão).
  */
 export function ListaConversasDoMentor({
   conversas,
@@ -52,7 +54,14 @@ export function ListaConversasDoMentor({
                   href={`/admin/mentor/conversas/${c.id}`}
                   className="flex min-h-14 flex-col gap-1 rounded-xl border bg-background px-4 py-3 md:grid md:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_8rem] md:items-center md:gap-4"
                 >
-                  <strong className="truncate">{c.casa.nome}</strong>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <strong className="truncate">{c.casa.nome}</strong>
+                    {c.excluida ? (
+                      <span className="number-mono shrink-0 rounded-full border px-2 py-0.5 text-xs">
+                        Excluída
+                      </span>
+                    ) : null}
+                  </span>
                   <span
                     className={cn(
                       "line-clamp-2 break-words md:line-clamp-1",
