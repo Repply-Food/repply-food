@@ -21,7 +21,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => clienteDoDono.atual,
 }));
 
-import { conversasDaCasa, mensagensDaConversa } from "@/lib/mentor/leitura";
+import {
+  conversasArquivadasDaCasa,
+  conversasDaCasa,
+  mensagensDaConversa,
+} from "@/lib/mentor/leitura";
 
 const opcoes = { auth: { persistSession: false, autoRefreshToken: false } };
 const sufixo = randomUUID().slice(0, 8);
@@ -38,6 +42,9 @@ let conversaAntiga = "";
 let conversaNova = "";
 let conversaOrfa = "";
 let conversaDeB = "";
+let conversaArquivada = "";
+let conversaExcluida = "";
+let conversaArquivadaExcluida = "";
 
 beforeAll(async () => {
   banco = await conectarBanco();
@@ -146,6 +153,62 @@ beforeAll(async () => {
     "pergunta da casa B",
     "2026-10-29T13:00:00Z"
   );
+
+  // Arquivada (com mensagem): continua na lista principal, marcada, e aparece
+  // na lista de arquivadas. Fica entre a nova e a antiga no tempo.
+  conversaArquivada = await conversa(
+    casaA,
+    "Conversa arquivada",
+    "2026-10-25T12:00:05Z"
+  );
+  await banco.query(
+    "update public.mentor_conversas set arquivada_em = $2 where id = $1",
+    [conversaArquivada, "2026-10-26T12:00:00Z"]
+  );
+  await mensagem(
+    conversaArquivada,
+    casaA,
+    "dono",
+    "pergunta arquivada",
+    "2026-10-25T12:00:00Z"
+  );
+
+  // Excluída (com mensagem): some da vista do dono, das duas listas.
+  conversaExcluida = await conversa(
+    casaA,
+    "Conversa excluída",
+    "2026-10-27T12:00:05Z"
+  );
+  await banco.query(
+    "update public.mentor_conversas set excluida_em = $2 where id = $1",
+    [conversaExcluida, "2026-10-27T12:00:10Z"]
+  );
+  await mensagem(
+    conversaExcluida,
+    casaA,
+    "dono",
+    "pergunta excluída",
+    "2026-10-27T12:00:00Z"
+  );
+
+  // Arquivada E excluída: a exclusão manda — não aparece em lista nenhuma do dono.
+  conversaArquivadaExcluida = await conversa(
+    casaA,
+    "Conversa arquivada e excluída",
+    "2026-10-24T12:00:05Z"
+  );
+  await banco.query(
+    `update public.mentor_conversas
+        set arquivada_em = $2, excluida_em = $3 where id = $1`,
+    [conversaArquivadaExcluida, "2026-10-24T12:00:10Z", "2026-10-24T12:00:20Z"]
+  );
+  await mensagem(
+    conversaArquivadaExcluida,
+    casaA,
+    "dono",
+    "pergunta arquivada e excluída",
+    "2026-10-24T12:00:00Z"
+  );
 });
 
 afterAll(async () => {
@@ -168,18 +231,50 @@ describe("conversasDaCasa", () => {
   it("lista da mais recente para a mais antiga e IGNORA a conversa sem mensagem", async () => {
     const lista = await conversasDaCasa(casaA);
 
-    expect(lista.map((c) => c.id)).toEqual([conversaNova, conversaAntiga]);
+    expect(lista.map((c) => c.id)).toEqual([
+      conversaNova,
+      conversaArquivada,
+      conversaAntiga,
+    ]);
     expect(lista.map((c) => c.id)).not.toContain(conversaOrfa);
     expect(lista[0]).toEqual({
       id: conversaNova,
       titulo: "Conversa nova",
       ultima_em: expect.any(String),
+      arquivada_em: null,
     });
+  });
+
+  it("mantém a arquivada na principal, marcada, e esconde as excluídas", async () => {
+    const lista = await conversasDaCasa(casaA);
+
+    const arquivada = lista.find((c) => c.id === conversaArquivada);
+    expect(arquivada?.arquivada_em).not.toBeNull();
+    expect(lista.map((c) => c.id)).not.toContain(conversaExcluida);
+    expect(lista.map((c) => c.id)).not.toContain(conversaArquivadaExcluida);
   });
 
   it("não traz conversa de outra casa, mesmo pedindo pelo id dela", async () => {
     // O dono de A não tem acesso a B: a RLS barra e o filtro por casa também.
     expect(await conversasDaCasa(casaB)).toEqual([]);
+  });
+});
+
+describe("conversasArquivadasDaCasa", () => {
+  it("devolve só as arquivadas, sem as excluídas", async () => {
+    const lista = await conversasArquivadasDaCasa(casaA);
+
+    expect(lista.map((c) => c.id)).toEqual([conversaArquivada]);
+    expect(lista[0]).toEqual({
+      id: conversaArquivada,
+      titulo: "Conversa arquivada",
+      ultima_em: expect.any(String),
+      arquivada_em: expect.any(String),
+    });
+  });
+
+  it("não traz nada de outra casa", async () => {
+    expect(await conversasArquivadasDaCasa(casaB)).toEqual([]);
   });
 });
 

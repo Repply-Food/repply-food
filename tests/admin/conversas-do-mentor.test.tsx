@@ -33,18 +33,24 @@ const DE_SP: ConversaParaAdmin = {
   id: "11111111-1111-4111-8111-111111111111",
   titulo: "Como foi a semana?",
   ultima_em: "2026-11-03T13:30:00+00:00",
+  arquivada_em: null,
+  excluida: false,
   casa: SAO_PAULO,
 };
 const DE_AM: ConversaParaAdmin = {
   id: "22222222-2222-4222-8222-222222222222",
   titulo: "Quanto vendi ontem?",
   ultima_em: "2026-11-03T13:30:00+00:00",
+  arquivada_em: null,
+  excluida: false,
   casa: MANAUS,
 };
 const SEM_TITULO: ConversaParaAdmin = {
   id: "33333333-3333-4333-8333-333333333333",
   titulo: null,
   ultima_em: "2026-10-30T14:05:00+00:00",
+  arquivada_em: null,
+  excluida: false,
   casa: SAO_PAULO,
 };
 

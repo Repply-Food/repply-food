@@ -87,6 +87,8 @@ function clienteComConversas(quantas: number) {
     id: `conversa-${i}`,
     titulo: `Conversa ${i}`,
     ultima_em: "2099-06-01T12:00:00Z",
+    arquivada_em: null,
+    excluida_em: null,
     restaurantes: { id: "casa", nome: "Casa", fuso: "America/Sao_Paulo" },
     mentor_mensagens: [{ id: `mensagem-${i}` }],
   }));
@@ -113,6 +115,7 @@ let conversaAntigaDeA = "";
 let conversaDoMeioDeB = "";
 let conversaOrfaDeA = "";
 let conversaRecenteDeA = "";
+let conversaExcluidaDeA = "";
 
 beforeAll(async () => {
   banco = await conectarBanco();
@@ -229,6 +232,25 @@ beforeAll(async () => {
     "Órfã da casa A",
     "2099-01-04T12:00:00Z"
   );
+
+  // Excluída pelo dono (com mensagem): some da vista dele, mas o suporte a vê,
+  // marcada. Fica entre a do meio (B) e a recente (A) no tempo.
+  conversaExcluidaDeA = await conversa(
+    casaA,
+    "Excluída da casa A",
+    "2099-01-02T13:00:05Z"
+  );
+  await banco.query(
+    "update public.mentor_conversas set excluida_em = $2 where id = $1",
+    [conversaExcluidaDeA, "2099-01-02T13:00:10Z"]
+  );
+  await mensagem(
+    conversaExcluidaDeA,
+    casaA,
+    "dono",
+    "pergunta excluída",
+    "2099-01-02T13:00:00Z"
+  );
 });
 
 beforeEach(() => {
@@ -262,15 +284,26 @@ describe("conversasParaAdmin", () => {
       conversaDoMeioDeB,
       conversaOrfaDeA,
       conversaRecenteDeA,
+      conversaExcluidaDeA,
     ]);
 
     // B no meio, entre duas de A: só uma ordem pelo tempo (e não por casa) passa.
     expect(conversas.map((c) => c.id).filter((id) => meus.has(id))).toEqual([
       conversaRecenteDeA,
+      conversaExcluidaDeA,
       conversaDoMeioDeB,
       conversaAntigaDeA,
     ]);
     expect(conversas.map((c) => c.id)).not.toContain(conversaOrfaDeA);
+  });
+
+  it("a excluída aparece marcada, para o suporte saber que sumiu da vista do dono", async () => {
+    const { conversas } = await conversasParaAdmin();
+    const excluida = conversas.find((c) => c.id === conversaExcluidaDeA);
+    const normal = conversas.find((c) => c.id === conversaDoMeioDeB);
+
+    expect(excluida?.excluida).toBe(true);
+    expect(normal?.excluida).toBe(false);
   });
 
   it("traz a casa de cada conversa (só o que a tela usa), para mostrar de quem é", async () => {
@@ -282,6 +315,8 @@ describe("conversasParaAdmin", () => {
       id: conversaDoMeioDeB,
       titulo: "Do meio da casa B",
       ultima_em: expect.any(String),
+      arquivada_em: null,
+      excluida: false,
       casa: { id: casaB, nome: "Casa B do admin", fuso: "America/Manaus" },
     });
     expect(deA?.casa).toEqual({
@@ -376,6 +411,8 @@ describe("conversaParaAdmin", () => {
       id: conversaRecenteDeA,
       titulo: "Recente da casa A",
       ultima_em: expect.any(String),
+      arquivada_em: null,
+      excluida: false,
       casa: { id: casaA, nome: "Casa A do admin", fuso: "America/Sao_Paulo" },
       mensagens: [
         {
@@ -408,6 +445,16 @@ describe("conversaParaAdmin", () => {
 
     expect(detalhe?.id).toBe(conversaOrfaDeA);
     expect(detalhe?.mensagens).toEqual([]);
+  });
+
+  it("a conversa excluída abre com a marca, para o suporte oferecer o apagar de verdade", async () => {
+    const detalhe = await conversaParaAdmin(conversaExcluidaDeA);
+
+    expect(detalhe?.id).toBe(conversaExcluidaDeA);
+    expect(detalhe?.excluida).toBe(true);
+    expect(detalhe?.mensagens.map((m) => [m.papel, m.texto])).toEqual([
+      ["dono", "pergunta excluída"],
+    ]);
   });
 
   it("devolve nulo para conversa que não existe ou id que não é um uuid", async () => {

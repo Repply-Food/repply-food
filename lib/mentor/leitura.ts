@@ -28,6 +28,8 @@ export type ConversaDaLista = {
   id: string;
   titulo: string | null;
   ultima_em: string;
+  /** Quando o dono arquivou; nulo = na lista principal. */
+  arquivada_em: string | null;
 };
 
 export type MensagemDaConversa = {
@@ -50,6 +52,10 @@ function falhaNaLeitura(): never {
  * conversa vazia órfã, que não pode aparecer. O `!inner` só devolve a conversa
  * que tem ao menos uma mensagem; o `limit(1)` na tabela filha evita trazer o
  * histórico inteiro só para provar que existe.
+ *
+ * IGNORA a conversa excluída: ela sumiu da vista do dono (só a faxina ou o
+ * admin a veem). A arquivada CONTINUA aqui, com a marca: a tela separa a lista
+ * principal das arquivadas (`conversasArquivadasDaCasa`).
  */
 export async function conversasDaCasa(
   restauranteId: string
@@ -57,14 +63,48 @@ export async function conversasDaCasa(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("mentor_conversas")
-    .select("id, titulo, ultima_em, mentor_mensagens!inner(id)")
+    .select("id, titulo, ultima_em, arquivada_em, mentor_mensagens!inner(id)")
     .eq("restaurante_id", restauranteId)
+    .is("excluida_em", null)
     .order("ultima_em", { ascending: false })
     .limit(MAXIMO_DE_CONVERSAS)
     .limit(1, { referencedTable: "mentor_mensagens" });
   if (error || !data) falhaNaLeitura();
 
-  return data.map(({ id, titulo, ultima_em }) => ({ id, titulo, ultima_em }));
+  return data.map(({ id, titulo, ultima_em, arquivada_em }) => ({
+    id,
+    titulo,
+    ultima_em,
+    arquivada_em,
+  }));
+}
+
+/**
+ * Só as arquivadas da casa (sem as excluídas), da mais recente para a mais
+ * antiga. Ignora a conversa sem mensagem, pelo mesmo motivo e do mesmo jeito
+ * da lista principal.
+ */
+export async function conversasArquivadasDaCasa(
+  restauranteId: string
+): Promise<ConversaDaLista[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("mentor_conversas")
+    .select("id, titulo, ultima_em, arquivada_em, mentor_mensagens!inner(id)")
+    .eq("restaurante_id", restauranteId)
+    .is("excluida_em", null)
+    .not("arquivada_em", "is", null)
+    .order("ultima_em", { ascending: false })
+    .limit(MAXIMO_DE_CONVERSAS)
+    .limit(1, { referencedTable: "mentor_mensagens" });
+  if (error || !data) falhaNaLeitura();
+
+  return data.map(({ id, titulo, ultima_em, arquivada_em }) => ({
+    id,
+    titulo,
+    ultima_em,
+    arquivada_em,
+  }));
 }
 
 type LinhaDeMensagem = {
@@ -124,7 +164,11 @@ export type CasaDaConversa = {
   fuso: string;
 };
 
-export type ConversaParaAdmin = ConversaDaLista & { casa: CasaDaConversa };
+export type ConversaParaAdmin = ConversaDaLista & {
+  casa: CasaDaConversa;
+  /** Verdadeiro quando o dono excluiu (sumiu da vista dele, guardada 60 dias). */
+  excluida: boolean;
+};
 
 /**
  * A lista do admin: as conversas (no máximo `MAXIMO_DE_CONVERSAS_NO_ADMIN`) e se
@@ -144,7 +188,8 @@ const idSchema = z.uuid();
 /**
  * As conversas de TODAS as casas, da mais recente para a mais antiga, cada uma
  * com a casa. Ignora a conversa sem mensagem, pelo mesmo motivo e do mesmo jeito
- * da lista do dono (`!inner` + `limit(1)` na tabela filha).
+ * da lista do dono (`!inner` + `limit(1)` na tabela filha). A excluída APARECE,
+ * marcada: o suporte precisa vê-la para apagar de verdade se o cliente pedir.
  *
  * Pede UMA a mais que o teto e devolve só o teto: se a extra veio, `haMais` é
  * verdadeiro (há conversa mais antiga fora da lista). Com exatamente o teto de
@@ -156,7 +201,7 @@ export async function conversasParaAdmin(): Promise<ConversasParaAdmin> {
   const { data, error } = await supabase
     .from("mentor_conversas")
     .select(
-      "id, titulo, ultima_em, restaurantes!inner(id, nome, fuso), mentor_mensagens!inner(id)"
+      "id, titulo, ultima_em, arquivada_em, excluida_em, restaurantes!inner(id, nome, fuso), mentor_mensagens!inner(id)"
     )
     .order("ultima_em", { ascending: false })
     .order("id", { ascending: false })
@@ -166,16 +211,20 @@ export async function conversasParaAdmin(): Promise<ConversasParaAdmin> {
 
   const conversas = data
     .slice(0, MAXIMO_DE_CONVERSAS_NO_ADMIN)
-    .map(({ id, titulo, ultima_em, restaurantes }) => ({
-      id,
-      titulo,
-      ultima_em,
-      casa: {
-        id: restaurantes.id,
-        nome: restaurantes.nome,
-        fuso: restaurantes.fuso,
-      },
-    }));
+    .map(
+      ({ id, titulo, ultima_em, arquivada_em, excluida_em, restaurantes }) => ({
+        id,
+        titulo,
+        ultima_em,
+        arquivada_em,
+        excluida: excluida_em !== null,
+        casa: {
+          id: restaurantes.id,
+          nome: restaurantes.nome,
+          fuso: restaurantes.fuso,
+        },
+      })
+    );
   return { conversas, haMais: data.length > MAXIMO_DE_CONVERSAS_NO_ADMIN };
 }
 
@@ -196,7 +245,9 @@ export async function conversaParaAdmin(
   const [conversa, mensagens] = await Promise.all([
     supabase
       .from("mentor_conversas")
-      .select("id, titulo, ultima_em, restaurantes!inner(id, nome, fuso)")
+      .select(
+        "id, titulo, ultima_em, arquivada_em, excluida_em, restaurantes!inner(id, nome, fuso)"
+      )
       .eq("id", id)
       .maybeSingle(),
     supabase
@@ -208,11 +259,14 @@ export async function conversaParaAdmin(
   if (conversa.error || mensagens.error || !mensagens.data) falhaNaLeitura();
   if (!conversa.data) return null;
 
-  const { titulo, ultima_em, restaurantes } = conversa.data;
+  const { titulo, ultima_em, arquivada_em, excluida_em, restaurantes } =
+    conversa.data;
   return {
     id: conversa.data.id,
     titulo,
     ultima_em,
+    arquivada_em,
+    excluida: excluida_em !== null,
     casa: {
       id: restaurantes.id,
       nome: restaurantes.nome,
