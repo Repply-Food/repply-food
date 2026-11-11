@@ -315,7 +315,11 @@ describe("excluirConversa", () => {
       leitura: VISIVEL,
       escrita: { data: [{ id: CONVERSA }], error: null },
     });
+    const servicoBanco = bancoFalso({
+      escrita: { data: [], error: null },
+    });
     createClient.mockResolvedValue({ from: banco.from });
+    createServiceClient.mockReturnValue({ from: servicoBanco.from });
 
     const r = await excluirConversa(SLUG, CONVERSA);
 
@@ -325,8 +329,10 @@ describe("excluirConversa", () => {
     expect(banco.consulta.update).toHaveBeenCalledWith({
       excluida_em: expect.any(String),
     });
-    // Marca, não apaga: nenhum DELETE sai daqui.
+    // Marca, não apaga: nenhum DELETE sai daqui para a conversa.
     expect(banco.consulta.delete).not.toHaveBeenCalled();
+    // Só as fichas saem junto, pela chave de serviço.
+    expect(servicoBanco.from).toHaveBeenCalledWith("mentor_memorias");
     expect(revalidatePath).toHaveBeenCalledWith(`/r/${SLUG}/mentor`);
   });
 
@@ -345,6 +351,62 @@ describe("excluirConversa", () => {
     expect(r).toEqual({ ok: true });
     // Sem nova escrita a data original fica valendo: o prazo não recomeça.
     expect(banco.consulta.update).not.toHaveBeenCalled();
+  });
+
+  it("apaga junto as fichas daquela conversa e casa, antes da marca", async () => {
+    dono();
+    const donoBanco = bancoFalso({
+      leitura: VISIVEL,
+      escrita: { data: [{ id: CONVERSA }], error: null },
+    });
+    const servicoBanco = bancoFalso({
+      escrita: { data: [], error: null },
+    });
+    createClient.mockResolvedValue({ from: donoBanco.from });
+    createServiceClient.mockReturnValue({ from: servicoBanco.from });
+
+    const r = await excluirConversa(SLUG, CONVERSA);
+
+    expect(r).toEqual({ ok: true });
+    // As fichas morrem junto com a vista da conversa: DELETE na tabela
+    // certa, preso à conversa E à casa da sessão — outra conversa da casa
+    // mantém as suas porque o filtro nunca é só pela casa.
+    expect(servicoBanco.from).toHaveBeenCalledWith("mentor_memorias");
+    expect(servicoBanco.consulta.delete).toHaveBeenCalledTimes(1);
+    expect(servicoBanco.consulta.eq).toHaveBeenCalledWith(
+      "conversa_id",
+      CONVERSA
+    );
+    expect(servicoBanco.consulta.eq).toHaveBeenCalledWith(
+      "restaurante_id",
+      CASA
+    );
+    // E a marca segue valendo, como antes.
+    expect(donoBanco.consulta.update).toHaveBeenCalledWith({
+      excluida_em: expect.any(String),
+    });
+    expect(revalidatePath).toHaveBeenCalledWith(`/r/${SLUG}/mentor`);
+  });
+
+  it("erro ao apagar as fichas falha fechado: sem marca, frase genérica, log só com código", async () => {
+    dono();
+    const donoBanco = bancoFalso({ leitura: VISIVEL });
+    const servicoBanco = bancoFalso({
+      escrita: {
+        data: null,
+        error: { code: "XX000", message: "segredo interno do Postgres" },
+      },
+    });
+    createClient.mockResolvedValue({ from: donoBanco.from });
+    createServiceClient.mockReturnValue({ from: servicoBanco.from });
+
+    const r = await excluirConversa(SLUG, CONVERSA);
+
+    expect(r).toEqual({ ok: false, error: FALHA_ORGANIZAR });
+    expect(logError).toHaveBeenCalledWith("falha_sessoes_mentor");
+    expect(JSON.stringify(logError.mock.calls)).not.toContain("segredo");
+    expect(donoBanco.consulta.update).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("conversa de outra casa vira frase de produto", async () => {

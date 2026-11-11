@@ -6,6 +6,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { FERRAMENTAS, executarFerramentas } from "./ferramentas";
 import { dentroDoLimite, devolverUso } from "./limite";
 import {
+  type FichaDoMentor,
+  carregarFichas,
+  extrairEgravarFichas,
+} from "./memoria";
+import {
   type MensagemIA,
   type ProvedorIA,
   type RespostaIA,
@@ -17,7 +22,7 @@ import { TRILHOS } from "./trilhos";
 
 /**
  * O cérebro do mentor: recebe a pergunta do dono, monta o pedido (trilhos +
- * cartilha + dia de hoje + histórico + ferramentas), conversa com o provedor de
+ * cartilha + dia de hoje + lembranças + histórico + ferramentas), conversa com o provedor de
  * IA executando as ferramentas que ele pedir e grava a conversa.
  *
  * SEGURANÇA E ISOLAMENTO
@@ -202,6 +207,17 @@ function tituloDe(pergunta: string): string {
     : letras.join("");
 }
 
+/**
+ * O bloco de lembranças que entra no pedido ao provedor, depois do dia de
+ * hoje. Vazio quando a casa não tem ficha: sem bloco, o pedido é igual ao de
+ * hoje. Fato de ficha nunca substitui número de ferramenta.
+ */
+function blocoDeLembrancas(fichas: FichaDoMentor[]): string {
+  if (fichas.length === 0) return "";
+  const linhas = fichas.map((ficha) => `- [${ficha.tipo}] ${ficha.texto}`);
+  return `Lembranças sobre a casa e o dono (podem estar desatualizadas; fato não substitui número de ferramenta):\n${linhas.join("\n")}`;
+}
+
 type DadosParaGravar = {
   restauranteId: string;
   conversaId: string | null;
@@ -366,15 +382,18 @@ async function responderComUsoContado(args: {
     return { ok: false, error: FRASE_CONVERSA };
   }
 
-  // 3 e 4. Instruções (trilhos + cartilha + hoje) e histórico.
-  const [cartilha, hoje, salvas] = await Promise.all([
+  // 3 e 4. Instruções (trilhos + cartilha + hoje + lembranças) e histórico.
+  // As lembranças vêm pelo cliente do dono (a RLS é a trava); sem ficha, sem
+  // bloco. Falha de leitura devolve vazio, nunca derruba a resposta.
+  const [cartilha, hoje, salvas, fichas] = await Promise.all([
     lerCartilha(),
     lerContextoDeHoje(supabase, restauranteId),
     conversaId === null
       ? Promise.resolve<MensagemIA[]>([])
       : carregarHistorico(supabase, conversaId, restauranteId),
+    carregarFichas(restauranteId),
   ]);
-  const instrucoes = [TRILHOS, cartilha, hoje]
+  const instrucoes = [TRILHOS, cartilha, hoje, blocoDeLembrancas(fichas)]
     .filter((parte) => parte !== "")
     .join("\n\n");
   const historico: MensagemIA[] = [
@@ -447,6 +466,17 @@ async function responderComUsoContado(args: {
     perguntaEm,
     respostaEm: Math.max(Date.now(), perguntaEm + 1),
   });
+
+  // A extração é auxiliar e posterior: só no sucesso, com a conversa já
+  // gravada. Aguarda, mas nunca derruba a resposta nem gasta a cota do dia
+  // (a função nunca lança por contrato; o `catch` é defesa em profundidade).
+  await extrairEgravarFichas({
+    restauranteId,
+    conversaId: idDaConversa,
+    pergunta,
+    resposta: textoFinal,
+  }).catch(() => undefined);
+
   return { ok: true, conversaId: idDaConversa, resposta: textoFinal };
 }
 

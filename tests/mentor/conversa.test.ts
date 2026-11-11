@@ -21,10 +21,13 @@ import { conectarBanco } from "../helpers/supabase-local";
 // ferramentas (que têm teste próprio) são dublês. Os asserts RELEEM o banco e
 // conferem contagem: zero linhas afetadas, ou meia-conversa, não é sucesso.
 
-const { executarFerramentas, logError } = vi.hoisted(() => ({
-  executarFerramentas: vi.fn(),
-  logError: vi.fn(),
-}));
+const { executarFerramentas, logError, carregarFichas, extrairEgravarFichas } =
+  vi.hoisted(() => ({
+    executarFerramentas: vi.fn(),
+    logError: vi.fn(),
+    carregarFichas: vi.fn(),
+    extrairEgravarFichas: vi.fn(),
+  }));
 const estado = vi.hoisted(() => ({ cliente: null as unknown }));
 
 // `server-only` só existe dentro do Next; no Vitest entra um vazio.
@@ -48,6 +51,12 @@ vi.mock("@/lib/mentor/ferramentas", () => ({
     },
   ],
   executarFerramentas,
+}));
+// As fichas são dublê: o provedor roteirizado nunca toca no banco de
+// lembranças, e a extração real chamaria o provedor de verdade.
+vi.mock("@/lib/mentor/memoria", () => ({
+  carregarFichas,
+  extrairEgravarFichas,
 }));
 
 import { contextoDeHoje, responderNoMentor } from "@/lib/mentor/conversa";
@@ -309,6 +318,11 @@ beforeEach(() => {
     pedidos.map((p) => ({ nome: p.nome, resultado: { valor: "1234.56" } }))
   );
   logError.mockReset();
+  // Sem ficha, por padrão: igual ao dia em que o mentor não lembrava nada.
+  carregarFichas.mockReset();
+  carregarFichas.mockResolvedValue([]);
+  extrairEgravarFichas.mockReset();
+  extrairEgravarFichas.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -478,6 +492,100 @@ describe("quando o provedor responde só com texto (os trilhos)", () => {
     expect(TRILHOS).toMatch(/contador/i);
     expect(TRILHOS).toMatch(/invent/i);
     expect(TRILHOS).toMatch(/rob[oô]|relat[oó]rio/i);
+  });
+});
+
+describe("as lembranças da casa (memória)", () => {
+  it("com 2 fichas, o pedido ao provedor leva as lembranças marcadas", async () => {
+    carregarFichas.mockResolvedValue([
+      { tipo: "fato", texto: "o dono prefere conselho direto" },
+      { tipo: "resumo", texto: "a casa abre às 8h" },
+    ]);
+    const { provedor, responder } = provedorRoteirizado([
+      texto("Anotado, dono."),
+    ]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Oi",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    expect(carregarFichas).toHaveBeenCalledWith(casaA);
+    // O assert é no argumento do dublê, não no texto final.
+    const instrucoes = responder.mock.calls[0]?.[0].instrucoes ?? "";
+    expect(instrucoes).toContain(TRILHOS);
+    expect(instrucoes).toContain(
+      "Lembranças sobre a casa e o dono (podem estar desatualizadas; fato não substitui número de ferramenta):"
+    );
+    expect(instrucoes).toContain("- [fato] o dono prefere conselho direto");
+    expect(instrucoes).toContain("- [resumo] a casa abre às 8h");
+  });
+
+  it("sem ficha, o pedido é igual ao de hoje (sem bloco de lembranças)", async () => {
+    carregarFichas.mockResolvedValue([]);
+    const { provedor, responder } = provedorRoteirizado([texto("Oi, dono.")]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Oi",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    const instrucoes = responder.mock.calls[0]?.[0].instrucoes ?? "";
+    expect(instrucoes).toContain(TRILHOS);
+    expect(instrucoes).not.toContain("Lembrança");
+  });
+
+  it("após a resposta ok, extrai e grava as fichas da conversa nova", async () => {
+    const { provedor } = provedorRoteirizado([
+      texto("Fale direto e sem rodeio."),
+    ]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Como falo com a equipe?",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
+    expect(extrairEgravarFichas).toHaveBeenCalledWith({
+      restauranteId: casaA,
+      conversaId: resultado.conversaId,
+      pergunta: "Como falo com a equipe?",
+      resposta: "Fale direto e sem rodeio.",
+    });
+  });
+
+  it("a extração que falha não derruba a resposta e o uso conta exatamente 1", async () => {
+    extrairEgravarFichas.mockRejectedValue(new Error("pane na extração"));
+    const usoAntes = await usoDeHoje(casaA);
+    const { provedor, responder } = provedorRoteirizado([
+      texto("Fale direto e sem rodeio."),
+    ]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Como falo com a equipe?",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(responder).toHaveBeenCalledTimes(1);
+    // A extração não gasta a cota: a resposta conta exatamente 1 no dia.
+    expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
+    expect(
+      (await mensagensDa(resultado.conversaId)).map((m) => m.texto)
+    ).toEqual(["Como falo com a equipe?", "Fale direto e sem rodeio."]);
   });
 });
 
