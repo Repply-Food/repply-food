@@ -35,7 +35,7 @@ const FRASE_FICHA = "não encontrei essa lembrança; ela pode ter sido apagada";
 const FALHA_LEMBRANCAS =
   "não foi possível mexer nas lembranças agora. Tente de novo em instantes.";
 
-const CODIGO_NO_LOG = "falha_memorias_mentor";
+const CODIGO_NO_LOG = "falha_memoria_mentor";
 
 const idSchema = z.uuid();
 

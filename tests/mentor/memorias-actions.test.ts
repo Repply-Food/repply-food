@@ -160,7 +160,7 @@ describe("apagarFicha", () => {
     const r = await apagarFicha(SLUG, FICHA);
 
     expect(r).toEqual({ ok: false, error: FALHA_LEMBRANCAS });
-    expect(logError).toHaveBeenCalledWith("falha_memorias_mentor");
+    expect(logError).toHaveBeenCalledWith("falha_memoria_mentor");
     expect(JSON.stringify(logError.mock.calls)).not.toContain("segredo");
     expect(revalidatePath).not.toHaveBeenCalled();
   });
@@ -223,9 +223,54 @@ describe("esquecerTudo", () => {
     const r = await esquecerTudo(SLUG);
 
     expect(r).toEqual({ ok: false, error: FALHA_LEMBRANCAS });
-    expect(logError).toHaveBeenCalledWith("falha_memorias_mentor");
+    expect(logError).toHaveBeenCalledWith("falha_memoria_mentor");
     expect(JSON.stringify(logError.mock.calls)).not.toContain("segredo");
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("codigo de log", () => {
+  it("usa código dentro do allowlist real do logger (não vira erro_interno)", async () => {
+    // Prova contra regressão: os asserts acima mockam o logger e repetiriam
+    // um código fora do allowlist sem reclamar. Aqui o código que a action
+    // usou passa pelo logError DE VERDADE (importActual, sem quebrar os
+    // mocks do arquivo); fora do allowlist ele sairia como "erro_interno".
+    const real =
+      await vi.importActual<typeof import("@/lib/logger")>("@/lib/logger");
+    const saidas: string[] = [];
+    const olho = vi
+      .spyOn(console, "error")
+      .mockImplementation((...args: unknown[]) => {
+        saidas.push(args.map(String).join(" "));
+      });
+    try {
+      dono();
+      const banco1 = bancoFalso({
+        escrita: { data: null, error: { code: "XX000", message: "x" } },
+      });
+      createServiceClient.mockReturnValue({ from: banco1.from });
+      await apagarFicha(SLUG, FICHA);
+      const codigo1 = logError.mock.calls[0]?.[0];
+      logError.mockClear();
+
+      dono();
+      const banco2 = bancoFalso({
+        escrita: { data: null, error: { code: "XX000", message: "x" } },
+      });
+      createServiceClient.mockReturnValue({ from: banco2.from });
+      await esquecerTudo(SLUG);
+      const codigo2 = logError.mock.calls[0]?.[0];
+
+      for (const codigo of [codigo1, codigo2]) {
+        const antes = saidas.length;
+        real.logError(codigo);
+        const saida = saidas.slice(antes).join(" ");
+        expect(saida).toContain(String(codigo));
+        expect(saida).not.toContain("erro_interno");
+      }
+    } finally {
+      olho.mockRestore();
+    }
   });
 });
 
