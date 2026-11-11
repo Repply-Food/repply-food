@@ -56,6 +56,7 @@ let casaA = "";
 let casaB = "";
 let donoA: Cliente;
 let donoB: Cliente;
+let admin: Cliente;
 // Semeados direto no banco, como dono do banco, antes dos testes.
 let conversaA = "";
 let fichaA = "";
@@ -77,14 +78,15 @@ async function criarFicha(
   texto: string,
   atualizadaHa = "1 hour",
   conversaId: string | null = null,
-  tipo = "fato"
+  tipo = "fato",
+  criadaHa = atualizadaHa
 ): Promise<string> {
   const r = await banco.query<{ id: string }>(
     `insert into public.mentor_memorias
        (restaurante_id, texto, tipo, conversa_id, criada_em, atualizada_em)
-      values ($1, $2, $3, $4, now() - $5::interval, now() - $5::interval)
+      values ($1, $2, $3, $4, now() - $6::interval, now() - $5::interval)
       returning id`,
-    [restauranteId, texto, tipo, conversaId, atualizadaHa]
+    [restauranteId, texto, tipo, conversaId, atualizadaHa, criadaHa]
   );
   return r.rows[0]?.id ?? "";
 }
@@ -123,12 +125,18 @@ beforeAll(async () => {
 
   const loginA = await criarLoginLogado("dono-a");
   const loginB = await criarLoginLogado("dono-b");
+  const loginAdmin = await criarLoginLogado("admin");
   donoA = loginA.cliente;
   donoB = loginB.cliente;
+  admin = loginAdmin.cliente;
   await banco.query(
     "insert into public.acessos (user_id, restaurante_id) values ($1, $2), ($3, $4)",
     [loginA.id, casaA, loginB.id, casaB]
   );
+  // O admin não tem acesso a nenhuma das duas casas: lê só pela RLS do admin.
+  await banco.query("insert into public.admins_repply (user_id) values ($1)", [
+    loginAdmin.id,
+  ]);
 
   conversaA = await criarConversa(casaA, "Conversa com lembranças");
   fichaA = await criarFicha(
@@ -173,6 +181,53 @@ describe("o dono lê só as lembranças da casa dele", () => {
       .eq("id", fichaA);
     expect(leitura.error).toBeNull();
     expect(leitura.data).toHaveLength(0);
+  });
+});
+
+describe("o admin da Repply lê (só lê)", () => {
+  it("o admin lê a ficha de qualquer casa, sem acesso a nenhuma", async () => {
+    const fichaB = await criarFicha(casaB, "a casa B prefere resumo curto");
+
+    for (const id of [fichaA, fichaB]) {
+      const leitura = await admin
+        .from("mentor_memorias")
+        .select("id")
+        .eq("id", id);
+      expect(leitura.error).toBeNull();
+      expect(leitura.data).toHaveLength(1);
+    }
+  });
+
+  it("o admin não escreve ficha (INSERT, UPDATE e DELETE recusados)", async () => {
+    const insere = await admin
+      .from("mentor_memorias")
+      .insert({
+        restaurante_id: casaA,
+        texto: "ficha do admin",
+        tipo: "fato",
+      })
+      .select();
+    expect(insere.error?.code).toBe("42501");
+
+    const altera = await admin
+      .from("mentor_memorias")
+      .update({ texto: "texto do admin" })
+      .eq("id", fichaA)
+      .select();
+    expect(altera.error?.code).toBe("42501");
+
+    const apaga = await admin.from("mentor_memorias").delete().eq("id", fichaA);
+    expect(apaga.error?.code).toBe("42501");
+
+    // Nada entrou nem mudou, conferido pelo banco.
+    const intrusas = await banco.query<{ total: string }>(
+      "select count(*) as total from public.mentor_memorias where texto in ('ficha do admin', 'texto do admin')"
+    );
+    expect(intrusas.rows[0]?.total).toBe("0");
+    expect((await fichaNoBanco(fichaA))?.texto).toBe(
+      "o dono prefere conselho direto"
+    );
+    expect(await existemMemorias([fichaA])).toEqual([fichaA]);
   });
 });
 
@@ -242,6 +297,70 @@ describe("a faxina aposenta a ficha velha e poupa a nova", () => {
     // E a ficha semente (de agora há pouco) também continua lá.
     expect(await existemMemorias([fichaA])).toEqual([fichaA]);
   });
+
+  it("o corte é pela atualizada_em: criada há 13 meses mas mexida ontem sobrevive; sem mexer há 13 meses some", async () => {
+    const sobrevivente = await criarFicha(
+      casaA,
+      "criada há treze meses, mexida ontem",
+      "1 day",
+      null,
+      "fato",
+      "13 months"
+    );
+    const esquecida = await criarFicha(
+      casaA,
+      "criada ontem, sem mexer há treze meses",
+      "13 months",
+      null,
+      "fato",
+      "1 day"
+    );
+
+    // O helper gravou as duas datas com intervalos diferentes, conferido pelo
+    // banco: a sobrevivente nasceu velha mas foi mexida ontem; a esquecida
+    // nasceu ontem mas não é mexida há 13 meses.
+    const datas = await banco.query<{
+      id: string;
+      criada_velha: boolean;
+      atualizada_velha: boolean;
+    }>(
+      `select id,
+          criada_em < now() - interval '12 months' as criada_velha,
+          atualizada_em < now() - interval '12 months' as atualizada_velha
+         from public.mentor_memorias where id = any($1::uuid[])`,
+      [[sobrevivente, esquecida]]
+    );
+    const porId = new Map(datas.rows.map((linha) => [linha.id, linha]));
+    expect(porId.get(sobrevivente)).toEqual({
+      id: sobrevivente,
+      criada_velha: true,
+      atualizada_velha: false,
+    });
+    expect(porId.get(esquecida)).toEqual({
+      id: esquecida,
+      criada_velha: false,
+      atualizada_velha: true,
+    });
+
+    // Confirmar a ficha renova os 12 meses: velha de 13 meses, mexida agora
+    // (só a atualizada_em anda), escapa da faxina.
+    const confirmada = await criarFicha(
+      casaA,
+      "ficha velha confirmada agora",
+      "13 months"
+    );
+    await banco.query(
+      "update public.mentor_memorias set atualizada_em = now() where id = $1",
+      [confirmada]
+    );
+
+    const limpeza = await servico.rpc("limpar_conversas_mentor");
+    expect(limpeza.error).toBeNull();
+
+    expect(await existemMemorias([sobrevivente])).toEqual([sobrevivente]);
+    expect(await existemMemorias([confirmada])).toEqual([confirmada]);
+    expect(await existemMemorias([esquecida])).toEqual([]);
+  });
 });
 
 describe("apagar leva as fichas junto (cascata)", () => {
@@ -278,5 +397,37 @@ describe("apagar leva as fichas junto (cascata)", () => {
 
     expect(await existemMemorias([fichaTemp])).toEqual([]);
     expect(await existemMemorias([fichaA])).toEqual([fichaA]);
+  });
+});
+
+describe("o banco recusa ficha fora da regra", () => {
+  it("texto de 200 letras passa; com 201 o banco recusa", async () => {
+    const noLimite = await banco.query<{ id: string }>(
+      `insert into public.mentor_memorias (restaurante_id, texto, tipo)
+        values ($1, $2, 'fato') returning id`,
+      [casaA, "x".repeat(200)]
+    );
+    expect(noLimite.rows).toHaveLength(1);
+    await banco.query("delete from public.mentor_memorias where id = $1", [
+      noLimite.rows[0]?.id,
+    ]);
+
+    await expect(
+      banco.query(
+        `insert into public.mentor_memorias (restaurante_id, texto, tipo)
+          values ($1, $2, 'fato')`,
+        [casaA, "x".repeat(201)]
+      )
+    ).rejects.toMatchObject({ code: "23514" });
+  });
+
+  it("tipo fora de fato/resumo o banco recusa", async () => {
+    await expect(
+      banco.query(
+        `insert into public.mentor_memorias (restaurante_id, texto, tipo)
+          values ($1, 'texto válido', 'lembrete')`,
+        [casaA]
+      )
+    ).rejects.toMatchObject({ code: "23514" });
   });
 });
