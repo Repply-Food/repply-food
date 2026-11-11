@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { enviarMensagemAction } from "@/lib/mentor/enviar-action";
 import { SendHorizontal } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   type FormEvent,
@@ -248,6 +249,16 @@ export function ChatMentor({
           </p>
         </form>
       )}
+      <p className="text-xs text-quiet">
+        O mentor lembra do que você conta para responder melhor.{" "}
+        <Link
+          href={`/r/${slug}/mentor/lembrancas`}
+          className="underline underline-offset-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          Veja ou apague as lembranças
+        </Link>
+        .
+      </p>
     </div>
   );
 }

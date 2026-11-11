@@ -71,7 +71,15 @@ export default async function PaginaMentor({
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Mentor</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">Mentor</h1>
+        <Link
+          href={`/r/${slug}/mentor/lembrancas`}
+          className="inline-flex h-11 items-center rounded-lg px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          O que o mentor lembra
+        </Link>
+      </div>
       {todas.length === 0 ? (
         chat
       ) : (

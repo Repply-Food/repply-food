@@ -39,6 +39,17 @@ export type MensagemDaConversa = {
   criada_em: string;
 };
 
+/** Quantas fichas a tela de lembranças devolve (o teto da casa é 50). */
+const MAXIMO_DE_FICHAS = 50;
+
+/** Uma ficha da lista de lembranças: o tipo, o texto e quando foi mexida. */
+export type FichaDaLista = {
+  id: string;
+  tipo: "fato" | "resumo";
+  texto: string;
+  atualizada_em: string;
+};
+
 function falhaNaLeitura(): never {
   logError("falha_leitura_mentor");
   throw new Error("falha_leitura_mentor");
@@ -152,6 +163,38 @@ export async function mensagensDaConversa(
   if (error || !data) falhaNaLeitura();
 
   return mensagensValidas(data);
+}
+
+/**
+ * As fichas que o mentor lembra da casa, da mais nova para a mais velha.
+ *
+ * Linha com tipo fora de fato/resumo não aparece: o banco de hoje só aceita
+ * esses dois, mas o que a tela mostra é validado aqui, nunca confiado ao
+ * banco — igual às mensagens, que filtram o papel.
+ */
+export async function fichasDaCasa(
+  restauranteId: string
+): Promise<FichaDaLista[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("mentor_memorias")
+    .select("id, tipo, texto, atualizada_em")
+    .eq("restaurante_id", restauranteId)
+    .order("atualizada_em", { ascending: false })
+    .limit(MAXIMO_DE_FICHAS);
+  if (error || !data) falhaNaLeitura();
+
+  const fichas: FichaDaLista[] = [];
+  for (const linha of data) {
+    if (linha.tipo !== "fato" && linha.tipo !== "resumo") continue;
+    fichas.push({
+      id: linha.id,
+      tipo: linha.tipo,
+      texto: linha.texto,
+      atualizada_em: linha.atualizada_em,
+    });
+  }
+  return fichas;
 }
 
 // ---------------------------------------------------------------------------
