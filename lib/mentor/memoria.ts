@@ -96,7 +96,9 @@ export async function extrairEgravarFichas(args: {
     if (!Array.isArray(cru)) return;
 
     const servico = createServiceClient();
-    for (const item of cru) {
+    // Teto por extração: o prompt pede "até 5", mas modelo desobediente pode
+    // devolver 100 itens; sem este corte, cada item vira roundtrips no banco.
+    for (const item of cru.slice(0, 5)) {
       const ficha = fichaValida(item);
       if (!ficha) continue;
 

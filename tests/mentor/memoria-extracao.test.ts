@@ -337,6 +337,27 @@ describe("extrairEgravarFichas", () => {
     expect(erroNoConsole).not.toHaveBeenCalled();
   });
 
+  it("dublê com 7 fichas válidas: só as 5 primeiras entram, sem erro", async () => {
+    const sete = Array.from({ length: 7 }, (_, i) => ({
+      tipo: "fato",
+      texto: `ficha nova ${i}`,
+    }));
+    const { provedor, responder } = provedorQueDevolve(JSON.stringify(sete));
+    await expect(extrairDa(casaA, provedor)).resolves.toBeUndefined();
+
+    expect(responder).toHaveBeenCalledTimes(1);
+    const fichas = await fichasDa(casaA);
+    expect(fichas).toHaveLength(5);
+    expect(fichas.map((ficha) => ficha.texto).sort()).toEqual([
+      "ficha nova 0",
+      "ficha nova 1",
+      "ficha nova 2",
+      "ficha nova 3",
+      "ficha nova 4",
+    ]);
+    expect(erroNoConsole).not.toHaveBeenCalled();
+  });
+
   it("provedor que lança: sem lançar, com o código no log", async () => {
     await expect(
       extrairDa(casaA, provedorQueFalha().provedor)
