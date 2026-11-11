@@ -461,6 +461,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"mentor_memorias": {
+                  Row: {
+                    "atualizada_em": string,"conversa_id": string | null,"criada_em": string,"id": string,"restaurante_id": string,"texto": string,"tipo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atualizada_em"?: string,"conversa_id"?: string | null,"criada_em"?: string,"id"?: string,"restaurante_id": string,"texto": string,"tipo": string
+                  }
+                  Update: {
+                    "atualizada_em"?: string,"conversa_id"?: string | null,"criada_em"?: string,"id"?: string,"restaurante_id"?: string,"texto"?: string,"tipo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mentor_memorias_conversa_id_fkey"
+      columns: ["conversa_id"]
+isOneToOne: false
+      referencedRelation: "mentor_conversas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mentor_memorias_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mentor_memorias_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"mentor_mensagens": {
                   Row: {
                     "conversa_id": string,"criada_em": string,"ferramentas_usadas": Json | null,"id": string,"papel": string,"restaurante_id": string,"texto": string
