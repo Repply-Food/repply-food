@@ -30,10 +30,13 @@ import { conectarBanco } from "../helpers/supabase-local";
 // O incremento continua ANTES do provedor (a checagem atômica do teto não
 // muda), então só o contador de hoje é conferido aqui.
 
-const { executarFerramentas, logError } = vi.hoisted(() => ({
-  executarFerramentas: vi.fn(),
-  logError: vi.fn(),
-}));
+const { executarFerramentas, logError, carregarFichas, extrairEgravarFichas } =
+  vi.hoisted(() => ({
+    executarFerramentas: vi.fn(),
+    logError: vi.fn(),
+    carregarFichas: vi.fn(),
+    extrairEgravarFichas: vi.fn(),
+  }));
 const estado = vi.hoisted(() => ({
   cliente: null as unknown,
   // Quando ligado, o cliente de serviço do cérebro recusa SÓ a devolução.
@@ -56,6 +59,12 @@ vi.mock("@/lib/mentor/ferramentas", () => ({
     },
   ],
   executarFerramentas,
+}));
+// As fichas são dublê: o provedor roteirizado nunca toca no banco de
+// lembranças, e a extração real chamaria o provedor de verdade.
+vi.mock("@/lib/mentor/memoria", () => ({
+  carregarFichas,
+  extrairEgravarFichas,
 }));
 // O cliente de serviço é o de verdade; com `falharDevolucao` ligado, só a
 // chamada de mentor_devolver_uso volta com erro (a leitura da cartilha, que
@@ -272,6 +281,11 @@ beforeEach(() => {
     pedidos.map((p) => ({ nome: p.nome, resultado: { valor: "1234.56" } }))
   );
   logError.mockReset();
+  // Sem ficha, por padrão: igual ao dia em que o mentor não lembrava nada.
+  carregarFichas.mockReset();
+  carregarFichas.mockResolvedValue([]);
+  extrairEgravarFichas.mockReset();
+  extrairEgravarFichas.mockResolvedValue(undefined);
 });
 
 describe("a função mentor_devolver_uso (só o serviço executa)", () => {

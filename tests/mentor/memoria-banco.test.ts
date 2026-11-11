@@ -235,7 +235,11 @@ describe("o navegador não escreve ficha direto (só a função do servidor)", (
   it("ninguém insere ficha direto (INSERT recusado para authenticated)", async () => {
     const insere = await donoA
       .from("mentor_memorias")
-      .insert({ restaurante_id: casaA, texto: "tentativa direta", tipo: "fato" })
+      .insert({
+        restaurante_id: casaA,
+        texto: "tentativa direta",
+        tipo: "fato",
+      })
       .select();
     expect(insere.error?.code).toBe("42501");
 
@@ -257,10 +261,7 @@ describe("o navegador não escreve ficha direto (só a função do servidor)", (
       "o dono prefere conselho direto"
     );
 
-    const apaga = await donoA
-      .from("mentor_memorias")
-      .delete()
-      .eq("id", fichaA);
+    const apaga = await donoA.from("mentor_memorias").delete().eq("id", fichaA);
     expect(apaga.error?.code).toBe("42501");
 
     // Nada sumiu, conferido pelo banco.
@@ -286,7 +287,11 @@ describe("o navegador não escreve ficha direto (só a função do servidor)", (
 
 describe("a faxina aposenta a ficha velha e poupa a nova", () => {
   it("ficha sem mexer há 13 meses some; a de ontem fica", async () => {
-    const velha = await criarFicha(casaA, "ficha velha de treze meses", "13 months");
+    const velha = await criarFicha(
+      casaA,
+      "ficha velha de treze meses",
+      "13 months"
+    );
     const nova = await criarFicha(casaA, "ficha de ontem", "1 day");
 
     const limpeza = await servico.rpc("limpar_conversas_mentor");
