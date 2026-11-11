@@ -351,6 +351,10 @@ describe("excluirConversa", () => {
     expect(r).toEqual({ ok: true });
     // Sem nova escrita a data original fica valendo: o prazo não recomeça.
     expect(banco.consulta.update).not.toHaveBeenCalled();
+    // Retorno precoce antes do DELETE: nenhum delete sai — nem na
+    // conversa, nem nas fichas via serviço (M-3).
+    expect(banco.consulta.delete).not.toHaveBeenCalled();
+    expect(createServiceClient).not.toHaveBeenCalled();
   });
 
   it("apaga junto as fichas daquela conversa e casa, antes da marca", async () => {
