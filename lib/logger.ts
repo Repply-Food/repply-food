@@ -23,6 +23,7 @@ const codigosErro = [
   "falha_mentor_provedor",
   "falha_mentor_limite",
   "falha_mentor_geral",
+  "falha_memoria_mentor",
   "falha_sessoes_mentor",
 ] as const;
 const codigosInfo = ["envio_processado", "envio_rejeitado"] as const;
