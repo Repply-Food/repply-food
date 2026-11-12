@@ -187,6 +187,31 @@ describe("esquecerTudo", () => {
     expect(revalidatePath).toHaveBeenCalledWith(`/r/${SLUG}/mentor/lembrancas`);
   });
 
+  it("esquecerTudo nunca toca em anexo nem no cofre: só mentor_memorias", async () => {
+    dono();
+    const banco = bancoFalso({
+      escrita: { data: [{ id: FICHA }], error: null },
+    });
+    const storageFrom = vi.fn();
+    createServiceClient.mockReturnValue({
+      from: banco.from,
+      storage: { from: storageFrom },
+    });
+
+    const r = await esquecerTudo(SLUG);
+
+    expect(r).toEqual({ ok: true });
+    // O delete alcança UMA tabela, e é a das fichas — nunca mentor_anexos.
+    expect(banco.from).toHaveBeenCalledWith("mentor_memorias");
+    const tabelas = banco.from.mock.calls.map(
+      (args) => (args as unknown as string[])[0]
+    );
+    expect(tabelas).toEqual(["mentor_memorias"]);
+    expect(banco.consulta.delete).toHaveBeenCalledTimes(1);
+    // Nada no cofre: esquecer é das lembranças, o anexo sai com a conversa.
+    expect(storageFrom).not.toHaveBeenCalled();
+  });
+
   it("sem ficha nenhuma continua ok (nada para esquecer)", async () => {
     dono();
     const banco = bancoFalso({ escrita: { data: [], error: null } });

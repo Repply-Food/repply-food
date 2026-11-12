@@ -47,6 +47,10 @@ const FRASE_QUANTIDADE = "dá para mandar até 5 arquivos por pergunta";
 const FRASE_ANEXOS_FALHARAM = "alguns anexos não entraram, reenvie só eles";
 const TAMANHO_MAXIMO_DA_PERGUNTA = 4000;
 
+// A lista vazia estável: o padrão `anexosIniciais = []` criaria referência
+// nova a cada desenho e o efeito que sincroniza a lista entraria em loop.
+const SEM_ANEXOS: AnexoDaConversa[] = [];
+
 /**
  * O chat do dono com o mentor (v1: sem streaming). A resposta vem inteira
  * quando a função do servidor volta, e enquanto isso a tela mostra
@@ -67,7 +71,7 @@ export function ChatMentor({
   conversaId: conversaInicial,
   mensagensIniciais,
   somenteLeitura,
-  anexosIniciais = [],
+  anexosIniciais,
   fuso = FUSO_PADRAO,
   agoraIso,
 }: {
@@ -94,7 +98,9 @@ export function ChatMentor({
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [anexos, setAnexos] = useState<AnexoDaConversa[]>(anexosIniciais);
+  const [anexos, setAnexos] = useState<AnexoDaConversa[]>(
+    anexosIniciais ?? SEM_ANEXOS
+  );
   const [selecionados, setSelecionados] = useState<File[]>([]);
   const [baixandoId, setBaixandoId] = useState<string | null>(null);
   const [erroBaixar, setErroBaixar] = useState<string | null>(null);
@@ -106,9 +112,13 @@ export function ChatMentor({
   const ultimaFala = useRef<HTMLLIElement>(null);
   const entradaArquivo = useRef<HTMLInputElement>(null);
 
-  // A lista nasce dos anexos gravados (a chave da página remonta o chat ao
-  // trocar de conversa, como nas mensagens) e cresce na hora com o que o dono
-  // anexa: sem recarregar a conversa para ver o que acabou de mandar.
+  // O servidor é a fonte da verdade: depois de cada `router.refresh()`
+  // as props chegam novas e a vista acompanha (como a lista de conversas).
+  // A chave da página remonta o chat ao trocar de conversa; este efeito
+  // cobre o mesmo endereço com dados novos (o envio acabou de entrar).
+  useEffect(() => {
+    setAnexos(anexosIniciais ?? SEM_ANEXOS);
+  }, [anexosIniciais]);
 
   // Mantém a conversa à vista: a pergunta nova vai para o fim da tela, e uma
   // resposta nova abre pelo começo dela (resposta longa se lê de cima).
@@ -169,17 +179,22 @@ export function ChatMentor({
           },
         ]);
         if (arquivos !== null) {
-          const agora = new Date().toISOString();
-          setAnexos((atuais) => [
-            ...atuais,
-            ...arquivos.map((arquivo, indice) => ({
-              id: `${idLocal}-anexo-${indice}`,
-              nome: arquivo.name,
-              tipo: tipoDeArquivo(arquivo.name),
-              tamanho_bytes: arquivo.size,
-              criada_em: agora,
-            })),
-          ]);
+          // Sucesso cheio: mostra na hora o que o dono anexou. Falha parcial
+          // NÃO entra na vista local (mentiria: algum arquivo ficou de fora)
+          // — só o aviso, e o `router.refresh()` traz a verdade do servidor.
+          if (!resultado.data.anexosFalharam) {
+            const agora = new Date().toISOString();
+            setAnexos((atuais) => [
+              ...atuais,
+              ...arquivos.map((arquivo, indice) => ({
+                id: `${idLocal}-anexo-${indice}`,
+                nome: arquivo.name,
+                tipo: tipoDeArquivo(arquivo.name),
+                tamanho_bytes: arquivo.size,
+                criada_em: agora,
+              })),
+            ]);
+          }
           setSelecionados([]);
           if (entradaArquivo.current) entradaArquivo.current.value = "";
         }
@@ -204,14 +219,29 @@ export function ChatMentor({
     if (somenteLeitura || baixandoId !== null) return;
     setBaixandoId(anexo.id);
     setErroBaixar(null);
+    // A aba abre no gesto do clique (síncrono): o bloqueador de popup só
+    // libera aqui. O link assinado chega depois e a aba navega até ele; se
+    // a busca falhar, ela fecha e a frase aparece na seção.
+    const aba = window.open("", "_blank", "noopener,noreferrer");
     try {
       const resultado = await baixarAnexo(slug, anexo.id);
       if (resultado.ok) {
-        window.open(resultado.url, "_blank", "noopener,noreferrer");
+        if (aba && !aba.closed) {
+          aba.location.href = resultado.url;
+        } else {
+          const direta = window.open(
+            resultado.url,
+            "_blank",
+            "noopener,noreferrer"
+          );
+          if (!direta) setErroBaixar(FRASE_FALHA_BAIXAR);
+        }
       } else {
+        aba?.close();
         setErroBaixar(resultado.error);
       }
     } catch {
+      aba?.close();
       setErroBaixar(FRASE_FALHA_BAIXAR);
     } finally {
       setBaixandoId(null);

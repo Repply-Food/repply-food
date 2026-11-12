@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import {
-  act,
   cleanup,
   fireEvent,
   render,
@@ -207,7 +206,7 @@ describe("chat do mentor: anexar arquivos", () => {
     expect(campoAnexo().files).toHaveLength(1);
   });
 
-  it("quando algum anexo não entra, avisa sem derrubar a resposta", async () => {
+  it("quando algum anexo não entra, avisa sem derrubar a resposta — e sem mentir na lista", async () => {
     enviarMensagemAction.mockResolvedValue({
       ok: true,
       data: {
@@ -216,7 +215,7 @@ describe("chat do mentor: anexar arquivos", () => {
         anexosFalharam: true,
       },
     });
-    render(telaChat());
+    render(telaChat({ conversaId: CONVERSA, anexosIniciais: ANEXOS }));
 
     fireEvent.change(screen.getByRole("textbox", { name: /sua pergunta/i }), {
       target: { value: "Olha isso" },
@@ -230,6 +229,34 @@ describe("chat do mentor: anexar arquivos", () => {
     expect(
       await screen.findByText(/alguns anexos não entraram, reenvie só eles/i)
     ).toBeTruthy();
+    // Falha parcial não otimista: a foto não entrou na vista local — a
+    // verdade chega do servidor (`router.refresh()`), sem mentir no meio.
+    const lista = screen.getByRole("list", { name: /anexos da conversa/i });
+    expect(within(lista).queryByText("foto.png")).toBeNull();
+    expect(within(lista).getAllByRole("listitem")).toHaveLength(ANEXOS.length);
+  });
+
+  it("a lista acompanha o servidor: prop nova, vista nova (sem recarregar)", () => {
+    const { rerender } = render(
+      telaChat({ conversaId: CONVERSA, anexosIniciais: ANEXOS })
+    );
+    expect(screen.getByText("fechamento-outubro.pdf")).toBeTruthy();
+
+    const novos = [
+      ...ANEXOS,
+      {
+        id: "d4444444-4444-4444-8444-444444444444",
+        nome: "novo-do-servidor.png",
+        tipo: "imagem" as const,
+        tamanho_bytes: 100,
+        criada_em: "2026-11-03T14:33:00+00:00",
+      },
+    ];
+    rerender(telaChat({ conversaId: CONVERSA, anexosIniciais: novos }));
+
+    // O `router.refresh()` trouxe a verdade e a vista acompanhou, sem
+    // remontar a conversa (o texto digitado continua no campo).
+    expect(screen.getByText("novo-do-servidor.png")).toBeTruthy();
   });
 
   it("os anexos da conversa mostram nome, tipo, tamanho e hora no fuso da casa", () => {
@@ -245,40 +272,48 @@ describe("chat do mentor: anexar arquivos", () => {
     expect(within(lista).getByText(/hoje 11:30/i)).toBeTruthy();
   });
 
-  it("baixar chama a ação com o id e abre o link assinado", async () => {
+  it("baixar chama a ação com o id e abre o link assinado na aba do clique", async () => {
+    // A aba abre no gesto (síncrono, antes da ação): o dublê finge a aba.
+    const aba = { location: { href: "" }, closed: false, close: vi.fn() };
+    vi.mocked(window.open).mockReturnValue(aba as unknown as Window);
     render(telaChat({ conversaId: CONVERSA, anexosIniciais: ANEXOS }));
 
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /baixar cardapio-novo\.png/i })
-      );
-    });
-
-    await waitFor(() =>
-      expect(baixarAnexo).toHaveBeenCalledWith("bar-do-ze", ANEXOS[0]?.id)
+    fireEvent.click(
+      screen.getByRole("button", { name: /baixar cardapio-novo\.png/i })
     );
+
+    // Síncrono: o clique abriu a aba antes mesmo de a ação responder.
     expect(window.open).toHaveBeenCalledWith(
-      "https://cofre.local/a.png",
+      "",
       "_blank",
       "noopener,noreferrer"
     );
+    await waitFor(() =>
+      expect(baixarAnexo).toHaveBeenCalledWith("bar-do-ze", ANEXOS[0]?.id)
+    );
+    // A URL assinada chegou depois e a aba navegou até ela.
+    await waitFor(() =>
+      expect(aba.location.href).toBe("https://cofre.local/a.png")
+    );
+    expect(aba.close).not.toHaveBeenCalled();
   });
 
-  it("quando o link não sai, baixar mostra a frase sem abrir nada", async () => {
+  it("quando o link não sai, baixar fecha a aba e mostra a frase", async () => {
     baixarAnexo.mockResolvedValue({
       ok: false,
       error: "não encontrei esse anexo",
     });
+    const aba = { location: { href: "" }, closed: false, close: vi.fn() };
+    vi.mocked(window.open).mockReturnValue(aba as unknown as Window);
     render(telaChat({ conversaId: CONVERSA, anexosIniciais: ANEXOS }));
 
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /baixar cardapio-novo\.png/i })
-      );
-    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /baixar cardapio-novo\.png/i })
+    );
 
     expect(await screen.findByText("não encontrei esse anexo")).toBeTruthy();
-    expect(window.open).not.toHaveBeenCalled();
+    expect(aba.close).toHaveBeenCalledTimes(1);
+    expect(aba.location.href).toBe("");
   });
 
   it("modo leitura: sem campo de anexo, sem enviar e sem baixar", () => {
@@ -358,15 +393,5 @@ describe("admin: anexos da conversa", () => {
     expect(
       screen.queryByRole("list", { name: /anexos da conversa/i })
     ).toBeNull();
-  });
-
-  it("esquecer-tudo não mexe em anexo: só apaga ficha (documentado)", () => {
-    // O `esquecerTudo` (`lib/mentor/memorias-actions.ts`) deleta SÓ de
-    // `mentor_memorias`, com o filtro da casa — nunca toca em `mentor_anexos`
-    // nem no cofre `mentor-anexos`. A prova está em
-    // `tests/mentor/memorias-actions.test.ts` ("só apaga fichas da casa"):
-    // o dublê do banco registra `from(...)` e nenhum `delete` alcança outra
-    // tabela. Este teste trava o contrato pelo lado da escrita.
-    expect(true).toBe(true);
   });
 });
