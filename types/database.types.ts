@@ -421,6 +421,38 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"mentor_anexos": {
+                  Row: {
+                    "caminho": string,"conversa_id": string | null,"criada_em": string,"id": string,"nome_original": string,"restaurante_id": string,"tamanho_bytes": number,"tipo": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "caminho": string,"conversa_id"?: string | null,"criada_em"?: string,"id"?: string,"nome_original": string,"restaurante_id": string,"tamanho_bytes": number,"tipo": string
+                  }
+                  Update: {
+                    "caminho"?: string,"conversa_id"?: string | null,"criada_em"?: string,"id"?: string,"nome_original"?: string,"restaurante_id"?: string,"tamanho_bytes"?: number,"tipo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mentor_anexos_conversa_id_fkey"
+      columns: ["conversa_id"]
+isOneToOne: false
+      referencedRelation: "mentor_conversas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mentor_anexos_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mentor_anexos_restaurante_id_fkey"
+      columns: ["restaurante_id"]
+isOneToOne: false
+      referencedRelation: "restaurantes_no_admin"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"mentor_cartilhas": {
                   Row: {
                     "ativa": boolean,"criada_em": string,"criada_por": string | null,"id": string,"texto": string
