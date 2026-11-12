@@ -186,6 +186,17 @@ describe("o dono lê só a ficha da casa dele", () => {
     expect(leitura.error).toBeNull();
     expect(leitura.data).toHaveLength(1);
   });
+
+  it("sem login não vaza linha nenhuma (negado, sem dados)", async () => {
+    const anonimo = novoCliente();
+    const leitura = await anonimo
+      .from("mentor_anexos")
+      .select("id")
+      .eq("id", anexoA);
+    // Sem grant para anon o banco nega (42501) e não devolve dado algum.
+    expect(leitura.error?.code).toBe("42501");
+    expect(leitura.data ?? []).toHaveLength(0);
+  });
 });
 
 describe("o navegador não escreve ficha direto (só a função do servidor)", () => {
@@ -217,13 +228,9 @@ describe("o navegador não escreve ficha direto (só a função do servidor)", (
       .update({ nome_original: "trocado.pdf" })
       .eq("id", anexoA)
       .select();
-    // Sem política de escrita a alteração volta vazia ou é barrada: nos dois
-    // casos a ficha continua igual no banco.
-    if (altera.error) {
-      expect(altera.error.code).toBe("42501");
-    } else {
-      expect(altera.data).toHaveLength(0);
-    }
+    // Sem privilégio de escrita a alteração é barrada (42501), igual ao
+    // apagar: nos dois casos a ficha continua igual no banco.
+    expect(altera.error?.code).toBe("42501");
     expect((await anexoNoBanco(anexoA))?.nome_original).toBe("cardapio.pdf");
 
     const apaga = await donoA.from("mentor_anexos").delete().eq("id", anexoA);
@@ -283,6 +290,20 @@ describe("o cofre é privado: o navegador nunca baixa direto", () => {
     }
   });
 
+  it("storage.objects tem RLS ativa e zero policies no total", async () => {
+    const rls = await banco.query<{ relrowsecurity: boolean }>(
+      `select relrowsecurity from pg_class
+        where relname = 'objects' and relnamespace = 'storage'::regnamespace`
+    );
+    expect(rls.rows[0]?.relrowsecurity).toBe(true);
+
+    const total = await banco.query<{ total: string }>(
+      `select count(*) as total from pg_policies
+        where schemaname = 'storage' and tablename = 'objects'`
+    );
+    expect(total.rows[0]?.total).toBe("0");
+  });
+
   it("nenhuma policy em storage.objects abre o cofre", async () => {
     const r = await banco.query<{ policyname: string }>(
       `select policyname from pg_policies
@@ -295,6 +316,10 @@ describe("o cofre é privado: o navegador nunca baixa direto", () => {
 
 describe("a faxina apaga a ficha velha e poupa a nova", () => {
   it("ficha de 13 meses some; a de ontem fica", async () => {
+    // Linha de base: esvazia o que já passou dos 12 meses antes de medir.
+    const antes = await servico.rpc("limpar_conversas_mentor");
+    expect(antes.error).toBeNull();
+
     const velha = await criarAnexo(casaA, `velha-${sufixo}/a.pdf`, "13 months");
     const nova = await criarAnexo(casaA, `nova-${sufixo}/b.pdf`, "1 day");
 
@@ -305,6 +330,10 @@ describe("a faxina apaga a ficha velha e poupa a nova", () => {
       "conversas",
       "mensagens",
     ]);
+    // A ficha velha entra no contador de mensagens: ele cresce.
+    const base = antes.data as { mensagens: number; conversas: number };
+    const apagadas = limpeza.data as { mensagens: number; conversas: number };
+    expect(apagadas.mensagens).toBeGreaterThan(base.mensagens);
 
     expect(await existemAnexos([velha])).toEqual([]);
     expect(await existemAnexos([nova])).toEqual([nova]);
@@ -401,6 +430,53 @@ describe("o banco recusa ficha fora da regra", () => {
           [casaA, tamanho, `tamanho-${sufixo}/${tamanho}.pdf`]
         )
       ).rejects.toMatchObject({ code: "23514" });
+    }
+  });
+
+  it("bordas que passam: nome de 1 letra, tamanho 1 e 10485760", async () => {
+    const primeira = await banco.query<{ id: string }>(
+      `insert into public.mentor_anexos
+         (restaurante_id, nome_original, tipo, tamanho_bytes, caminho)
+       values ($1, 'a', 'pdf', 1, $2) returning id`,
+      [casaA, `borda-${sufixo}/min.pdf`]
+    );
+    expect(primeira.rows).toHaveLength(1);
+
+    const segunda = await banco.query<{ id: string }>(
+      `insert into public.mentor_anexos
+         (restaurante_id, nome_original, tipo, tamanho_bytes, caminho)
+       values ($1, 'maximo.pdf', 'pdf', 10485760, $2) returning id`,
+      [casaA, `borda-${sufixo}/max.pdf`]
+    );
+    expect(segunda.rows).toHaveLength(1);
+
+    await banco.query(
+      "delete from public.mentor_anexos where id = any($1::uuid[])",
+      [[primeira.rows[0]?.id, segunda.rows[0]?.id]]
+    );
+  });
+
+  it("caminho duplicado o banco recusa (23505)", async () => {
+    const caminho = `duplicado-${sufixo}/mesmo.pdf`;
+    await banco.query(
+      `insert into public.mentor_anexos
+         (restaurante_id, nome_original, tipo, tamanho_bytes, caminho)
+       values ($1, 'mesmo.pdf', 'pdf', 10, $2)`,
+      [casaA, caminho]
+    );
+    try {
+      await expect(
+        banco.query(
+          `insert into public.mentor_anexos
+             (restaurante_id, nome_original, tipo, tamanho_bytes, caminho)
+           values ($1, 'mesmo.pdf', 'pdf', 10, $2)`,
+          [casaA, caminho]
+        )
+      ).rejects.toMatchObject({ code: "23505" });
+    } finally {
+      await banco.query("delete from public.mentor_anexos where caminho = $1", [
+        caminho,
+      ]);
     }
   });
 });
