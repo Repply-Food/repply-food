@@ -17,12 +17,16 @@ const { enviarMensagemAction } = vi.hoisted(() => ({
 
 vi.mock("@/lib/mentor/enviar-action", () => ({ enviarMensagemAction }));
 
+vi.mock("@/lib/mentor/anexos-actions", () => ({
+  baixarAnexo: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import { ChatMentor } from "@/components/painel/mentor/chat-mentor";
 
 const AVISO =
-  "A equipe da Repply pode ler esta conversa para dar suporte, e ela também ajuda a melhorar a inteligência artificial.";
+  "O que você mandar aqui (texto e arquivo) a equipe da Repply pode ler para dar suporte, e também ajuda a melhorar a inteligência artificial.";
 const CONVERSA = "22222222-2222-4222-8222-222222222222";
 
 const MENSAGENS = [

@@ -8,6 +8,7 @@ vi.mock("@/lib/auth/sessao", () => ({ exigirCasa }));
 vi.mock("@/lib/mentor/leitura", () => ({
   conversasDaCasa: vi.fn(async () => []),
   mensagensDaConversa: vi.fn(async () => []),
+  anexosDaConversa: vi.fn(async () => []),
 }));
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {

@@ -25,6 +25,9 @@ vi.mock("@/lib/mentor/sessoes-actions", () => ({
   arquivarConversa,
   excluirConversa,
 }));
+vi.mock("@/lib/mentor/anexos-actions", () => ({
+  baixarAnexo: vi.fn(),
+}));
 
 const { atualizar } = vi.hoisted(() => ({ atualizar: vi.fn() }));
 vi.mock("next/navigation", () => ({

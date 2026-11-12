@@ -50,6 +50,15 @@ export type FichaDaLista = {
   atualizada_em: string;
 };
 
+/** Um anexo da conversa: o bastante para listar e baixar (nome, tipo, tamanho e quando entrou). */
+export type AnexoDaConversa = {
+  id: string;
+  nome: string;
+  tipo: "imagem" | "pdf" | "planilha";
+  tamanho_bytes: number;
+  criada_em: string;
+};
+
 function falhaNaLeitura(): never {
   logError("falha_leitura_mentor");
   throw new Error("falha_leitura_mentor");
@@ -195,6 +204,47 @@ export async function fichasDaCasa(
     });
   }
   return fichas;
+}
+
+/**
+ * Os anexos de uma conversa da casa, do mais antigo para o mais recente.
+ * Filtro duplo (conversa E casa) sobre a RLS, como as mensagens: anexo de
+ * outra casa nunca aparece, mesmo com o id na mão.
+ *
+ * Linha com tipo fora de imagem/pdf/planilha não aparece: igual às fichas, o
+ * que a tela mostra é validado aqui, nunca confiado ao banco.
+ */
+export async function anexosDaConversa(
+  conversaId: string,
+  restauranteId: string
+): Promise<AnexoDaConversa[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("mentor_anexos")
+    .select("id, nome_original, tipo, tamanho_bytes, criada_em")
+    .eq("conversa_id", conversaId)
+    .eq("restaurante_id", restauranteId)
+    .order("criada_em", { ascending: true });
+  if (error || !data) falhaNaLeitura();
+
+  const anexos: AnexoDaConversa[] = [];
+  for (const linha of data) {
+    if (
+      linha.tipo !== "imagem" &&
+      linha.tipo !== "pdf" &&
+      linha.tipo !== "planilha"
+    ) {
+      continue;
+    }
+    anexos.push({
+      id: linha.id,
+      nome: linha.nome_original,
+      tipo: linha.tipo,
+      tamanho_bytes: linha.tamanho_bytes,
+      criada_em: linha.criada_em,
+    });
+  }
+  return anexos;
 }
 
 // ---------------------------------------------------------------------------

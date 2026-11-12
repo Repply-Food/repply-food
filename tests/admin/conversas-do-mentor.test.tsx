@@ -23,6 +23,7 @@ const {
   exigirAdmin,
   conversasParaAdmin,
   conversaParaAdmin,
+  urlParaBaixar,
 } = vi.hoisted(() => ({
   apagar: vi.fn(),
   push: vi.fn(),
@@ -32,6 +33,7 @@ const {
   exigirAdmin: vi.fn(),
   conversasParaAdmin: vi.fn(),
   conversaParaAdmin: vi.fn(),
+  urlParaBaixar: vi.fn(async () => null),
 }));
 
 vi.mock("@/lib/mentor/sessoes-actions", () => ({
@@ -47,6 +49,7 @@ vi.mock("@/lib/mentor/leitura", () => ({
   conversasParaAdmin,
   conversaParaAdmin,
 }));
+vi.mock("@/lib/mentor/anexos", () => ({ urlParaBaixar }));
 
 import PaginaConversa from "@/app/admin/mentor/conversas/[id]/page";
 import PaginaConversas from "@/app/admin/mentor/conversas/page";
@@ -390,6 +393,78 @@ describe("ConversaDoMentor", () => {
   });
 });
 
+describe("ConversaDoMentor: anexos", () => {
+  const ANEXOS = [
+    {
+      id: "a1111111-1111-4111-8111-111111111111",
+      nome: "cardapio-novo.png",
+      tipo: "imagem" as const,
+      tamanho_bytes: 204_800,
+      criada_em: "2026-11-03T14:30:00+00:00",
+      url: "https://cofre.local/a1111111",
+    },
+    {
+      id: "b2222222-2222-4222-8222-222222222222",
+      nome: "fechamento-outubro.pdf",
+      tipo: "pdf" as const,
+      tamanho_bytes: 1_572_864,
+      criada_em: "2026-11-03T14:31:00+00:00",
+      url: "https://cofre.local/b2222222",
+    },
+  ];
+
+  it("lista os anexos com nome, tipo, tamanho, hora no fuso e baixar", () => {
+    render(
+      <ConversaDoMentor conversa={DETALHE} agoraIso={AGORA} anexos={ANEXOS} />
+    );
+
+    const lista = screen.getByRole("list", { name: /anexos da conversa/i });
+    expect(within(lista).getByText("cardapio-novo.png")).toBeTruthy();
+    expect(within(lista).getByText(/imagem/i)).toBeTruthy();
+    expect(within(lista).getByText(/200 KB/i)).toBeTruthy();
+    expect(within(lista).getByText(/1,5 MB/i)).toBeTruthy();
+    // 14:30 UTC: 11:30 em São Paulo, no relógio da casa.
+    expect(within(lista).getByText(/hoje 11:30/i)).toBeTruthy();
+    const baixar = within(lista).getByRole("link", {
+      name: /baixar cardapio-novo\.png/i,
+    });
+    expect(baixar.getAttribute("href")).toBe("https://cofre.local/a1111111");
+  });
+
+  it("é só leitura com anexo: link de baixar, nenhum botão, campo ou formulário", () => {
+    const { container } = render(
+      <ConversaDoMentor conversa={DETALHE} agoraIso={AGORA} anexos={ANEXOS} />
+    );
+
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+    expect(container.querySelector("form")).toBeNull();
+  });
+
+  it("sem anexo, nenhuma lista aparece (igual a hoje)", () => {
+    render(<ConversaDoMentor conversa={DETALHE} agoraIso={AGORA} />);
+
+    expect(
+      screen.queryByRole("list", { name: /anexos da conversa/i })
+    ).toBeNull();
+  });
+
+  it("sem link assinado, o nome continua visível e a tela pede para recarregar", () => {
+    render(
+      <ConversaDoMentor
+        conversa={DETALHE}
+        agoraIso={AGORA}
+        anexos={ANEXOS.slice(0, 1).map((a) => ({ ...a, url: null }))}
+      />
+    );
+
+    expect(screen.getByText("cardapio-novo.png")).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /baixar cardapio-novo\.png/i })
+    ).toBeNull();
+    expect(screen.getByText(/recarregue a página/i)).toBeTruthy();
+  });
+});
 const DETALHE_EXCLUIDO: DetalheDaConversaParaAdmin = {
   ...DETALHE,
   id: EXCLUIDA.id,

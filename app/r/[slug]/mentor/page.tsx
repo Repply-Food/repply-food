@@ -1,7 +1,11 @@
 import { ChatMentor } from "@/components/painel/mentor/chat-mentor";
 import { ListaConversas } from "@/components/painel/mentor/lista-conversas";
 import { exigirCasa } from "@/lib/auth/sessao";
-import { conversasDaCasa, mensagensDaConversa } from "@/lib/mentor/leitura";
+import {
+  anexosDaConversa,
+  conversasDaCasa,
+  mensagensDaConversa,
+} from "@/lib/mentor/leitura";
 import { casaTemModulo } from "@/lib/painel/modulos";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
@@ -54,6 +58,10 @@ export default async function PaginaMentor({
   const nova = primeiro(consulta.nova) === "1" && ativa === null;
   const chatAberto = ativa !== null || nova;
   const mensagens = ativa ? await mensagensDaConversa(ativa.id, casa.id) : [];
+  // Os anexos entram junto das mensagens: mesma conversa, mesmos filtros, sem
+  // leitura extra quando ninguém abriu nada.
+  const anexos = ativa ? await anexosDaConversa(ativa.id, casa.id) : [];
+  const agoraIso = new Date().toISOString();
 
   // A chave inclui a conversa aberta: trocar de conversa remonta o chat com as
   // mensagens dela (o estado interno não acompanha prop nova). Trocar no meio
@@ -66,6 +74,9 @@ export default async function PaginaMentor({
       conversaId={ativa?.id ?? null}
       mensagensIniciais={mensagens}
       somenteLeitura={modoAdmin}
+      anexosIniciais={anexos}
+      fuso={casa.fuso}
+      agoraIso={agoraIso}
     />
   );
 
@@ -91,7 +102,7 @@ export default async function PaginaMentor({
               arquivadas={arquivadas}
               ativaId={ativa?.id ?? null}
               fuso={casa.fuso}
-              agoraIso={new Date().toISOString()}
+              agoraIso={agoraIso}
               somenteLeitura={modoAdmin}
             />
           </div>

@@ -4,12 +4,27 @@ import { Confirmacao } from "@/components/admin/confirmacao";
 import { Fala } from "@/components/painel/mentor/fala";
 import { Button } from "@/components/ui/button";
 import { momentoNaCasa } from "@/lib/admin/datas";
-import type { DetalheDaConversaParaAdmin } from "@/lib/mentor/leitura";
+import {
+  ROTULO_DO_TIPO_DE_ANEXO,
+  formatarTamanho,
+} from "@/lib/mentor/anexos-texto";
+import type {
+  AnexoDaConversa,
+  DetalheDaConversaParaAdmin,
+} from "@/lib/mentor/leitura";
 import { apagarConversaDeVerdade } from "@/lib/mentor/sessoes-actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+
+/**
+ * Um anexo da conversa com o link de baixar pronto: a página do admin assina
+ * cada anexo no servidor (`urlParaBaixar`, com a chave de serviço) e a tela só
+ * abre o link — sem botão, sem campo, sem ação de escrita (D-38). Sem link
+ * (nulo), o nome continua visível e a tela diz para recarregar.
+ */
+export type AnexoParaAdmin = AnexoDaConversa & { url: string | null };
 
 const NOME_DE_QUEM_FALOU = { dono: "Dono", mentor: "Mentor" } as const;
 
@@ -30,10 +45,13 @@ const NOME_DE_QUEM_FALOU = { dono: "Dono", mentor: "Mentor" } as const;
 export function ConversaDoMentor({
   conversa,
   agoraIso,
+  anexos = [],
 }: {
   conversa: DetalheDaConversaParaAdmin;
   /** Momento da leitura, para o "hoje 21:03" (no fuso da casa). */
   agoraIso: string;
+  /** Os anexos da conversa, com o link de baixar pronto (vazio = sem anexo, igual a hoje). */
+  anexos?: AnexoParaAdmin[];
 }) {
   const agora = new Date(agoraIso);
   const { casa, mensagens } = conversa;
@@ -91,6 +109,45 @@ export function ConversaDoMentor({
           ))}
         </ol>
       )}
+
+      {anexos.length > 0 ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold">Anexos da conversa</h2>
+          <ul aria-label="Anexos da conversa" className="flex flex-col gap-2">
+            {anexos.map((anexo) => (
+              <li
+                key={anexo.id}
+                className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{anexo.nome}</p>
+                  <p className="number-mono text-xs text-quiet">
+                    {ROTULO_DO_TIPO_DE_ANEXO[anexo.tipo]} ·{" "}
+                    {formatarTamanho(anexo.tamanho_bytes)} ·{" "}
+                    {momentoNaCasa(anexo.criada_em, agora, casa.fuso)}
+                  </p>
+                </div>
+                {anexo.url ? (
+                  <Link
+                    href={anexo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={anexo.nome}
+                    aria-label={`Baixar ${anexo.nome}`}
+                    className="inline-flex h-9 shrink-0 items-center rounded-lg border px-3 text-sm font-bold outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    Baixar
+                  </Link>
+                ) : (
+                  <span className="shrink-0 text-xs text-quiet">
+                    Recarregue a página para baixar
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {conversa.excluida ? <ApagarDeVerdade conversaId={conversa.id} /> : null}
     </section>
