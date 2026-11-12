@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   type ArquivoValidado,
+  excluirAnexosPendentes,
   gravarAnexos,
   validarArquivos,
   vincularAnexos,
@@ -465,87 +466,105 @@ async function responderComUsoContado(args: {
 
   const catalogo = new Set(FERRAMENTAS.map((ferramenta) => ferramenta.nome));
   const usadas: string[] = [];
-  let resposta = await chamarProvedor(anexos ? { anexos } : {});
-  let rodadas = 0;
-  while (resposta.tipo === "ferramenta") {
-    const { pedidos } = resposta;
-    // Resposta de ferramenta sem nenhum pedido não deveria existir: é defeito
-    // do provedor, e seguir só rodaria o laço à toa. Falha fechado.
-    if (pedidos.length === 0) throw new FalhaDoMentor("falha_mentor_provedor");
-    if (rodadas >= MAXIMO_DE_RODADAS) {
-      throw new FalhaDoMentor("falha_mentor_geral");
-    }
-    rodadas += 1;
 
-    // Pedidos demais não derrubam a conversa e não são "cortados" em silêncio:
-    // o provedor espera um resultado para CADA chamada que fez (pareamento 1:1,
-    // na ordem). Os primeiros rodam de verdade; cada excedente volta com um erro
-    // que o modelo entende e pode pedir de novo na rodada seguinte.
-    const aExecutar = pedidos.slice(0, MAXIMO_DE_PEDIDOS_POR_RODADA);
-    const excedentes = pedidos.slice(MAXIMO_DE_PEDIDOS_POR_RODADA);
-    const executados: ResultadoFerramenta[] = await classificando(
-      "falha_mentor_geral",
-      () => executarFerramentas(aExecutar, restauranteId)
-    );
-    // Só os que rodaram contam como "usados" na mensagem salva.
-    for (const { nome } of aExecutar) {
-      if (catalogo.has(nome) && !usadas.includes(nome)) usadas.push(nome);
-    }
-    const resultados: ResultadoFerramenta[] = [
-      ...executados,
-      ...excedentes.map(({ nome }) => ({
-        nome,
-        resultado: RESULTADO_ALEM_DO_LIMITE,
-      })),
-    ];
-    resposta = await chamarProvedor({ resultados });
-  }
+  // Daqui em diante, qualquer lançamento apaga os pendentes (linhas +
+  // arquivos, melhor esforço, sem mascarar o erro original) antes de
+  // propagar: sem isso, o provedor ou a gravação falhando deixava ficha
+  // pendente e arquivo no cofre. O vínculo que falha NÃO passa por aqui: ele
+  // vira o aviso e a resposta sai (passo 6).
+  try {
+    let resposta = await chamarProvedor(anexos ? { anexos } : {});
+    let rodadas = 0;
+    while (resposta.tipo === "ferramenta") {
+      const { pedidos } = resposta;
+      // Resposta de ferramenta sem nenhum pedido não deveria existir: é defeito
+      // do provedor, e seguir só rodaria o laço à toa. Falha fechado.
+      if (pedidos.length === 0)
+        throw new FalhaDoMentor("falha_mentor_provedor");
+      if (rodadas >= MAXIMO_DE_RODADAS) {
+        throw new FalhaDoMentor("falha_mentor_geral");
+      }
+      rodadas += 1;
 
-  const textoFinal = resposta.texto.trim();
-  if (textoFinal === "") throw new FalhaDoMentor("falha_mentor_provedor");
-
-  // 6. Gravação, só no sucesso e só no fim. Depois dela, os pendentes saem
-  // da área temporária para a pasta da conversa. Se o vínculo falhar, a
-  // conversa segue gravada e a resposta sai com o aviso (o dono reenvia só
-  // os anexos): falha de anexo nunca derruba a pergunta.
-  const idDaConversa = await gravar(supabase, {
-    restauranteId,
-    conversaId,
-    pergunta,
-    resposta: textoFinal,
-    ferramentasUsadas: usadas,
-    perguntaEm,
-    respostaEm: Math.max(Date.now(), perguntaEm + 1),
-  });
-  if (pendentes.length > 0) {
-    try {
-      await vincularAnexos(
-        restauranteId,
-        idDaConversa,
-        pendentes.map((pendente) => pendente.id)
+      // Pedidos demais não derrubam a conversa e não são "cortados" em silêncio:
+      // o provedor espera um resultado para CADA chamada que fez (pareamento 1:1,
+      // na ordem). Os primeiros rodam de verdade; cada excedente volta com um erro
+      // que o modelo entende e pode pedir de novo na rodada seguinte.
+      const aExecutar = pedidos.slice(0, MAXIMO_DE_PEDIDOS_POR_RODADA);
+      const excedentes = pedidos.slice(MAXIMO_DE_PEDIDOS_POR_RODADA);
+      const executados: ResultadoFerramenta[] = await classificando(
+        "falha_mentor_geral",
+        () => executarFerramentas(aExecutar, restauranteId)
       );
-    } catch {
-      anexosFalharam = true;
+      // Só os que rodaram contam como "usados" na mensagem salva.
+      for (const { nome } of aExecutar) {
+        if (catalogo.has(nome) && !usadas.includes(nome)) usadas.push(nome);
+      }
+      const resultados: ResultadoFerramenta[] = [
+        ...executados,
+        ...excedentes.map(({ nome }) => ({
+          nome,
+          resultado: RESULTADO_ALEM_DO_LIMITE,
+        })),
+      ];
+      resposta = await chamarProvedor({ resultados });
     }
+
+    const textoFinal = resposta.texto.trim();
+    if (textoFinal === "") throw new FalhaDoMentor("falha_mentor_provedor");
+
+    // 6. Gravação, só no sucesso e só no fim. Depois dela, os pendentes saem
+    // da área temporária para a pasta da conversa. Se o vínculo falhar, a
+    // conversa segue gravada e a resposta sai com o aviso (o dono reenvia só
+    // os anexos): falha de anexo nunca derruba a pergunta.
+    const idDaConversa = await gravar(supabase, {
+      restauranteId,
+      conversaId,
+      pergunta,
+      resposta: textoFinal,
+      ferramentasUsadas: usadas,
+      perguntaEm,
+      respostaEm: Math.max(Date.now(), perguntaEm + 1),
+    });
+    if (pendentes.length > 0) {
+      try {
+        await vincularAnexos(
+          restauranteId,
+          idDaConversa,
+          pendentes.map((pendente) => pendente.id)
+        );
+      } catch {
+        anexosFalharam = true;
+      }
+    }
+
+    // A extração é auxiliar e posterior: só no sucesso, com a conversa já
+    // gravada. Aguarda, mas nunca derruba a resposta nem gasta a cota do dia
+    // (a função nunca lança por contrato; o `catch` é defesa em profundidade).
+    // Anexo não vira ficha sozinho: a extração recebe só texto.
+    await extrairEgravarFichas({
+      restauranteId,
+      conversaId: idDaConversa,
+      pergunta,
+      resposta: textoFinal,
+    }).catch(() => undefined);
+
+    return {
+      ok: true,
+      conversaId: idDaConversa,
+      resposta: textoFinal,
+      anexosFalharam,
+    };
+  } catch (erro) {
+    // Melhor esforço: a limpeza nunca lança (e o `catch` é defesa em
+    // profundidade), então o erro original sempre chega intacto a quem chamou.
+    if (pendentes.length > 0) {
+      await excluirAnexosPendentes(restauranteId, pendentes).catch(
+        () => undefined
+      );
+    }
+    throw erro;
   }
-
-  // A extração é auxiliar e posterior: só no sucesso, com a conversa já
-  // gravada. Aguarda, mas nunca derruba a resposta nem gasta a cota do dia
-  // (a função nunca lança por contrato; o `catch` é defesa em profundidade).
-  // Anexo não vira ficha sozinho: a extração recebe só texto.
-  await extrairEgravarFichas({
-    restauranteId,
-    conversaId: idDaConversa,
-    pergunta,
-    resposta: textoFinal,
-  }).catch(() => undefined);
-
-  return {
-    ok: true,
-    conversaId: idDaConversa,
-    resposta: textoFinal,
-    anexosFalharam,
-  };
 }
 
 /**

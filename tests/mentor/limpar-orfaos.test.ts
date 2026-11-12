@@ -9,6 +9,7 @@ import {
   type FichasDoMentor,
   LOTE_REMOCAO,
   apurarOrfaos,
+  confirmarApagar,
   criarCofreReal,
   criarFichasReais,
   lerConfig,
@@ -144,34 +145,81 @@ describe("limparOrfaos (cofre dublado)", () => {
   });
 });
 
-describe("lerConfig (trava contra a nuvem)", () => {
+describe("lerConfig (travas local x produção)", () => {
   const chave = "chave-de-servico-ficticia";
   const ambienteLocal = {
     SUPABASE_URL: "http://127.0.0.1:54321",
     SUPABASE_SERVICE_ROLE_KEY: chave,
   };
+  const ambienteNuvem = {
+    SUPABASE_URL: "https://projeto.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: chave,
+  };
 
-  it("dry-run é o padrão (sem --executar não apaga)", () => {
-    expect(lerConfig([], ambienteLocal).executar).toBe(false);
+  it("dry-run é o padrão (sem flag não apaga), no banco local", () => {
+    expect(lerConfig([], ambienteLocal)).toEqual({
+      executar: false,
+      producao: false,
+      url: ambienteLocal.SUPABASE_URL,
+      chave,
+    });
   });
 
-  it("--executar libera o apagar", () => {
+  it("dry-run na nuvem também só lista (não recusa, não apaga)", () => {
+    expect(lerConfig([], ambienteNuvem)).toEqual({
+      executar: false,
+      producao: false,
+      url: ambienteNuvem.SUPABASE_URL,
+      chave,
+    });
+  });
+
+  it("--executar libera o apagar no banco local", () => {
     expect(lerConfig(["--executar"], ambienteLocal).executar).toBe(true);
   });
 
-  it("recusa endereço fora desta máquina", () => {
-    expect(() =>
-      lerConfig([], {
-        SUPABASE_URL: "https://projeto.supabase.co",
-        SUPABASE_SERVICE_ROLE_KEY: chave,
-      })
-    ).toThrow("só roda contra o banco local");
+  it("--executar na nuvem sem --producao é recusado", () => {
+    expect(() => lerConfig(["--executar"], ambienteNuvem)).toThrow(
+      "--producao"
+    );
   });
 
-  it("recusa sem a chave de serviço", () => {
+  it("--producao no banco local é recusado (lá é --executar)", () => {
+    expect(() => lerConfig(["--producao"], ambienteLocal)).toThrow(
+      "--producao"
+    );
+  });
+
+  it("--producao na nuvem libera o apagar (a confirmação vem no main)", () => {
+    expect(lerConfig(["--producao"], ambienteNuvem)).toEqual({
+      executar: true,
+      producao: true,
+      url: ambienteNuvem.SUPABASE_URL,
+      chave,
+    });
+  });
+
+  it("recusa sem a chave de serviço (local e produção)", () => {
     expect(() =>
       lerConfig([], { SUPABASE_URL: "http://127.0.0.1:54321" })
     ).toThrow("SUPABASE_SERVICE_ROLE_KEY");
+    expect(() => lerConfig(["--producao"], {})).toThrow(
+      "SUPABASE_SERVICE_ROLE_KEY"
+    );
+  });
+});
+
+describe("confirmarApagar (a trava do --producao)", () => {
+  it("só a palavra exata libera", () => {
+    expect(confirmarApagar("APAGAR")).toBe(true);
+  });
+
+  it("qualquer outra coisa recusa", () => {
+    expect(confirmarApagar("apagar")).toBe(false);
+    expect(confirmarApagar(" APAGAR")).toBe(false);
+    expect(confirmarApagar("APAGAR ")).toBe(false);
+    expect(confirmarApagar("")).toBe(false);
+    expect(confirmarApagar(undefined)).toBe(false);
   });
 });
 

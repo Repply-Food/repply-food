@@ -244,6 +244,7 @@ export async function apagarConversaDeVerdade(
     return { ok: false, error: FRASE_SOMENTE_EXCLUIDA };
   }
 
+  // Invariante: só conversa excluída chega aqui (a tela só mostra o botão nela) e os arquivos já morreram no excluir; se um dia entrar conversa ativa, chamar excluirAnexosDaConversa antes do delete.
   const apagada = await banco
     .from("mentor_conversas")
     .delete()

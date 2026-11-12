@@ -243,6 +243,24 @@ export async function gravarAnexos(
 }
 
 /**
+ * Apaga os pendentes que ficaram para trás quando a resposta falhou DEPOIS da
+ * subida (o provedor ou a gravação): as linhas e os arquivos, melhor esforço,
+ * sem lançar — o erro original já vai para o log e não pode sumir.
+ */
+export async function excluirAnexosPendentes(
+  restauranteId: string,
+  pendentes: { id: string; caminho: string }[]
+): Promise<void> {
+  if (pendentes.length === 0) return;
+  await desfazerSubida(
+    createServiceClient(),
+    pendentes.map((pendente) => pendente.caminho),
+    pendentes.map((pendente) => pendente.id),
+    restauranteId
+  );
+}
+
+/**
  * Leva o anexo do pendente para a pasta da conversa
  * (`{casa}/{conversa}/{anexo_id}-{nome-seguro}`) e liga a ficha. O nome vem
  * do banco re-higienizado (basename); id ou conversa fora do formato recusa

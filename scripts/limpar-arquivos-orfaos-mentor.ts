@@ -7,14 +7,20 @@
  * vínculo deixa o arquivo novo sem ficha. O que sobra no cofre sem ficha é
  * órfão, e este script apaga.
  *
- * Uso: node --env-file=.env.local --import tsx scripts/limpar-arquivos-orfaos-mentor.ts [--executar]
- * Sem `--executar` é dry-run: só lista os órfãos, sem apagar nada. Com
- * `--executar`, apaga do cofre os arquivos sem ficha.
+ * Uso: node --env-file=.env.local --import tsx scripts/limpar-arquivos-orfaos-mentor.ts [--executar | --producao]
+ * Sem flag é dry-run: só lista os órfãos, sem apagar nada — em qualquer
+ * ambiente, inclusive na nuvem. Com `--executar`, apaga de verdade, mas só
+ * contra o banco local. Com `--producao`, apaga no banco da SUPABASE_URL
+ * atual (a nuvem): o script pede para digitar APAGAR e só apaga com a
+ * confirmação exata.
  *
- * Trava de segurança: só roda contra o banco local (127.0.0.1, localhost ou
- * ::1), como `scripts/acesso-local.ts`. A chave de serviço vem de
+ * Trava de segurança: apagar pede URL de loopback (`--executar`, como
+ * `scripts/acesso-local.ts`) ou URL fora dela COM confirmação digitada
+ * (`--producao`); `--executar` na nuvem é recusado. A chave de serviço vem de
  * SUPABASE_SERVICE_ROLE_KEY (nunca tem prefixo NEXT_PUBLIC_ nem vai ao git).
  */
+import { stdin as entradaPadrao, stdout as saidaPadrao } from "node:process";
+import { createInterface } from "node:readline/promises";
 import { type SupabaseClient, createClient } from "@supabase/supabase-js";
 import { enderecoLocal } from "./gerador-dados-ficticios";
 
@@ -44,27 +50,54 @@ export type ResultadoDaVarredura = {
 
 type Config = {
   executar: boolean;
+  producao: boolean;
   url: string;
   chave: string;
 };
 
+/** A palavra que libera o apagar em produção (comparação exata). */
+export const CONFIRMACAO_APAGAR = "APAGAR";
+
 /**
- * Lê os argumentos e o ambiente. Dry-run é o padrão; `--executar` libera o
- * apagar. Recusa endereço fora desta máquina e falta da chave de serviço.
+ * Confere a confirmação digitada no modo `--producao`: só a palavra exata
+ * libera o apagar. Qualquer outra coisa (vazio, minúscula, com espaço)
+ * recusa — o lado seguro para uma operação destrutiva.
+ */
+export function confirmarApagar(digitado: string | undefined): boolean {
+  return digitado === CONFIRMACAO_APAGAR;
+}
+
+/**
+ * Lê os argumentos e o ambiente. Dry-run é o padrão em qualquer ambiente
+ * (só lista, sem apagar). `--executar` apaga, mas só contra o banco local;
+ * na nuvem ele é recusado. `--producao` apaga na SUPABASE_URL atual (a
+ * nuvem) e recusa URL local — a confirmação digitada acontece no `main`.
  */
 export function lerConfig(
   argv: string[],
   ambiente: Record<string, string | undefined> = process.env
 ): Config {
+  const producao = argv.includes("--producao");
   const url = ambiente.SUPABASE_URL ?? ambiente.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  if (!enderecoLocal(url)) {
-    throw new Error("Este comando só roda contra o banco local (127.0.0.1).");
-  }
   const chave = ambiente.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!chave) {
     throw new Error("Falta SUPABASE_SERVICE_ROLE_KEY no .env.local");
   }
-  return { executar: argv.includes("--executar"), url, chave };
+  if (producao) {
+    if (enderecoLocal(url)) {
+      throw new Error(
+        "O modo --producao é para o banco da nuvem; no banco local use --executar."
+      );
+    }
+    return { executar: true, producao: true, url, chave };
+  }
+  const executar = argv.includes("--executar");
+  if (executar && !enderecoLocal(url)) {
+    throw new Error(
+      "Este comando só apaga contra o banco local (127.0.0.1). Na nuvem, confira em dry-run e use --producao."
+    );
+  }
+  return { executar, producao: false, url, chave };
 }
 
 type EntradaDoCofre = {
@@ -164,8 +197,29 @@ export async function limparOrfaos(
   return { orfaos, apagados: orfaos.length };
 }
 
+async function pedirConfirmacao(pergunta: string): Promise<string> {
+  const leitor = createInterface({
+    input: entradaPadrao,
+    output: saidaPadrao,
+  });
+  try {
+    return await leitor.question(pergunta);
+  } finally {
+    leitor.close();
+  }
+}
+
 async function main(): Promise<void> {
   const config = lerConfig(process.argv.slice(2));
+  if (config.producao) {
+    const digitado = await pedirConfirmacao(
+      "[orfaos-mentor] ATENÇÃO: vai APAGAR órfãos do cofre em PRODUÇÃO. Digite APAGAR para confirmar: "
+    );
+    if (!confirmarApagar(digitado)) {
+      console.error("[orfaos-mentor] confirmação inválida; nada foi apagado");
+      process.exit(1);
+    }
+  }
   const db = createClient(config.url, config.chave, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -174,10 +228,11 @@ async function main(): Promise<void> {
     criarFichasReais(db),
     { executar: config.executar }
   );
+  const onde = config.producao ? " (produção)" : "";
   console.log(
     config.executar
-      ? `[orfaos-mentor] apagados ${resultado.apagados} de ${resultado.orfaos.length} órfãos`
-      : `[orfaos-mentor] dry-run: ${resultado.orfaos.length} órfãos (passe --executar para apagar)`
+      ? `[orfaos-mentor] apagados ${resultado.apagados} de ${resultado.orfaos.length} órfãos${onde}`
+      : `[orfaos-mentor] dry-run: ${resultado.orfaos.length} órfãos${onde} (passe --executar para apagar)`
   );
   for (const caminho of resultado.orfaos) console.log(`  ${caminho}`);
 }

@@ -28,10 +28,16 @@ const { executarFerramentas, logError, carregarFichas, extrairEgravarFichas } =
     carregarFichas: vi.fn(),
     extrairEgravarFichas: vi.fn(),
   }));
-const { validarArquivos, gravarAnexos, vincularAnexos } = vi.hoisted(() => ({
+const {
+  validarArquivos,
+  gravarAnexos,
+  vincularAnexos,
+  excluirAnexosPendentes,
+} = vi.hoisted(() => ({
   validarArquivos: vi.fn(),
   gravarAnexos: vi.fn(),
   vincularAnexos: vi.fn(),
+  excluirAnexosPendentes: vi.fn(),
 }));
 const estado = vi.hoisted(() => ({ cliente: null as unknown }));
 
@@ -71,6 +77,7 @@ vi.mock("@/lib/mentor/anexos", () => ({
   validarArquivos,
   gravarAnexos,
   vincularAnexos,
+  excluirAnexosPendentes,
 }));
 
 import { contextoDeHoje, responderNoMentor } from "@/lib/mentor/conversa";
@@ -347,6 +354,7 @@ beforeEach(() => {
   validarArquivos.mockReset();
   gravarAnexos.mockReset();
   vincularAnexos.mockReset();
+  excluirAnexosPendentes.mockReset();
   validarArquivos.mockImplementation((arquivos: File[]) => ({
     ok: true as const,
     arquivos: arquivos.map((arquivo) => ({
@@ -371,6 +379,7 @@ beforeEach(() => {
       }))
   );
   vincularAnexos.mockResolvedValue(undefined);
+  excluirAnexosPendentes.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -819,6 +828,29 @@ describe("perguntas com anexos (a foto e o PDF vão junto do texto)", () => {
     ).toEqual(["Olha", "Vi."]);
     expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
     expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
+  });
+
+  it("provedor que lança com pendentes: apaga os pendentes antes de propagar, e o uso volta", async () => {
+    const pendentes = [{ id: randomUUID(), caminho: "pendente/arquivo-teste" }];
+    gravarAnexos.mockResolvedValue(pendentes);
+    const usoAntes = await usoDeHoje(casaA);
+    const mensagensAntes = await contar("mentor_mensagens", casaA);
+    const { provedor } = provedorRoteirizado([new Error("503 do provedor")]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha",
+      arquivos: [foto()],
+      provedor,
+    });
+
+    expect(resultado).toEqual({ ok: false, error: FRASE_INDISPONIVEL });
+    expect(excluirAnexosPendentes).toHaveBeenCalledTimes(1);
+    expect(excluirAnexosPendentes).toHaveBeenCalledWith(casaA, pendentes);
+    expect(logError.mock.calls).toEqual([["falha_mentor_provedor"]]);
+    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+    expect(await usoDeHoje(casaA)).toBe(usoAntes);
   });
 
   it("falha ao ler os bytes: a resposta sai com aviso e o log leva o código", async () => {
