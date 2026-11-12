@@ -430,6 +430,7 @@ async function responderComUsoContado(args: {
           dados: bytes.toString("base64"),
         });
       } catch {
+        logError("falha_anexos_mentor");
         anexosFalharam = true;
       }
     }

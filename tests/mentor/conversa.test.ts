@@ -820,6 +820,40 @@ describe("perguntas com anexos (a foto e o PDF vão junto do texto)", () => {
     expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
     expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
   });
+
+  it("falha ao ler os bytes: a resposta sai com aviso e o log leva o código", async () => {
+    const quebrado = foto();
+    vi.spyOn(quebrado, "arrayBuffer").mockRejectedValueOnce(
+      new Error("disco falhou")
+    );
+    const usoAntes = await usoDeHoje(casaA);
+    const { provedor, responder } = provedorRoteirizado([
+      texto("Vi sem o anexo."),
+    ]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha",
+      arquivos: [quebrado],
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.resposta).toBe("Vi sem o anexo.");
+    expect(resultado.anexosFalharam).toBe(true);
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith("falha_anexos_mentor");
+    // Sem bytes, o provedor recebe só o texto...
+    expect(responder.mock.calls[0]?.[0].anexos).toBeUndefined();
+    // ...mas a conversa grava, a extração roda 1 vez e o uso conta exatamente 1.
+    expect(
+      (await mensagensDa(resultado.conversaId)).map((m) => m.texto)
+    ).toEqual(["Olha", "Vi sem o anexo."]);
+    expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
+    expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
+  });
 });
 
 describe("continuar uma conversa", () => {
