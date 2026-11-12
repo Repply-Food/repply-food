@@ -25,6 +25,7 @@ const codigosErro = [
   "falha_mentor_geral",
   "falha_memoria_mentor",
   "falha_sessoes_mentor",
+  "falha_anexos_mentor",
 ] as const;
 const codigosInfo = ["envio_processado", "envio_rejeitado"] as const;
 const contextos = ["receber-envio"] as const;

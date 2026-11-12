@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { excluirAnexosDaConversa } from "./anexos";
 
 /**
  * As ações de sessão do mentor: renomear, arquivar, excluir e apagar de
@@ -28,8 +29,8 @@ import { z } from "zod";
  *    da vista do dono, e zero linhas afetadas nunca é sucesso.
  *
  * Excluir é só uma marca (`excluida_em`): a linha continua no banco e a faxina
- * apaga de verdade após 60 dias (D-75). As fichas da conversa morrem junto,
- * na hora. Excluir de novo não recomeça o prazo:
+ * apaga de verdade após 60 dias (D-75). As fichas e os arquivos da conversa
+ * morrem junto, na hora. Excluir de novo não recomeça o prazo:
  * conversa já excluída devolve ok sem escrever. Arquivar também é marca
  * (`arquivada_em`) e pode ser desfeito. Todo erro vira frase do produto; o log
  * leva só o código (D-29).
@@ -183,6 +184,15 @@ export async function excluirConversa(
     .eq("conversa_id", conversaId)
     .eq("restaurante_id", casa.id);
   if (fichas.error) return falhaAoOrganizar();
+
+  // Os arquivos morrem junto com a vista da conversa, antes da marca, na
+  // mesma ordem das fichas: com a conversa E a casa explícitas — outra
+  // conversa da casa mantém os seus. Erro aqui falha fechado, sem marcar.
+  try {
+    await excluirAnexosDaConversa(casa.id, conversaId);
+  } catch {
+    return falhaAoOrganizar();
+  }
 
   const escrita = await supabase
     .from("mentor_conversas")

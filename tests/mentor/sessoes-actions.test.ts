@@ -31,6 +31,11 @@ vi.mock("@/lib/supabase/server", () => ({ createClient }));
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient }));
 vi.mock("@/lib/logger", () => ({ logError }));
 
+const { excluirAnexosDaConversa } = vi.hoisted(() => ({
+  excluirAnexosDaConversa: vi.fn(),
+}));
+vi.mock("@/lib/mentor/anexos", () => ({ excluirAnexosDaConversa }));
+
 import {
   apagarConversaDeVerdade,
   arquivarConversa,
@@ -311,6 +316,7 @@ describe("excluirConversa", () => {
 
   it("exclui marcando a data, sem apagar a linha, e atualiza a tela", async () => {
     dono();
+    excluirAnexosDaConversa.mockResolvedValue(undefined);
     const banco = bancoFalso({
       leitura: VISIVEL,
       escrita: { data: [{ id: CONVERSA }], error: null },
@@ -333,7 +339,56 @@ describe("excluirConversa", () => {
     expect(banco.consulta.delete).not.toHaveBeenCalled();
     // Só as fichas saem junto, pela chave de serviço.
     expect(servicoBanco.from).toHaveBeenCalledWith("mentor_memorias");
+    // E os arquivos da conversa saem junto, com a casa explícita.
+    expect(excluirAnexosDaConversa).toHaveBeenCalledWith(CASA, CONVERSA);
     expect(revalidatePath).toHaveBeenCalledWith(`/r/${SLUG}/mentor`);
+  });
+
+  it("excluir apaga os arquivos da conversa; a segunda chamada não toca no cofre", async () => {
+    dono();
+    excluirAnexosDaConversa.mockResolvedValue(undefined);
+    const primeira = bancoFalso({
+      leitura: VISIVEL,
+      escrita: { data: [{ id: CONVERSA }], error: null },
+    });
+    createClient.mockResolvedValue({ from: primeira.from });
+    createServiceClient.mockReturnValue({
+      from: bancoFalso({ escrita: { data: [], error: null } }).from,
+    });
+
+    expect(await excluirConversa(SLUG, CONVERSA)).toEqual({ ok: true });
+    expect(excluirAnexosDaConversa).toHaveBeenCalledTimes(1);
+    expect(excluirAnexosDaConversa).toHaveBeenCalledWith(CASA, CONVERSA);
+
+    const segunda = bancoFalso({
+      leitura: {
+        data: { id: CONVERSA, excluida_em: "2026-11-01T12:00:00Z" },
+        error: null,
+      },
+    });
+    createClient.mockResolvedValue({ from: segunda.from });
+
+    expect(await excluirConversa(SLUG, CONVERSA)).toEqual({ ok: true });
+    // Retorno precoce: a segunda chamada não volta ao cofre.
+    expect(excluirAnexosDaConversa).toHaveBeenCalledTimes(1);
+  });
+
+  it("erro ao apagar os arquivos falha fechado: sem marca, frase genérica", async () => {
+    dono();
+    excluirAnexosDaConversa.mockRejectedValue(new Error("cofre fora do ar"));
+    const donoBanco = bancoFalso({ leitura: VISIVEL });
+    const servicoBanco = bancoFalso({
+      escrita: { data: [], error: null },
+    });
+    createClient.mockResolvedValue({ from: donoBanco.from });
+    createServiceClient.mockReturnValue({ from: servicoBanco.from });
+
+    const r = await excluirConversa(SLUG, CONVERSA);
+
+    expect(r).toEqual({ ok: false, error: FALHA_ORGANIZAR });
+    expect(logError).toHaveBeenCalledWith("falha_sessoes_mentor");
+    expect(donoBanco.consulta.update).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("excluir conversa já excluída é idempotente (ok, sem mexer no relógio dos 60 dias)", async () => {
@@ -359,6 +414,7 @@ describe("excluirConversa", () => {
 
   it("apaga junto as fichas daquela conversa e casa, antes da marca", async () => {
     dono();
+    excluirAnexosDaConversa.mockResolvedValue(undefined);
     const donoBanco = bancoFalso({
       leitura: VISIVEL,
       escrita: { data: [{ id: CONVERSA }], error: null },
