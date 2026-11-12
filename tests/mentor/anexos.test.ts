@@ -456,3 +456,103 @@ describe("urlParaBaixar", () => {
     await expect(urlParaBaixar(casaA, randomUUID())).resolves.toBeNull();
   });
 });
+
+describe("endurecimentos do revisor (M-1/M-2/M-3)", () => {
+  it("M-1: nome_original envenenado no banco é re-higienizado ao vincular", async () => {
+    const tag = `veneno-${sufixo}`;
+    const corpo = `bytes-${tag}`;
+    const origem = `pendente/${randomUUID()}-${tag}.png`;
+    const subida = await servico.storage
+      .from("mentor-anexos")
+      .upload(origem, new TextEncoder().encode(corpo), {
+        contentType: "image/png",
+        upsert: false,
+      });
+    expect(subida.error).toBeNull();
+    observar(origem);
+
+    const veneno = `../../etc/${tag}.png`;
+    const ficha = await banco.query<{ id: string }>(
+      `insert into public.mentor_anexos
+         (restaurante_id, conversa_id, nome_original, tipo, tamanho_bytes, caminho)
+       values ($1, null, $2, 'imagem', $3, $4)
+       returning id`,
+      [casaA, veneno, corpo.length, origem]
+    );
+    const id = ficha.rows[0]?.id ?? "";
+    expect(id).not.toBe("");
+
+    await vincularAnexos(casaA, conversaA, [id]);
+
+    const destino = await caminhoNoBanco(id);
+    observar(destino ?? undefined);
+    expect(destino?.startsWith(`${casaA}/${conversaA}/`)).toBe(true);
+    expect(destino).not.toContain("..");
+    expect(await baixar(destino ?? "")).toBe(corpo);
+  });
+
+  it("M-2: vincularAnexos recusa id malformado antes de tocar banco/cofre", async () => {
+    const tag = `guarda-${sufixo}`;
+    const [saida] = await gravarAnexos(casaA, null, [
+      pdf(`ok-${tag}.pdf`, `bytes-${tag}`),
+    ]);
+    const origem = saida?.caminho ?? "";
+    observar(origem);
+
+    await expect(
+      vincularAnexos(casaA, conversaA, [saida?.id ?? "", "nao-eh-uuid"])
+    ).rejects.toBeInstanceOf(FalhaDoMentor);
+
+    // Nada moveu: o id válido do lote segue pendente, arquivo intacto.
+    expect(await caminhoNoBanco(saida?.id ?? "")).toBe(origem);
+    expect(await baixar(origem)).toBe(`bytes-${tag}`);
+    expect(errosLogados()).toContain("falha_anexos_mentor");
+  });
+
+  it("M-2: vincularAnexos recusa conversaId malformado", async () => {
+    await expect(
+      vincularAnexos(casaA, "conversa??", [randomUUID()])
+    ).rejects.toBeInstanceOf(FalhaDoMentor);
+    expect(errosLogados()).toContain("falha_anexos_mentor");
+  });
+
+  it("M-2: excluirAnexosDaConversa recusa conversaId malformado sem apagar nada", async () => {
+    const tag = `fica-${sufixo}`;
+    const [saida] = await gravarAnexos(casaA, null, [
+      pdf(`fica-${tag}.pdf`, `bytes-${tag}`),
+    ]);
+    await vincularAnexos(casaA, conversaA, [saida?.id ?? ""]);
+    const destino = await caminhoNoBanco(saida?.id ?? "");
+    observar(destino ?? undefined);
+
+    await expect(excluirAnexosDaConversa(casaA, "lixo")).rejects.toBeInstanceOf(
+      FalhaDoMentor
+    );
+
+    expect(await contarAnexos(casaA, conversaA)).toBe(1);
+    expect(await baixar(destino ?? "")).toBe(`bytes-${tag}`);
+    expect(errosLogados()).toContain("falha_anexos_mentor");
+  });
+
+  it("M-3: grava tamanho_bytes dos bytes reais, não do File.size declarado", async () => {
+    const tag = `real-${sufixo}`;
+    const reais = new TextEncoder().encode(`bytes-${tag}`);
+    const mentiroso = {
+      name: `medido-${tag}.pdf`,
+      type: "application/pdf",
+      size: 999_999,
+      arrayBuffer: async () => reais.slice().buffer as ArrayBuffer,
+    } as unknown as File;
+
+    expect(validarArquivos([mentiroso]).ok).toBe(true);
+    const [saida] = await gravarAnexos(casaA, null, [mentiroso]);
+    observar(saida?.caminho);
+
+    const linha = await banco.query<{ tamanho_bytes: number }>(
+      "select tamanho_bytes from public.mentor_anexos where id = $1",
+      [saida?.id]
+    );
+    expect(linha.rows[0]?.tamanho_bytes).toBe(reais.length);
+    expect(await baixar(saida?.caminho ?? "")).toBe(`bytes-${tag}`);
+  });
+});

@@ -228,7 +228,7 @@ export async function gravarAnexos(
           conversa_id: conversaId,
           nome_original: item.nomeSeguro,
           tipo: item.tipo,
-          tamanho_bytes: item.tamanho,
+          tamanho_bytes: bytes.length,
           caminho,
         })
         .select("id");
@@ -250,8 +250,9 @@ export async function gravarAnexos(
 
 /**
  * Leva o anexo do pendente para a pasta da conversa
- * (`{casa}/{conversa}/{anexo_id}-{nome-seguro}`) e liga a ficha. Falha lança
- * a falha classificada.
+ * (`{casa}/{conversa}/{anexo_id}-{nome-seguro}`) e liga a ficha. O nome vem
+ * do banco re-higienizado (basename); id ou conversa fora do formato recusa
+ * antes de tocar banco e cofre. Falha lança a falha classificada.
  */
 export async function vincularAnexos(
   restauranteId: string,
@@ -259,6 +260,10 @@ export async function vincularAnexos(
   ids: string[]
 ): Promise<void> {
   if (ids.length === 0) return;
+  if (!UUID.test(conversaId) || ids.some((id) => !UUID.test(id))) {
+    logError(CODIGO_NO_LOG);
+    throw new FalhaDoMentor(CODIGO_NO_LOG);
+  }
   const servico = createServiceClient();
   try {
     for (const id of ids) {
@@ -271,7 +276,10 @@ export async function vincularAnexos(
       if (linha.error || !linha.data) {
         throw linha.error ?? new Error("a ficha do anexo não foi achada");
       }
-      const destino = `${restauranteId}/${conversaId}/${linha.data.id}-${linha.data.nome_original}`;
+      // Nunca confia no nome que está no banco: re-higieniza (basename).
+      const nome = higienizarNome(linha.data.nome_original);
+      if (!nome) throw new Error("o nome do anexo não vale");
+      const destino = `${restauranteId}/${conversaId}/${linha.data.id}-${nome}`;
       const movida = await servico.storage
         .from("mentor-anexos")
         .move(linha.data.caminho, destino);
@@ -303,6 +311,10 @@ export async function excluirAnexosDaConversa(
   restauranteId: string,
   conversaId: string
 ): Promise<void> {
+  if (!UUID.test(conversaId)) {
+    logError(CODIGO_NO_LOG);
+    throw new FalhaDoMentor(CODIGO_NO_LOG);
+  }
   const servico = createServiceClient();
   try {
     const linhas = await servico
