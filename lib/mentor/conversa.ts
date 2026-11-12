@@ -3,6 +3,13 @@ import { randomUUID } from "node:crypto";
 import { logError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  type ArquivoValidado,
+  gravarAnexos,
+  validarArquivos,
+  vincularAnexos,
+} from "./anexos";
+import { type CodigoDeFalha, FalhaDoMentor } from "./falha";
 import { FERRAMENTAS, executarFerramentas } from "./ferramentas";
 import { dentroDoLimite, devolverUso } from "./limite";
 import {
@@ -11,6 +18,7 @@ import {
   extrairEgravarFichas,
 } from "./memoria";
 import {
+  type AnexoParaIA,
   type MensagemIA,
   type ProvedorIA,
   type RespostaIA,
@@ -75,18 +83,6 @@ const DIAS_DA_SEMANA = [
   "sexta-feira",
   "sábado",
 ];
-
-type CodigoDeFalha =
-  | "falha_mentor_provedor"
-  | "falha_mentor_limite"
-  | "falha_mentor_geral";
-
-/** Uma falha já classificada: só o código vai para o log, nunca o motivo cru. */
-class FalhaDoMentor extends Error {
-  constructor(readonly codigo: CodigoDeFalha) {
-    super(codigo);
-  }
-}
 
 /** Roda `etapa` e, se ela lançar, troca o erro cru por uma falha classificada. */
 async function classificando<T>(
@@ -323,6 +319,7 @@ async function conversar(args: {
   conversaId: string | null;
   pergunta: string;
   provedor: ProvedorIA;
+  arquivos?: File[];
 }): Promise<ResultadoDoMentor> {
   const { restauranteId, conversaId } = args;
 
@@ -338,6 +335,17 @@ async function conversar(args: {
     }
   }
 
+  // 0b. Os anexos valem antes do limite: fora da regra, a recusa sai com a
+  // frase do produto sem gastar o uso do dia, sem chamar o provedor e sem
+  // gravar nada. Vazio aqui é "sem anexo": segue igual a hoje.
+  const arquivos = args.arquivos ?? [];
+  let validados: ArquivoValidado[] = [];
+  if (arquivos.length > 0) {
+    const validacao = validarArquivos(arquivos);
+    if (!validacao.ok) return { ok: false, error: validacao.error };
+    validados = validacao.arquivos;
+  }
+
   // 1. Limite primeiro: barrado, o provedor nem é chamado. Erro no contador
   // falha fechado (nunca vira "liberado"). O uso é contado AQUI, antes de
   // qualquer chamada à IA: é o incremento atômico que segura o teto.
@@ -351,7 +359,7 @@ async function conversar(args: {
   // não perde cota por isso. Qualquer outra falha (a IA respondeu e gastou, ou
   // o banco falhou ao gravar) mantém o uso contado.
   try {
-    return await responderComUsoContado(args);
+    return await responderComUsoContado({ ...args, validados });
   } catch (erro) {
     if (
       erro instanceof FalhaDoMentor &&
@@ -369,8 +377,9 @@ async function responderComUsoContado(args: {
   conversaId: string | null;
   pergunta: string;
   provedor: ProvedorIA;
+  validados: ArquivoValidado[];
 }): Promise<ResultadoDoMentor> {
-  const { restauranteId, conversaId, pergunta, provedor } = args;
+  const { restauranteId, conversaId, pergunta, provedor, validados } = args;
   const perguntaEm = Date.now();
 
   // 2. A conversa continuada tem de ser desta casa. Só se grava no fim.
@@ -401,10 +410,48 @@ async function responderComUsoContado(args: {
     { papel: "dono", texto: pergunta },
   ];
 
+  // 4b. Os bytes para a IA e a subida pendente. Os bytes são lidos aqui, em
+  // mãos antes de qualquer chamada: se o cofre falhar, o provedor ainda
+  // analisa (o aviso cobre a persistência). A subida usa conversa nula — o
+  // id só existe depois de gravar (passo 6) — e qualquer falha de anexo vira
+  // o aviso, sem derrubar a resposta.
+  let anexos: AnexoParaIA[] | undefined;
+  let anexosFalharam = false;
+  let pendentes: { id: string; caminho: string }[] = [];
+  if (validados.length > 0) {
+    const paraIA: AnexoParaIA[] = [];
+    for (const item of validados) {
+      try {
+        const bytes = Buffer.from(await item.arquivo.arrayBuffer());
+        paraIA.push({
+          tipo: item.tipo,
+          mime: item.mime,
+          nome: item.nomeSeguro,
+          dados: bytes.toString("base64"),
+        });
+      } catch {
+        anexosFalharam = true;
+      }
+    }
+    if (paraIA.length > 0) anexos = paraIA;
+    try {
+      pendentes = await gravarAnexos(
+        restauranteId,
+        null,
+        validados.map((item) => item.arquivo)
+      );
+    } catch {
+      anexosFalharam = true;
+      pendentes = [];
+    }
+  }
+
   // 5. O laço de ferramentas. A MESMA instância do provedor em todo o laço: o
-  // Gemini guarda o pedido de função para reenviar com os resultados.
+  // Gemini guarda o pedido de função para reenviar com os resultados. Os
+  // anexos vão SÓ na primeira chamada; as rodadas de ferramenta seguem como
+  // hoje.
   const chamarProvedor = (
-    entrada: Pick<EntradaDoProvedor, "resultados">
+    entrada: Pick<EntradaDoProvedor, "resultados" | "anexos">
   ): Promise<RespostaIA> =>
     classificando("falha_mentor_provedor", () =>
       provedor.responder({
@@ -417,7 +464,7 @@ async function responderComUsoContado(args: {
 
   const catalogo = new Set(FERRAMENTAS.map((ferramenta) => ferramenta.nome));
   const usadas: string[] = [];
-  let resposta = await chamarProvedor({});
+  let resposta = await chamarProvedor(anexos ? { anexos } : {});
   let rodadas = 0;
   while (resposta.tipo === "ferramenta") {
     const { pedidos } = resposta;
@@ -456,7 +503,10 @@ async function responderComUsoContado(args: {
   const textoFinal = resposta.texto.trim();
   if (textoFinal === "") throw new FalhaDoMentor("falha_mentor_provedor");
 
-  // 6. Gravação, só no sucesso e só no fim.
+  // 6. Gravação, só no sucesso e só no fim. Depois dela, os pendentes saem
+  // da área temporária para a pasta da conversa. Se o vínculo falhar, a
+  // conversa segue gravada e a resposta sai com o aviso (o dono reenvia só
+  // os anexos): falha de anexo nunca derruba a pergunta.
   const idDaConversa = await gravar(supabase, {
     restauranteId,
     conversaId,
@@ -466,10 +516,22 @@ async function responderComUsoContado(args: {
     perguntaEm,
     respostaEm: Math.max(Date.now(), perguntaEm + 1),
   });
+  if (pendentes.length > 0) {
+    try {
+      await vincularAnexos(
+        restauranteId,
+        idDaConversa,
+        pendentes.map((pendente) => pendente.id)
+      );
+    } catch {
+      anexosFalharam = true;
+    }
+  }
 
   // A extração é auxiliar e posterior: só no sucesso, com a conversa já
   // gravada. Aguarda, mas nunca derruba a resposta nem gasta a cota do dia
   // (a função nunca lança por contrato; o `catch` é defesa em profundidade).
+  // Anexo não vira ficha sozinho: a extração recebe só texto.
   await extrairEgravarFichas({
     restauranteId,
     conversaId: idDaConversa,
@@ -477,7 +539,12 @@ async function responderComUsoContado(args: {
     resposta: textoFinal,
   }).catch(() => undefined);
 
-  return { ok: true, conversaId: idDaConversa, resposta: textoFinal };
+  return {
+    ok: true,
+    conversaId: idDaConversa,
+    resposta: textoFinal,
+    anexosFalharam,
+  };
 }
 
 /**
@@ -499,6 +566,7 @@ export async function responderNoMentor(args: {
   restauranteId: string;
   conversaId: string | null;
   mensagemDoDono: string;
+  arquivos?: File[];
   provedor?: ProvedorIA;
 }): Promise<ResultadoDoMentor> {
   try {
@@ -513,6 +581,7 @@ export async function responderNoMentor(args: {
       restauranteId: args.restauranteId,
       conversaId: args.conversaId,
       pergunta,
+      arquivos: args.arquivos,
       provedor: args.provedor ?? escolherProvedor(),
     });
   } catch (erro) {

@@ -10,10 +10,14 @@ const { exigirCasa, responderNoMentor } = vi.hoisted(() => ({
   exigirCasa: vi.fn(),
   responderNoMentor: vi.fn(),
 }));
+const { validarArquivos } = vi.hoisted(() => ({ validarArquivos: vi.fn() }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth/sessao", () => ({ exigirCasa }));
 vi.mock("@/lib/mentor/conversa", () => ({ responderNoMentor }));
+// A action confere a regra dos arquivos antes de chamar o cérebro: sem gastar
+// o limite e sem chamar a IA quando o anexo é inválido.
+vi.mock("@/lib/mentor/anexos", () => ({ validarArquivos }));
 
 import { enviarMensagemAction } from "@/lib/mentor/enviar-action";
 
@@ -35,7 +39,10 @@ function admin() {
   });
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  validarArquivos.mockReturnValue({ ok: true, arquivos: [] });
+});
 
 describe("enviarMensagemAction", () => {
   it("passa o restaurante da SESSÃO ao cérebro e devolve a resposta", async () => {
@@ -44,6 +51,7 @@ describe("enviarMensagemAction", () => {
       ok: true,
       conversaId: CONVERSA,
       resposta: "A semana fechou em alta.",
+      anexosFalharam: false,
     });
 
     const r = await enviarMensagemAction(
@@ -54,7 +62,11 @@ describe("enviarMensagemAction", () => {
 
     expect(r).toEqual({
       ok: true,
-      data: { conversaId: CONVERSA, resposta: "A semana fechou em alta." },
+      data: {
+        conversaId: CONVERSA,
+        resposta: "A semana fechou em alta.",
+        anexosFalharam: false,
+      },
     });
     expect(exigirCasa).toHaveBeenCalledWith("bar-do-ze");
     expect(responderNoMentor).toHaveBeenCalledTimes(1);
@@ -211,5 +223,77 @@ describe("enviarMensagemAction", () => {
       error: "no modo leitura do admin o mentor não responde",
     });
     expect(responderNoMentor).not.toHaveBeenCalled();
+  });
+
+  describe("com arquivos", () => {
+    const foto = () =>
+      new File([new TextEncoder().encode("bytes-da-foto")], "foto.png", {
+        type: "image/png",
+      });
+
+    it("repassa os arquivos ao cérebro e devolve o aviso de anexo com a resposta", async () => {
+      dono();
+      responderNoMentor.mockResolvedValue({
+        ok: true,
+        conversaId: CONVERSA,
+        resposta: "Vi a foto.",
+        anexosFalharam: true,
+      });
+      const arquivos = [foto()];
+
+      const r = await enviarMensagemAction("bar-do-ze", null, "Olha", arquivos);
+
+      expect(validarArquivos).toHaveBeenCalledWith(arquivos);
+      expect(responderNoMentor).toHaveBeenCalledWith({
+        restauranteId: CASA,
+        conversaId: null,
+        mensagemDoDono: "Olha",
+        arquivos,
+      });
+      expect(r).toEqual({
+        ok: true,
+        data: {
+          conversaId: CONVERSA,
+          resposta: "Vi a foto.",
+          anexosFalharam: true,
+        },
+      });
+    });
+
+    it("arquivo fora da regra recusa com a frase, sem chamar o cérebro", async () => {
+      dono();
+      validarArquivos.mockReturnValueOnce({
+        ok: false,
+        error: "dá para mandar até 5 arquivos por pergunta",
+      });
+
+      const r = await enviarMensagemAction("bar-do-ze", null, "Olha", [foto()]);
+
+      expect(r).toEqual({
+        ok: false,
+        error: "dá para mandar até 5 arquivos por pergunta",
+      });
+      expect(responderNoMentor).not.toHaveBeenCalled();
+    });
+
+    it("sem arquivos, não valida nada e o cérebro recebe sem o campo", async () => {
+      dono();
+      responderNoMentor.mockResolvedValue({
+        ok: true,
+        conversaId: CONVERSA,
+        resposta: "ok",
+        anexosFalharam: false,
+      });
+
+      await enviarMensagemAction("bar-do-ze", null, "oi");
+
+      expect(validarArquivos).not.toHaveBeenCalled();
+      expect(responderNoMentor).toHaveBeenCalledWith({
+        restauranteId: CASA,
+        conversaId: null,
+        mensagemDoDono: "oi",
+        arquivos: undefined,
+      });
+    });
   });
 });

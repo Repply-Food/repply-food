@@ -25,7 +25,6 @@ import { conectarBanco } from "../helpers/supabase-local";
 vi.mock("server-only", () => ({}));
 
 import {
-  FalhaDoMentor,
   MAXIMO_ANEXOS_POR_PERGUNTA,
   TAMANHO_MAXIMO_ANEXO,
   TIPOS_ANEXO,
@@ -35,6 +34,7 @@ import {
   validarArquivos,
   vincularAnexos,
 } from "@/lib/mentor/anexos";
+import { FalhaDoMentor } from "@/lib/mentor/falha";
 
 const opcoes = { auth: { persistSession: false, autoRefreshToken: false } };
 const sufixo = randomUUID().slice(0, 8);

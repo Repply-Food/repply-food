@@ -3,6 +3,7 @@
 import { exigirCasa } from "@/lib/auth/sessao";
 import { casaTemModulo } from "@/lib/painel/modulos";
 import { z } from "zod";
+import { validarArquivos } from "./anexos";
 import { responderNoMentor } from "./conversa";
 
 /**
@@ -39,13 +40,17 @@ const perguntaSchema = z
   .max(TAMANHO_MAXIMO_DA_PERGUNTA, FRASE_LONGA);
 
 type Resultado =
-  | { ok: true; data: { conversaId: string; resposta: string } }
+  | {
+      ok: true;
+      data: { conversaId: string; resposta: string; anexosFalharam: boolean };
+    }
   | { ok: false; error: string };
 
 export async function enviarMensagemAction(
   slug: string,
   conversaId: string | null,
-  texto: string
+  texto: string,
+  arquivos?: File[]
 ): Promise<Resultado> {
   // Guarda primeiro: o restaurante só pode vir daqui.
   const { casa, modoAdmin } = await exigirCasa(slug);
@@ -63,14 +68,29 @@ export async function enviarMensagemAction(
     };
   }
 
+  // Os anexos valem antes do cérebro: fora da regra, a recusa sai com a frase
+  // do produto sem gastar o uso do dia e sem chamar o provedor. A validação
+  // se repete lá dentro (defesa em profundidade para quem chama o cérebro
+  // direto); aqui ela só evita gastar a cota à toa.
+  const lista = Array.isArray(arquivos) ? arquivos : [];
+  if (lista.length > 0) {
+    const validacao = validarArquivos(lista);
+    if (!validacao.ok) return { ok: false, error: validacao.error };
+  }
+
   const resultado = await responderNoMentor({
     restauranteId: casa.id,
     conversaId,
     mensagemDoDono: pergunta.data,
+    arquivos: lista.length > 0 ? lista : undefined,
   });
   if (!resultado.ok) return { ok: false, error: resultado.error };
   return {
     ok: true,
-    data: { conversaId: resultado.conversaId, resposta: resultado.resposta },
+    data: {
+      conversaId: resultado.conversaId,
+      resposta: resultado.resposta,
+      anexosFalharam: resultado.anexosFalharam,
+    },
   };
 }

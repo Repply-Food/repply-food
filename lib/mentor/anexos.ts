@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { logError } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
+import { FalhaDoMentor } from "./falha";
 
 /**
  * Os anexos do mentor (Fase 4): os arquivos que o dono manda junto da
@@ -69,13 +70,6 @@ const FRASE_TAMANHO = "cada arquivo pode ter no máximo 10 MB";
 const FRASE_NOME = "esse nome de arquivo não vale; renomeie e mande de novo";
 
 const CODIGO_NO_LOG = "falha_anexos_mentor" as const;
-
-/** Uma falha já classificada: só o código vai para o log, nunca o motivo. */
-export class FalhaDoMentor extends Error {
-  constructor(readonly codigo: typeof CODIGO_NO_LOG) {
-    super(codigo);
-  }
-}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

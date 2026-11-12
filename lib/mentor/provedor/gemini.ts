@@ -7,6 +7,7 @@ import {
   GoogleGenAI,
 } from "@google/genai";
 import type {
+  AnexoParaIA,
   MensagemIA,
   PedidoFerramenta,
   ProvedorIA,
@@ -41,6 +42,27 @@ function paraConteudo(mensagem: MensagemIA): Content {
     role: mensagem.papel === "dono" ? "user" : "model",
     parts: [{ text: mensagem.texto }],
   };
+}
+
+/**
+ * Junta os anexos à pergunta do dono (o último turno do histórico): cada
+ * arquivo vira uma parte `inlineData` depois do texto. Devolve um vetor novo,
+ * sem mexer na entrada. Quando o histórico não termina no dono (não acontece
+ * no cérebro, que sempre fecha no texto da pergunta), os arquivos vão num
+ * turno próprio em vez de contaminar um turno do modelo.
+ */
+function comAnexos(pergunta: Content[], anexos: AnexoParaIA[]): Content[] {
+  const partes = anexos.map((anexo) => ({
+    inlineData: { mimeType: anexo.mime, data: anexo.dados },
+  }));
+  const ultima = pergunta[pergunta.length - 1];
+  if (!ultima || ultima.role !== "user") {
+    return [...pergunta, { role: "user", parts: partes }];
+  }
+  return [
+    ...pergunta.slice(0, -1),
+    { ...ultima, parts: [...(ultima.parts ?? []), ...partes] },
+  ];
 }
 
 type ChamadaComNome = FunctionCall & { name: string };
@@ -135,8 +157,19 @@ export class ProvedorGemini implements ProvedorIA {
       this.ultimoTurnoDeFerramentas = undefined;
       this.acumuladoDeFerramentas = [];
     }
+    // Os anexos entram SÓ na primeira chamada (sem resultados), junto do
+    // texto da pergunta: nas rodadas de ferramenta o pedido segue como hoje,
+    // sem reenviar os arquivos. Sem anexos, o pedido é byte-idêntico ao de
+    // hoje.
+    const pergunta = entrada.historico.map(paraConteudo);
+    const primeiroPedido =
+      entrada.anexos !== undefined &&
+      entrada.anexos.length > 0 &&
+      parDaRodada.length === 0;
     const contents = [
-      ...entrada.historico.map(paraConteudo),
+      ...(primeiroPedido
+        ? comAnexos(pergunta, entrada.anexos ?? [])
+        : pergunta),
       ...this.acumuladoDeFerramentas,
       ...parDaRodada,
     ];

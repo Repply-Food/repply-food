@@ -3,6 +3,7 @@ import { ProvedorGemini } from "./gemini";
 import type { ProvedorIA } from "./tipos";
 
 export type {
+  AnexoParaIA,
   DefinicaoFerramenta,
   MensagemIA,
   PedidoFerramenta,

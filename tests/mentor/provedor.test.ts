@@ -9,6 +9,7 @@ import {
   type RespostaBruta,
 } from "../../lib/mentor/provedor/gemini";
 import type {
+  AnexoParaIA,
   MensagemIA,
   ProvedorIA,
   RespostaIA,
@@ -649,5 +650,108 @@ describe("ProvedorGemini (com cliente falso, sem rede)", () => {
     vi.stubEnv("MENTOR_IA_PROVEDOR", "");
 
     expect(escolherProvedor()).toBeInstanceOf(ProvedorGemini);
+  });
+
+  describe("anexos para a IA (imagem, PDF, planilha)", () => {
+    const anexos: AnexoParaIA[] = [
+      {
+        tipo: "imagem",
+        mime: "image/png",
+        nome: "cardapio.png",
+        dados: Buffer.from("bytes-da-foto").toString("base64"),
+      },
+      {
+        tipo: "pdf",
+        mime: "application/pdf",
+        nome: "relatorio.pdf",
+        dados: Buffer.from("bytes-do-pdf").toString("base64"),
+      },
+    ];
+
+    it("na primeira chamada, cada anexo vai como inlineData junto do texto da pergunta", async () => {
+      const { cliente, chamadas } = clienteFalso([texto("Vi o cardápio.")]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+
+      await provedor.responder({
+        instrucoes: "x",
+        historico,
+        ferramentas,
+        anexos,
+      });
+
+      expect(chamadas).toHaveLength(1);
+      expect(chamadas.at(0)?.contents).toEqual([
+        {
+          role: "user",
+          parts: [
+            { text: "Como foi o faturamento de ontem?" },
+            {
+              inlineData: {
+                mimeType: "image/png",
+                data: Buffer.from("bytes-da-foto").toString("base64"),
+              },
+            },
+            {
+              inlineData: {
+                mimeType: "application/pdf",
+                data: Buffer.from("bytes-do-pdf").toString("base64"),
+              },
+            },
+          ],
+        },
+      ]);
+      // As ferramentas continuam no pedido, como sem anexo.
+      expect(chamadas.at(0)?.config?.tools).toHaveLength(1);
+    });
+
+    it("nas rodadas de ferramenta, os anexos não voltam (só a primeira chamada leva)", async () => {
+      const turnoDoModelo = {
+        role: "model",
+        parts: [
+          {
+            functionCall: {
+              id: "chamada-1",
+              name: "faturamento_do_dia",
+              args: { dia: "ontem" },
+            },
+          },
+        ],
+      };
+      const { cliente, chamadas } = clienteFalso([
+        { candidates: [{ content: turnoDoModelo }] },
+        texto("Foram R$ 1.000,00."),
+      ]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+
+      await provedor.responder({
+        instrucoes: "x",
+        historico,
+        ferramentas,
+        anexos,
+      });
+      await provedor.responder({
+        instrucoes: "x",
+        historico,
+        ferramentas,
+        resultados: [{ nome: "faturamento_do_dia", resultado: 1 }],
+      });
+
+      expect(chamadas).toHaveLength(2);
+      expect(JSON.stringify(chamadas.at(0)?.contents)).toContain("inlineData");
+      expect(JSON.stringify(chamadas.at(1)?.contents)).not.toContain(
+        "inlineData"
+      );
+    });
+
+    it("sem anexos, nenhuma parte leva inlineData (pedido igual ao de hoje)", async () => {
+      const { cliente, chamadas } = clienteFalso([texto("ok")]);
+      const provedor = new ProvedorGemini({ chave: "chave-de-teste", cliente });
+
+      await provedor.responder({ instrucoes: "x", historico, ferramentas });
+
+      expect(JSON.stringify(chamadas.at(0)?.contents)).not.toContain(
+        "inlineData"
+      );
+    });
   });
 });

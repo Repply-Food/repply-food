@@ -28,6 +28,11 @@ const { executarFerramentas, logError, carregarFichas, extrairEgravarFichas } =
     carregarFichas: vi.fn(),
     extrairEgravarFichas: vi.fn(),
   }));
+const { validarArquivos, gravarAnexos, vincularAnexos } = vi.hoisted(() => ({
+  validarArquivos: vi.fn(),
+  gravarAnexos: vi.fn(),
+  vincularAnexos: vi.fn(),
+}));
 const estado = vi.hoisted(() => ({ cliente: null as unknown }));
 
 // `server-only` só existe dentro do Next; no Vitest entra um vazio.
@@ -58,8 +63,18 @@ vi.mock("@/lib/mentor/memoria", () => ({
   carregarFichas,
   extrairEgravarFichas,
 }));
+// Os arquivos passam pelo módulo de anexos em dublê: a subida e o vínculo
+// reais têm teste próprio (`anexos.test.ts`, com Storage local). Aqui o que
+// importa é a ORDEM (pendente com conversa nula → vínculo após gravar) e o
+// aviso quando o anexo falha, sem derrubar a resposta.
+vi.mock("@/lib/mentor/anexos", () => ({
+  validarArquivos,
+  gravarAnexos,
+  vincularAnexos,
+}));
 
 import { contextoDeHoje, responderNoMentor } from "@/lib/mentor/conversa";
+import { FalhaDoMentor } from "@/lib/mentor/falha";
 import { FERRAMENTAS } from "@/lib/mentor/ferramentas";
 import { TETO_DIARIO } from "@/lib/mentor/limite";
 import type {
@@ -129,6 +144,11 @@ const pedir = (...nomes: string[]): RespostaIA => ({
   tipo: "ferramenta",
   pedidos: nomes.map((nome): PedidoFerramenta => ({ nome, argumentos: {} })),
 });
+
+/** Um arquivo de mentira para os testes de anexo (o cofre real é dublado). */
+function arquivoDoTeste(nome: string, tipo: string, conteudo: string): File {
+  return new File([new TextEncoder().encode(conteudo)], nome, { type: tipo });
+}
 
 let banco: Client;
 let casaA = "";
@@ -323,6 +343,34 @@ beforeEach(() => {
   carregarFichas.mockResolvedValue([]);
   extrairEgravarFichas.mockReset();
   extrairEgravarFichas.mockResolvedValue(undefined);
+  // Sem anexo, por padrão: o pedido ao provedor sai sem o campo.
+  validarArquivos.mockReset();
+  gravarAnexos.mockReset();
+  vincularAnexos.mockReset();
+  validarArquivos.mockImplementation((arquivos: File[]) => ({
+    ok: true as const,
+    arquivos: arquivos.map((arquivo) => ({
+      arquivo,
+      nomeSeguro: arquivo.name,
+      tipo: arquivo.name.endsWith(".pdf")
+        ? ("pdf" as const)
+        : ("imagem" as const),
+      mime: arquivo.type,
+      tamanho: arquivo.size,
+    })),
+  }));
+  gravarAnexos.mockImplementation(
+    async (
+      _restauranteId: string,
+      _conversaId: string | null,
+      arquivos: File[]
+    ) =>
+      arquivos.map(() => ({
+        id: randomUUID(),
+        caminho: `pendente/${randomUUID()}-teste`,
+      }))
+  );
+  vincularAnexos.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -591,6 +639,189 @@ describe("as lembranças da casa (memória)", () => {
   });
 });
 
+describe("perguntas com anexos (a foto e o PDF vão junto do texto)", () => {
+  const foto = () =>
+    arquivoDoTeste("cardapio.png", "image/png", "bytes-da-foto");
+  const pdf = () =>
+    arquivoDoTeste("relatorio.pdf", "application/pdf", "bytes-do-pdf");
+
+  it("o provedor recebe os anexos com tipo, mime, nome e dados em base64", async () => {
+    const usoAntes = await usoDeHoje(casaA);
+    const { provedor, responder } = provedorRoteirizado([texto("Vi tudo.")]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha meu cardápio",
+      arquivos: [foto(), pdf()],
+      provedor,
+    });
+
+    expect(resultado).toEqual({
+      ok: true,
+      conversaId: expect.any(String),
+      resposta: "Vi tudo.",
+      anexosFalharam: false,
+    });
+    expect(responder).toHaveBeenCalledTimes(1);
+    expect(responder.mock.calls[0]?.[0].anexos).toEqual([
+      {
+        tipo: "imagem",
+        mime: "image/png",
+        nome: "cardapio.png",
+        dados: Buffer.from("bytes-da-foto").toString("base64"),
+      },
+      {
+        tipo: "pdf",
+        mime: "application/pdf",
+        nome: "relatorio.pdf",
+        dados: Buffer.from("bytes-do-pdf").toString("base64"),
+      },
+    ]);
+    // A extração continua chamada 1 vez, e o uso conta exatamente 1.
+    expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
+    expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
+  });
+
+  it("sem anexo, o pedido ao provedor não leva o campo (igual ao de hoje)", async () => {
+    const { provedor, responder } = provedorRoteirizado([texto("Oi.")]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Oi",
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    expect(responder.mock.calls[0]?.[0].anexos).toBeUndefined();
+    expect(validarArquivos).not.toHaveBeenCalled();
+    expect(gravarAnexos).not.toHaveBeenCalled();
+    expect(vincularAnexos).not.toHaveBeenCalled();
+  });
+
+  it("conversa nova: sobe pendente (conversa nula) e vincula após gravar, nessa ordem", async () => {
+    const ids = [randomUUID()];
+    gravarAnexos.mockResolvedValue([
+      { id: ids[0], caminho: "pendente/arquivo-teste" },
+    ]);
+    const { provedor } = provedorRoteirizado([texto("Vi.")]);
+    const arquivos = [foto()];
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha",
+      arquivos,
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.anexosFalharam).toBe(false);
+    expect(gravarAnexos).toHaveBeenCalledTimes(1);
+    expect(gravarAnexos).toHaveBeenCalledWith(casaA, null, arquivos);
+    expect(vincularAnexos).toHaveBeenCalledTimes(1);
+    expect(vincularAnexos).toHaveBeenCalledWith(
+      casaA,
+      resultado.conversaId,
+      ids
+    );
+    expect(gravarAnexos.mock.invocationCallOrder[0] ?? 0).toBeLessThan(
+      vincularAnexos.mock.invocationCallOrder[0] ?? 0
+    );
+  });
+
+  it("anexo inválido recusa com a frase, sem gastar o uso e sem chamar o provedor", async () => {
+    validarArquivos.mockReturnValueOnce({
+      ok: false,
+      error: "dá para mandar até 5 arquivos por pergunta",
+    });
+    const usoAntes = await usoDeHoje(casaA);
+    const mensagensAntes = await contar("mentor_mensagens", casaA);
+    const { provedor, responder } = provedorRoteirizado([texto("não deveria")]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha",
+      arquivos: [foto()],
+      provedor,
+    });
+
+    expect(resultado).toEqual({
+      ok: false,
+      error: "dá para mandar até 5 arquivos por pergunta",
+    });
+    expect(responder).not.toHaveBeenCalled();
+    expect(gravarAnexos).not.toHaveBeenCalled();
+    expect(logError).not.toHaveBeenCalled();
+    expect(await usoDeHoje(casaA)).toBe(usoAntes);
+    expect(await contar("mentor_mensagens", casaA)).toBe(mensagensAntes);
+  });
+
+  it("falha ao subir: a resposta sai mesmo assim, com aviso (a conversa grava)", async () => {
+    gravarAnexos.mockRejectedValueOnce(
+      new FalhaDoMentor("falha_anexos_mentor")
+    );
+    const usoAntes = await usoDeHoje(casaA);
+    const { provedor, responder } = provedorRoteirizado([
+      texto("Vi mesmo sem salvar."),
+    ]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha",
+      arquivos: [foto()],
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.resposta).toBe("Vi mesmo sem salvar.");
+    expect(resultado.anexosFalharam).toBe(true);
+    // A conversa gravou...
+    expect(
+      (await mensagensDa(resultado.conversaId)).map((m) => m.texto)
+    ).toEqual(["Olha", "Vi mesmo sem salvar."]);
+    // ...o provedor analisou com os bytes mesmo sem o cofre...
+    expect(responder.mock.calls[0]?.[0].anexos).toHaveLength(1);
+    // ...nada para vincular, extração 1 vez, uso exatamente 1.
+    expect(vincularAnexos).not.toHaveBeenCalled();
+    expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
+    expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
+  });
+
+  it("falha ao vincular: a conversa segue gravada, com aviso para reenviar só os anexos", async () => {
+    vincularAnexos.mockRejectedValueOnce(
+      new FalhaDoMentor("falha_anexos_mentor")
+    );
+    const usoAntes = await usoDeHoje(casaA);
+    const { provedor } = provedorRoteirizado([texto("Vi.")]);
+
+    const resultado = await responderNoMentor({
+      restauranteId: casaA,
+      conversaId: null,
+      mensagemDoDono: "Olha",
+      arquivos: [foto()],
+      provedor,
+    });
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.anexosFalharam).toBe(true);
+    expect(vincularAnexos).toHaveBeenCalledTimes(1);
+    expect(vincularAnexos.mock.calls[0]?.[0]).toBe(casaA);
+    expect(vincularAnexos.mock.calls[0]?.[1]).toBe(resultado.conversaId);
+    expect(
+      (await mensagensDa(resultado.conversaId)).map((m) => m.texto)
+    ).toEqual(["Olha", "Vi."]);
+    expect(extrairEgravarFichas).toHaveBeenCalledTimes(1);
+    expect(await usoDeHoje(casaA)).toBe(usoAntes + 1);
+  });
+});
+
 describe("continuar uma conversa", () => {
   it("manda o histórico salvo antes da pergunta nova e acrescenta as mensagens", async () => {
     const primeira = await responderNoMentor({
@@ -619,6 +850,7 @@ describe("continuar uma conversa", () => {
       ok: true,
       conversaId: primeira.conversaId,
       resposta: "Segunda resposta",
+      anexosFalharam: false,
     });
     expect(responder.mock.calls[0]?.[0].historico).toEqual([
       { papel: "dono", texto: "Primeira pergunta" },
